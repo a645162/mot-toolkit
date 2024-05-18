@@ -3,10 +3,13 @@ from typing import Optional
 
 from PySide6.QtWidgets import (
     QApplication,
-    QMainWindow
+    QMainWindow, QWidget,
+    QVBoxLayout,
 )
 
-from gui.view.components.select_directory_path import SelectDirectoryPathWidget
+from mot_toolkit.gui.view.components.select_directory_path import (
+    SelectDirectoryPathWidget
+)
 
 
 class MainWindow(QMainWindow):
@@ -19,11 +22,21 @@ class MainWindow(QMainWindow):
 
         self.__setup_window_properties()
 
+        self.__init_widgets()
+
     def __setup_window_properties(self):
         self.setWindowTitle("MOT-Tools")
 
     def __init_widgets(self):
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
+        self.v_layout = QVBoxLayout()
+
         self.__select_directory_path_widget = SelectDirectoryPathWidget()
+        self.v_layout.addWidget(self.__select_directory_path_widget)
+
+        self.central_widget.setLayout(self.v_layout)
 
 
 def init_main_window():

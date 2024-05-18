@@ -1,4 +1,11 @@
-from PySide6.QtWidgets import QWidget
+import os
+
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout, QHBoxLayout,
+    QLabel, QLineEdit, QPushButton, QFileDialog,
+)
 
 
 class SelectDirectoryPathWidget(QWidget):
@@ -6,5 +13,59 @@ class SelectDirectoryPathWidget(QWidget):
     def __init__(self):
         super().__init__()
 
+        self.__init_widgets()
+
+    def __init_widgets(self):
+        self.setFixedHeight(80)
+
+        self.v_layout = QVBoxLayout()
+
+        self.top_label = QLabel(parent=self)
+        self.top_label.setText("Select Directory Path:")
+        self.v_layout.addWidget(self.top_label)
+
+        self.path_h_layout = QHBoxLayout()
+
+        self.path_line_edit = QLineEdit(parent=self)
+        self.path_line_edit.setMinimumWidth(200)
+        self.path_line_edit.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.path_line_edit.setPlaceholderText("Select/Input a directory path")
+        self.path_line_edit.textChanged.connect(self.__line_edit_text_changed)
+        self.path_h_layout.addWidget(self.path_line_edit)
+
+        self.select_path_button = QPushButton(parent=self)
+        self.select_path_button.setText("...")
+        self.select_path_button.setFixedWidth(30)
+        self.select_path_button.clicked.connect(
+            self.__button_select_path_clicked
+        )
+        self.path_h_layout.addWidget(self.select_path_button)
+
+        self.v_layout.addLayout(self.path_h_layout)
+
+        self.setLayout(self.v_layout)
+
+    def __button_select_path_clicked(self):
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "Select Directory", ".",
+            QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks
+        )
+
+        # 如果用户选择了目录，打印出来
+        if directory and os.path.isdir(directory):
+            self.path_line_edit.setText(directory)
+
+    def check_path_is_valid(self):
+        return os.path.isdir(self.path_line_edit.text())
+
+    def __line_edit_text_changed(self):
+        self.path_line_edit.setStyleSheet(
+            "border: 1px solid green;"
+            if self.check_path_is_valid()
+            else "border: 1px solid red;"
+        )
+
     def get_path(self):
-        pass
+        if self.check_path_is_valid():
+            return self.path_line_edit.text()
