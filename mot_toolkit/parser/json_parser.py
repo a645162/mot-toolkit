@@ -3,7 +3,7 @@ import json
 from mot_toolkit.parser.file_encoding import read_file_with_detect
 
 
-def parse_json_to_dict(json_path:str)->dict:
+def parse_json_to_dict(json_path: str) -> dict:
     json_str = read_file_with_detect(json_path)
     data = json.loads(json_str)
     return data

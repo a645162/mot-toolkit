@@ -1,15 +1,15 @@
-from mot_toolkit.datatype.object_annotation import ObjectAnnotation
+from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 
 
 class RectDataAnnotation(ObjectAnnotation):
-    x1: int
-    y1: int
+    x1: float
+    y1: float
 
-    x2: int
-    y2: int
+    x2: float
+    y2: float
 
-    width: int
-    height: int
+    width: float
+    height: float
 
     def __init__(self, label: str = ""):
         super().__init__(label)
@@ -38,8 +38,8 @@ class RectDataAnnotation(ObjectAnnotation):
 
     def set_by_position_and_size(
             self,
-            x: int, y: int,
-            width: int, height: int
+            x: float, y: float,
+            width: float, height: float
     ):
         self.x1 = x
         self.y1 = y
@@ -49,8 +49,8 @@ class RectDataAnnotation(ObjectAnnotation):
 
     def set_by_rect_two_point(
             self,
-            x1: int, y1: int,
-            x2: int, y2: int
+            x1: float, y1: float,
+            x2: float, y2: float
     ):
         self.x1 = min(x1, x2)
         self.y1 = min(y1, y2)

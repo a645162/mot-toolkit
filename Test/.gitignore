@@ -1,1 +1,11 @@
+# Image
+/*.jpg
+/*/*.jpg
+/*.jpeg
+/*/*.jpeg
+/*.png
+/*/*.png
+
+# Annotation
 /*.json
+/*/*.json
