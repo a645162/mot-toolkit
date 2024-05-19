@@ -45,6 +45,32 @@ class SelectDirectoryPathWidget(QGroupBox):
 
         self.setLayout(self.v_layout)
 
+    def __init_drag(self):
+        def drag_enter_event(event):
+            if (
+                    event.mimeData().hasUrls() and
+                    all(
+                        url.isLocalFile()
+                        for url in event.mimeData().urls()
+                    )
+            ):
+                event.acceptProposedAction()
+
+        def drag_move_event(event):
+            if event.mimeData().hasUrls():
+                event.acceptProposedAction()
+
+        def drop_event(event):
+            for url in event.mimeData().urls():
+                folder_path = url.toLocalFile()
+                print(folder_path)
+            event.acceptProposedAction()
+
+        self.setAcceptDrops(True)
+        self.dragEnterEvent = drag_enter_event
+        self.dragMoveEvent = drag_move_event
+        self.dropEvent = drop_event
+
     def __button_select_path_clicked(self):
         directory = QFileDialog.getExistingDirectory(
             self,
