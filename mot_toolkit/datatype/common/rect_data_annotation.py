@@ -58,6 +58,32 @@ class RectDataAnnotation(ObjectAnnotation):
         self.x2 = max(x1, x2)
         self.y2 = max(y1, y2)
 
+    def set_by_center_and_size(
+            self,
+            center_x: float, center_y: float,
+            width: float, height: float
+    ):
+        self.x1 = center_x - width / 2
+        self.y1 = center_y - height / 2
+
+        self.x2 = center_x + width / 2
+        self.y2 = center_y + height / 2
+
+    def set_by_yolo_format(
+            self,
+            image_width: float, image_height: float,
+
+            center_x_ratio: float, center_y_ratio: float,
+            width_ratio: float, height_ratio: float
+    ):
+        center_x = image_width * center_x_ratio
+        center_y = image_height * center_y_ratio
+
+        width = image_width * width_ratio
+        height = image_height * height_ratio
+
+        self.set_by_center_and_size(center_x, center_y, width, height)
+
     def fix_bugs(self):
         if self.x1 > self.x2:
             self.x1, self.x2 = self.x2, self.x1

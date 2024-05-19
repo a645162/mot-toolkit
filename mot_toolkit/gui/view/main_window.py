@@ -10,8 +10,10 @@ from PySide6.QtWidgets import (
 from mot_toolkit.gui.view.components.select_directory_path import (
     SelectDirectoryPathWidget
 )
-from mot_toolkit.gui.view.frame.interface_frame import InterfaceFrame
-from mot_toolkit.gui.view.statistics.interface_statistics import InterfaceStatistics
+from mot_toolkit.gui.view.interface. \
+    frame.interface_frame import InterfaceFrame
+from mot_toolkit.gui.view.interface. \
+    statistics.interface_statistics import InterfaceStatistics
 
 
 class MainWindow(QMainWindow):
