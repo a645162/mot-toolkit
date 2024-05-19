@@ -2,13 +2,13 @@ import os
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QWidget,
+    QGroupBox,
     QVBoxLayout, QHBoxLayout,
     QLabel, QLineEdit, QPushButton, QFileDialog,
 )
 
 
-class SelectDirectoryPathWidget(QWidget):
+class SelectDirectoryPathWidget(QGroupBox):
 
     def __init__(self):
         super().__init__()
@@ -69,3 +69,4 @@ class SelectDirectoryPathWidget(QWidget):
     def get_path(self):
         if self.check_path_is_valid():
             return self.path_line_edit.text()
+        return ""
