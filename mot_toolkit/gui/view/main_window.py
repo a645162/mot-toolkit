@@ -7,13 +7,17 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QPushButton,
 )
 
-from mot_toolkit.gui.common.system_wide_menu import *
+from mot_toolkit.gui.common.system_wide_menu import (
+    init_system_menu
+)
 
 from mot_toolkit.gui.view.components.select_directory_path import (
     SelectDirectoryPathWidget
 )
 from mot_toolkit.gui.view.interface. \
     frame.interface_frame import InterfaceFrame
+from mot_toolkit.gui.view.interface. \
+    frame.preview.interface_preview import InterFacePreview
 from mot_toolkit.gui.view.interface. \
     statistics.interface_statistics import InterfaceStatistics
 
@@ -59,22 +63,33 @@ class MainWindow(QMainWindow):
         self.__button_stats.clicked.connect(self.__button_stats_clicked)
         self.v_layout.addWidget(self.__button_stats)
 
+        self.__button_preview = QPushButton(parent=self)
+        self.__button_preview.setText("Preview")
+        self.__button_preview.clicked.connect(self.__button_preview_clicked)
+        self.v_layout.addWidget(self.__button_preview)
+
         self.__button_frame_operation = QPushButton(parent=self)
         self.__button_frame_operation.setText("Frame Operation")
         self.__button_frame_operation.clicked.connect(self.__button_frame_operation_clicked)
         self.v_layout.addWidget(self.__button_frame_operation)
 
     def __button_stats_clicked(self):
-        self.interfaceStatistics = InterfaceStatistics(
+        self.interface_statistics = InterfaceStatistics(
             work_directory_path=self.__select_directory_path_widget.get_path()
         )
-        self.interfaceStatistics.show()
+        self.interface_statistics.show()
+
+    def __button_preview_clicked(self):
+        self.interface_preview = InterFacePreview(
+            work_directory_path=self.__select_directory_path_widget.get_path()
+        )
+        self.interface_preview.show()
 
     def __button_frame_operation_clicked(self):
-        self.interfaceFrame = InterfaceFrame(
+        self.interface_frame = InterfaceFrame(
             work_directory_path=self.__select_directory_path_widget.get_path()
         )
-        self.interfaceFrame.show()
+        self.interface_frame.show()
 
 
 def init_main_window():

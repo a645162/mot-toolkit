@@ -1,5 +1,3 @@
-from PySide6.QtWidgets import QLabel
-
 from mot_toolkit.gui.view.components.base_interface import BaseInterface
 from mot_toolkit.gui.view.interface. \
     frame.make_dataset.make_dataset_group_widget import MakeDatasetGroupWidget
