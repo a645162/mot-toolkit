@@ -37,8 +37,8 @@ You may need to use `Python 3.11` or lower on macOS.
 ## Step
 
 1. Automatically label each frame(Using `X-Anylabeling`)
-2. Manually label appearance frames
-3. Use single target tracking algorithm
+2. Manually label object appearance frames
+3. Use `Single Object Tracking (SOT)` algorithm
 4. Adjust and delete from the frame where the target disappears.
 
 ## Remote Run GUI On Linux Server

@@ -1,16 +1,18 @@
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout
+from PySide6.QtWidgets import (
+    QHBoxLayout, QVBoxLayout
+)
 
 from mot_toolkit.gui.view. \
     components.base_interface_window import BaseInterfaceWindow
 
+from mot_toolkit.gui.view.interface. \
+    frame.preview.components.toolkit_widget import ToolkitWidget
 from mot_toolkit.gui.view.interface. \
     frame.preview.components.dataset_image_view_widget import DatasetImageView
 from mot_toolkit.gui.view.interface. \
     frame.preview.components.file_list_widget import FileListWidget
 from mot_toolkit.gui.view.interface. \
     frame.preview.components.object_list_widget import ObjectListWidget
-from mot_toolkit.gui.view.interface. \
-    frame.preview.components.toolkit_widget import ToolkitWidget
 
 
 class InterFacePreview(BaseInterfaceWindow):
@@ -26,8 +28,12 @@ class InterFacePreview(BaseInterfaceWindow):
         self.setWindowTitle("Preview Interface")
 
     def __init_widgets(self):
-        self.main_h_layout = QHBoxLayout(parent=self)
-        self.setLayout(self.main_h_layout)
+        # self.label_work_path = QLabel(parent=self)
+        # self.label_work_path.setText("Work Directory: " + self.work_directory_path)
+        # self.v_layout.addWidget(self.label_work_path)
+
+        self.main_h_layout = QHBoxLayout()
+        self.v_layout.addLayout(self.main_h_layout)
 
         self.toolkit_widget = ToolkitWidget(parent=self)
         self.main_h_layout.addWidget(self.toolkit_widget)
