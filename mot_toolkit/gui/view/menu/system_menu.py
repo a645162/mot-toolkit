@@ -1,6 +1,8 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenuBar
 
+from mot_toolkit.utils.system_info import is_macos
+
 
 class MenuAction(QAction):
 
@@ -9,19 +11,17 @@ class MenuAction(QAction):
 
 
 class SystemMenu:
-    def __init__(self):
-        self.menu_bar = QMenuBar(parent=None)
+    def __init__(self, parent=None, current_menubar: QMenuBar = None):
+        if current_menubar is not None:
+            self.menu_bar = current_menubar
+        else:
+            self.menu_bar = QMenuBar(parent=parent)
 
         self.__init_macos_program_menu()
 
         self.__init_children()
 
     def __init_macos_program_menu(self):
-        import platform
-
-        def is_macos():
-            return platform.system().lower() == "darwin"
-
         # Check is macOS
         if not is_macos():
             return

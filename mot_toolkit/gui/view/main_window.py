@@ -17,6 +17,8 @@ from mot_toolkit.gui.view.interface. \
 from mot_toolkit.gui.view.interface. \
     statistics.interface_statistics import InterfaceStatistics
 
+from mot_toolkit.utils.system_info import is_macos
+
 
 class MainWindow(QMainWindow):
     __select_directory_path_widget: Optional[
@@ -33,7 +35,15 @@ class MainWindow(QMainWindow):
     def __setup_window_properties(self):
         self.setWindowTitle("MOT-Tools")
 
-        init_system_menu()
+        current_menubar = None
+
+        if not is_macos():
+            current_menubar = self.menuBar()
+
+        init_system_menu(
+            parent=None,
+            current_menubar=current_menubar
+        )
 
     def __init_widgets(self):
         self.central_widget = QWidget(parent=self)
