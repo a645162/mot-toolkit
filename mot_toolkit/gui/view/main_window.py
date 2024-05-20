@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QPushButton,
 )
 
+from mot_toolkit.gui.common.system_wide_menu import *
+
 from mot_toolkit.gui.view.components.select_directory_path import (
     SelectDirectoryPathWidget
 )
@@ -30,6 +32,8 @@ class MainWindow(QMainWindow):
 
     def __setup_window_properties(self):
         self.setWindowTitle("MOT-Tools")
+
+        init_system_menu()
 
     def __init_widgets(self):
         self.central_widget = QWidget(parent=self)

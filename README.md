@@ -1,6 +1,6 @@
 # MOT Toolkit
 
-Multiple Object Tracking(MOT) Toolkit
+Multiple Object Tracking (MOT) Toolkit
 
 ## Features
 
