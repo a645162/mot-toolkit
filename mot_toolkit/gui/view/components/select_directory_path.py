@@ -15,6 +15,8 @@ class SelectDirectoryPathWidget(QGroupBox):
 
         self.__init_widgets()
 
+        self.__init_drag()
+
     def __init_widgets(self):
         self.setFixedHeight(80)
 

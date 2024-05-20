@@ -10,6 +10,21 @@ Multiple Object Tracking (MOT) Toolkit
 
 ## Compatability
 
+### System
+
+- Microsoft Windows
+- Apple macOS
+- Linux Desktop
+- Linux Server (X11 Forwarding)
+
+### Python
+
+Recommend to use `Python 3.8` or higher.
+
+**Notice:**
+
+You may need to use `Python 3.11` or lower on macOS.
+
 ### File Format
 
 - X-AnyLabeling JSON Format
@@ -17,6 +32,13 @@ Multiple Object Tracking (MOT) Toolkit
 ### Annotation Format
 
 - Rectangle
+
+## Step
+
+1. Automatically label each frame(Using `X-Anylabeling`)
+2. Manually label appearance frames
+3. Use single target tracking algorithm
+4. Adjust and delete from the frame where the target disappears.
 
 ## Remote Run GUI On Linux Server
 
@@ -46,7 +68,7 @@ You can use `xclock` or `xeyes` to test the feature.
 
 ### Linux
 
-`PySide6` may need to install `xcb-cursor` lib.
+`PySide6` may need to install `xcb-cursor` lib on Linux.
 
 Using `apt` on `Ubuntu` or `Debian`:
 
@@ -57,11 +79,21 @@ sudo apt-get install libxcb-cursor0
 sudo apt-get install libxcb-cursor-dev
 ```
 
-or using `dnf`/`rpm` on `RHEL` series or `Fedora`:
+or using `dnf`/`yum` on `RHEL` series or `Fedora`:
 
 ```bash
 sudo dnf install xcb-util-cursor
+# or
+# sudo yum install xcb-util-cursor
 ```
+
+## Thanks
+
+Thanks to the following projects:
+
+- [PySide6](https://doc.qt.io/qtforpython/)
+- [X-Anylabeling](https://github.com/CVHub520/X-AnyLabeling)
+- [OpenCV](https://opencv.org/)
 
 ## License
 
