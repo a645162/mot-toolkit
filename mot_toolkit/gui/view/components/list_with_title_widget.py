@@ -6,6 +6,9 @@ from PySide6.QtWidgets import (
 
 
 class ListWithTitleWidget(QWidget):
+    title: str
+    __title: str
+    __title_show: str
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -18,7 +21,7 @@ class ListWithTitleWidget(QWidget):
         pass
 
     def __init_widgets(self):
-        self.v_layout = QVBoxLayout(parent=self)
+        self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
 
         self.label_title = QLabel(parent=self)
@@ -29,11 +32,37 @@ class ListWithTitleWidget(QWidget):
         self.v_layout.addWidget(self.list_widget)
 
     def set_title(self, title: str):
+        self.title = title
+
+    def get_title(self) -> str:
+        return self.title
+
+    @property
+    def title(self) -> str:
+        title_str = self.__title.strip()
+        while title_str.endswith(":"):
+            title_str = title_str[:-1]
+        return title_str
+
+    @title.setter
+    def title(self, title: str):
         title_str = title.strip()
+        self.__title = title_str
+        self.update_ui()
+
+    @property
+    def __title_show(self) -> str:
+        title_str = self.title
+
+        list_empty_str = ""
+        if self.list_widget.count() == 0:
+            list_empty_str = " (Empty)"
+        title_str = title_str + list_empty_str
+
         if not title_str.endswith(":"):
             title_str = title_str + ":"
 
-        self.label_title.setText(title_str)
+        return title_str
 
-    def get_title(self) -> str:
-        return self.label_title.text()
+    def update_ui(self):
+        self.label_title.setText(self.__title_show)
