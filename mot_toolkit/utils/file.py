@@ -26,6 +26,10 @@ def check_path(path) -> bool:
         return is_unix_path(path)
 
 
+def fix_path(original_path: str) -> str:
+    return original_path.replace("\\", "/")
+
+
 if __name__ == "__main__":
     print(f"Is Windows: {is_windows()}")
 

@@ -15,11 +15,11 @@ class ToolkitWidget(QWidget):
         self.__init_widgets()
 
     def __setup_widget_properties(self):
-        self.setFixedWidth(100)
+        self.setFixedWidth(150)
         # pass
 
     def __init_widgets(self):
-        self.v_layout = QVBoxLayout(parent=self)
+        self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
 
         self.btn_open_dir = QPushButton(parent=self)

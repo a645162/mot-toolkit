@@ -44,12 +44,16 @@ class XAnyLabelingAnnotation(AnnotationFile):
             rect_item.fix_bugs()
 
 
-def parse_xanylabeling_json(json_path) -> XAnyLabelingAnnotation:
+def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
     data: dict = parse_json_to_dict(json_path)
+
     result: XAnyLabelingAnnotation = XAnyLabelingAnnotation()
 
     result.version = data.get("version", "")
     result.flags = data.get("flags", {})
+
+    result.json_path = json_path
+    result.file_path = json_path
 
     shapes_list: List[dict] = data.get("shapes", [])
 
