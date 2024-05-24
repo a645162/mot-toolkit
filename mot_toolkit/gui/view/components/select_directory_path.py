@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QGroupBox,
     QVBoxLayout, QHBoxLayout,
-    QLabel, QLineEdit, QPushButton, QFileDialog,
+    QLabel, QLineEdit, QPushButton, QFileDialog, QSizePolicy,
 )
 
 
@@ -18,7 +18,11 @@ class SelectDirectoryPathWidget(QGroupBox):
         self.__init_drag()
 
     def __init_widgets(self):
-        self.setFixedHeight(80)
+        size_policy = QSizePolicy(
+            QSizePolicy.Preferred,
+            QSizePolicy.Fixed
+        )
+        self.setSizePolicy(size_policy)
 
         self.v_layout = QVBoxLayout()
 

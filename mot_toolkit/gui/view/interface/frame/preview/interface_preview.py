@@ -87,6 +87,7 @@ class InterFacePreview(BaseInterfaceWindow):
     def load_directory(self):
         self.annotation_directory.dir_path = self.work_directory_path
         self.annotation_directory.walk_dir()
+        self.annotation_directory.sort_path(group_directory=True)
         self.annotation_directory.load_json_files()
 
         for annotation in self.annotation_directory.annotation_file:
@@ -109,7 +110,8 @@ class InterFacePreview(BaseInterfaceWindow):
         self.current_annotation_object = self.annotation_directory.annotation_file[index]
         self.current_file_path = self.current_annotation_object.file_path
 
-        self.r_object_list_widget.list_widget.clear()
+        self.main_image_view.image_view.set_image_by_path(self.current_file_path)
 
+        self.r_object_list_widget.list_widget.clear()
         for rect_item in self.current_annotation_object.rect_annotation_list:
             self.r_object_list_widget.list_widget.addItem(f"{rect_item.label}({rect_item.group_id})")

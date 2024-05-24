@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 
 
 class ImageView(QLabel):
-    slot_image_changed: Signal
+    slot_image_changed: Signal = Signal()
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)

@@ -19,11 +19,14 @@ class ScrollImageView(QWidget):
         pass
 
     def __init_widgets(self):
-        self.v_layout = QVBoxLayout(parent=self)
+        self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
 
         self.scroll_area = QScrollArea(parent=self)
-        self.image_view = ImageView(parent=self)
+        self.image_view = ImageView(parent=self.scroll_area)
+
+        self.scroll_area.setWidget(self.image_view)
+        self.v_layout.addWidget(self.scroll_area)
 
     def keyPressEvent(self, event):
         key = event.key()
