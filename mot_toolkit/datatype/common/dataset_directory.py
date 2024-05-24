@@ -10,6 +10,68 @@ class AnnotationDirectory:
     def __init__(self, dir_path: str = ""):
         self.dir_path = dir_path
 
+    def sort_path(self, group_directory=False):
+        if group_directory:
+            self.__sort_path_group()
+        else:
+            self.__sort_path_simple()
+
+    def __sort_path_simple(self):
+        temp_list: List[tuple] = []
+
+        for file_path in self.file_list:
+            file_name = os.path.basename(file_path)
+            file_name_no_ext = os.path.splitext(file_name)[0]
+
+            temp_list.append(
+                (file_name_no_ext, file_path)
+            )
+
+        temp_list.sort(
+            key=lambda x: x[0]
+        )
+
+        self.file_list.clear()
+        for _, file_path in temp_list:
+            self.file_list.append(file_path)
+
+    def __sort_path_group(self):
+        temp_group_dict = {}
+
+        # Group by directory
+        for file_path in self.file_list:
+            file_dir = os.path.dirname(file_path)
+            file_name = os.path.basename(file_path)
+            file_name_no_ext = os.path.splitext(file_name)[0]
+
+            if file_dir not in temp_group_dict.keys():
+                temp_group_dict[file_dir] = []
+
+            temp_group_dict[file_dir].append(
+                (file_dir, file_name_no_ext, file_path)
+            )
+
+        # Sort by file name
+        for file_dir in temp_group_dict.keys():
+            temp_group_dict[file_dir].sort(
+                key=lambda x: x[1]
+            )
+
+        # Sort by directory
+        directory_list = list(temp_group_dict.keys())
+        # Sort by length
+        directory_list.sort(
+            key=lambda x: len(x)
+        )
+
+        # Clear old list
+        self.file_list.clear()
+
+        # Append to list
+        for file_dir in directory_list:
+            for _, _, file_path in temp_group_dict[file_dir]:
+                self.file_list.append(file_path)
+
     def walk_dir(
             self,
             file_extension: str = "json",

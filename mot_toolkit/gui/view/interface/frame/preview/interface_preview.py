@@ -111,5 +111,5 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.r_object_list_widget.list_widget.clear()
 
-        for rect_item in self.current_annotation_object.rect_annotation:
+        for rect_item in self.current_annotation_object.rect_annotation_list:
             self.r_object_list_widget.list_widget.addItem(f"{rect_item.label}({rect_item.group_id})")
