@@ -110,7 +110,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.current_annotation_object = self.annotation_directory.annotation_file[index]
         self.current_file_path = self.current_annotation_object.file_path
 
-        self.main_image_view.image_view.set_image_by_path(self.current_file_path)
+        self.main_image_view.update_dataset_annotation_path(self.current_annotation_object)
 
         self.r_object_list_widget.list_widget.clear()
         for rect_item in self.current_annotation_object.rect_annotation_list:

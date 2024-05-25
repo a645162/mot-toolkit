@@ -16,6 +16,9 @@ class AnnotationFile:
 
     file_path: str = ""
 
+    pic_path: str
+    __pic_path: str = ""
+
     def __init__(self, label: str = ""):
         super().__init__()
 
@@ -24,7 +27,7 @@ class AnnotationFile:
     def check_file_is_exist(self) -> bool:
         return os.path.exists(self.file_path)
 
-    def check_pic_is_exist(self) -> bool:
+    def __get_pic_path(self) -> str:
         filename = os.path.basename(self.file_path)
         filename_no_ext = os.path.splitext(filename)[0]
         directory = os.path.dirname(self.file_path)
@@ -32,5 +35,19 @@ class AnnotationFile:
         for ext in final_image_extension:
             image_path = os.path.join(directory, f"{filename_no_ext}{ext}")
             if os.path.exists(image_path):
-                return True
-        return False
+                return image_path
+
+        return ""
+
+    @property
+    def pic_path(self) -> str:
+        if not os.path.exists(self.__pic_path):
+            self.__pic_path = self.__get_pic_path()
+
+        if not os.path.exists(self.__pic_path):
+            return ""
+
+        return self.__pic_path
+
+    def check_pic_is_exist(self) -> bool:
+        return self.pic_path != ""
