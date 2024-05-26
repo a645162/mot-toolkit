@@ -21,6 +21,22 @@ class RectDataAnnotation(ObjectAnnotation):
         self.y2 = 0
 
     @property
+    def x(self):
+        return self.x1
+
+    @property
+    def y(self):
+        return self.y1
+
+    @property
+    def center_x(self):
+        return (self.x1 + self.x2) / 2
+
+    @property
+    def center_y(self):
+        return (self.y1 + self.y2) / 2
+
+    @property
     def width(self):
         return self.x2 - self.x1
 
