@@ -1,3 +1,5 @@
+from typing import List
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -66,3 +68,38 @@ class ListWithTitleWidget(QWidget):
 
     def update_ui(self):
         self.label_title.setText(self.__title_show)
+
+    @property
+    def selection_index(self) -> int:
+        selected_items = self.list_widget.selectedItems()
+        if len(selected_items) == 0:
+            return -1
+
+        selected_item = selected_items[0]
+        index = self.list_widget.row(selected_item)
+
+        return index
+
+    @selection_index.setter
+    def selection_index(self, index: int):
+        if index < 0 or index >= self.list_widget.count():
+            return
+
+        self.list_widget.setCurrentRow(index)
+
+    @property
+    def selection_index_list(self) -> List[int]:
+        selected_items = self.list_widget.selectedItems()
+
+        index_list = []
+
+        for selected_item in selected_items:
+            index = self.list_widget.row(selected_item)
+            if index not in index_list:
+                index_list.append(index)
+
+        return index_list
+
+    @property
+    def count(self) -> int:
+        return self.list_widget.count()

@@ -63,6 +63,8 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         self.main_image_view = DatasetImageView(parent=self)
+        self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
+        self.main_image_view.slot_next_image.connect(self.__slot_next_image)
         self.main_h_layout.addWidget(self.main_image_view)
 
         self.right_widget = QWidget(parent=self)
@@ -100,12 +102,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.load_directory()
 
     def __file_list_item_selection_changed(self):
-        selected_items = self.r_file_list_widget.list_widget.selectedItems()
-        if len(selected_items) == 0:
-            return
-
-        selected_item = selected_items[0]
-        index = self.r_file_list_widget.list_widget.row(selected_item)
+        index = self.r_file_list_widget.selection_index
 
         self.current_annotation_object = self.annotation_directory.annotation_file[index]
         self.current_file_path = self.current_annotation_object.file_path
@@ -115,3 +112,17 @@ class InterFacePreview(BaseInterfaceWindow):
         self.r_object_list_widget.list_widget.clear()
         for rect_item in self.current_annotation_object.rect_annotation_list:
             self.r_object_list_widget.list_widget.addItem(f"{rect_item.label}({rect_item.group_id})")
+
+    def __slot_previous_image(self):
+        selection_index = self.r_file_list_widget.selection_index
+        selection_index -= 1
+        if selection_index < 0:
+            return
+        self.r_file_list_widget.selection_index = selection_index
+
+    def __slot_next_image(self):
+        selection_index = self.r_file_list_widget.selection_index
+        selection_index += 1
+        if selection_index >= self.r_file_list_widget.count:
+            return
+        self.r_file_list_widget.selection_index = selection_index

@@ -20,6 +20,8 @@ class ImageView(QLabel):
 
     def set_image_by_path(self, image_path: str):
         q_pixmap = QPixmap(image_path)
+
+        self.setFixedSize(q_pixmap.size())
         self.set_image(q_pixmap)
 
     def set_image(self, image: QPixmap):

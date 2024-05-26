@@ -6,8 +6,8 @@ from mot_toolkit.gui.view. \
 
 
 class DatasetImageView(ScrollImageView):
-    slot_previous_image: Signal
-    slot_next_image: Signal
+    slot_previous_image: Signal = Signal()
+    slot_next_image: Signal = Signal()
 
     __annotation_obj: XAnyLabelingAnnotation
     __picture_file_path: str = ""
