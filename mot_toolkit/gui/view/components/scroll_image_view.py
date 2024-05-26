@@ -8,8 +8,8 @@ from mot_toolkit.gui.view. \
 class ScrollImageView(QWidget):
     ctrl_pressing: bool = False
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
 
         self.__setup_widget_properties()
 

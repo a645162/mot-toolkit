@@ -115,8 +115,10 @@ class RectDataAnnotation(ObjectAnnotation):
         return (
             f"RectDataAnnotation("
             f"label={self.label}, "
-            f"x={self.x1}, "
-            f"y={self.y1}, "
+            f"x1={self.x1}, "
+            f"y1={self.y1}, "
+            f"x2={self.x2}, "
+            f"y2={self.y2}, "
             f"width={self.width}, "
             f"height={self.height}"
             f")"

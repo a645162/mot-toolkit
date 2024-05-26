@@ -16,6 +16,8 @@ class AnnotationFile:
 
     file_path: str = ""
 
+    is_modified: bool = False
+
     pic_path: str
     __pic_path: str = ""
 
