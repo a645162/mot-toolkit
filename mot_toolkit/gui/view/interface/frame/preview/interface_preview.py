@@ -111,7 +111,9 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.r_object_list_widget.list_widget.clear()
         for rect_item in self.current_annotation_object.rect_annotation_list:
-            self.r_object_list_widget.list_widget.addItem(f"{rect_item.label}({rect_item.group_id})")
+            self.r_object_list_widget.list_widget.addItem(
+                f"{rect_item.label}({rect_item.group_id})"
+            )
 
     def __slot_previous_image(self):
         selection_index = self.r_file_list_widget.selection_index

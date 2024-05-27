@@ -1,5 +1,9 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QScrollArea, QVBoxLayout
+from PySide6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QScrollArea,
+)
 
 from mot_toolkit.gui.view. \
     components.base_image_view import ImageView

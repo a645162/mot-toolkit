@@ -5,6 +5,8 @@ from PySide6.QtCore import Qt, QRect
 
 
 class ResizableRect(QWidget):
+    scale_factor: float
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -25,6 +27,8 @@ class ResizableRect(QWidget):
         self.fillOpacity = 0.5
 
         self.boundary = QRect()  # Initialize with an empty rectangle
+
+        self.__scale_factor: float = 1.0
 
     def paintEvent(self, event):
         qp = QPainter(self)
@@ -82,6 +86,85 @@ class ResizableRect(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.lastPos = None
             self.resizing = False
+
+    @property
+    def scale_factor(self):
+        return self.__scale_factor
+
+    @scale_factor.setter
+    def scale_factor(self, value: float):
+        self.__scale_factor = value
+
+        self.setGeometry(
+            int(self.x() * value), int(self.y() * value),
+            int(self.width() * value), int(self.height() * value)
+        )
+
+        self.update()
+
+    @property
+    def x_original(self):
+        return round(self.x() / self.scale_factor, 1)
+
+    @x_original.setter
+    def x_original(self, value: float):
+        self.move(int(value * self.scale_factor), self.y())
+
+    @property
+    def y_original(self):
+        return round(self.y() / self.scale_factor, 1)
+
+    @y_original.setter
+    def y_original(self, value: float):
+        self.move(self.x(), int(value * self.scale_factor))
+
+    @property
+    def width_original(self):
+        return round(self.width() / self.scale_factor, 1)
+
+    @width_original.setter
+    def width_original(self, value: float):
+        self.resize(int(value * self.scale_factor), self.height())
+
+    @property
+    def height_original(self):
+        return round(self.height() / self.scale_factor, 1)
+
+    @height_original.setter
+    def height_original(self, value: float):
+        self.resize(self.width(), int(value * self.scale_factor))
+
+    @property
+    def x1(self):
+        return self.x_original
+
+    @x1.setter
+    def x1(self, value: float):
+        self.x_original = value
+
+    @property
+    def y1(self):
+        return self.y_original
+
+    @y1.setter
+    def y1(self, value: float):
+        self.y_original = value
+
+    @property
+    def x2(self):
+        return self.x_original + self.width_original
+
+    @x2.setter
+    def x2(self, value: float):
+        self.width_original = value - self.x_original
+
+    @property
+    def y2(self):
+        return self.y_original + self.height_original
+
+    @y2.setter
+    def y2(self, value: float):
+        self.height_original = value - self.y_original
 
 
 if __name__ == '__main__':

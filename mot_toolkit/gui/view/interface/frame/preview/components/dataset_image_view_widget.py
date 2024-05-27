@@ -46,8 +46,8 @@ class DatasetImageView(ScrollImageView):
     ):
         self.__annotation_obj = annotation_obj
 
-        print(annotation_obj.file_path)
-        print(annotation_obj.pic_path)
+        # print(annotation_obj.file_path)
+        # print(annotation_obj.pic_path)
 
         self.image_view.set_image_by_path(annotation_obj.pic_path)
         self.init_annotation()
