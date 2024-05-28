@@ -1,6 +1,7 @@
 from typing import List
 
 from PySide6.QtCore import Signal, Qt
+from PySide6.QtGui import QPixmap
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
 from mot_toolkit.gui.view. \
@@ -15,6 +16,8 @@ class DatasetImageView(ScrollImageView):
 
     __annotation_obj: XAnyLabelingAnnotation
     __picture_file_path: str = ""
+
+    current_q_pixmap: QPixmap = None
 
     annotation_widget_rect_list: List[AnnotationWidgetRect] = []
 
@@ -48,9 +51,9 @@ class DatasetImageView(ScrollImageView):
 
         # print(annotation_obj.file_path)
         # print(annotation_obj.pic_path)
-
-        self.image_view.set_image_by_path(annotation_obj.pic_path)
+        self.current_q_pixmap = QPixmap(annotation_obj.pic_path)
         self.init_annotation()
+        self.image_view.set_image(self.current_q_pixmap)
 
     def init_annotation(self):
         # Remove All Old Widget
@@ -71,7 +74,7 @@ class DatasetImageView(ScrollImageView):
             rect_widget.setFillOpacity(0.3)
 
             # Set the boundary for the rectangle
-            rect_widget.setBoundary(self.image_view.get_image().rect())
+            rect_widget.setBoundary(self.current_q_pixmap.rect())
 
             rect_widget.show()
 

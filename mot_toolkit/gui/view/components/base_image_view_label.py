@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 
-class ImageView(QLabel):
+class ImageViewLabel(QLabel):
     slot_image_changed: Signal = Signal()
 
     scale_factor: float

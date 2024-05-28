@@ -6,7 +6,9 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.gui.view. \
-    components.base_image_view import ImageView
+    components.base_image_view_graphics import ImageViewGraphics
+from mot_toolkit.gui.view. \
+    components.base_image_view_label import ImageViewLabel
 
 
 class ScrollImageView(QWidget):
@@ -26,11 +28,17 @@ class ScrollImageView(QWidget):
         self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
 
+        # Normal Mode
         self.scroll_area = QScrollArea(parent=self)
-        self.image_view = ImageView(parent=self.scroll_area)
+        self.image_view = ImageViewGraphics(parent=self.scroll_area)
+        # self.image_view = ImageViewLabel(parent=self.scroll_area)
 
         self.scroll_area.setWidget(self.image_view)
         self.v_layout.addWidget(self.scroll_area)
+
+        # No Scroll Area
+        # self.image_view = ImageViewGraphics(parent=self)
+        # self.v_layout.addWidget(self.image_view)
 
     def keyPressEvent(self, event):
         key = event.key()
