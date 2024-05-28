@@ -44,10 +44,13 @@ class ScrollImageView(QWidget):
         key = event.key()
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.ctrl_pressing = True
-            if key == Qt.Key.Key_PageUp:
-                return
-            elif key == Qt.Key.Key_PageDown:
-                return
+            match key:
+                case Qt.Key.Key_PageUp:
+                    print("Ctrl + Page Up")
+                    return
+                case Qt.Key.Key_PageDown:
+                    print("Ctrl + Page Down")
+                    return
 
         super().keyPressEvent(event)
 

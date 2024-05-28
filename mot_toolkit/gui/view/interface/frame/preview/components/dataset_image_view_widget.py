@@ -35,13 +35,30 @@ class DatasetImageView(ScrollImageView):
         pass
 
     def keyPressEvent(self, event):
-        if event.modifiers() == Qt.KeyboardModifier.NoModifier:
-            if event.key() == Qt.Key.Key_A:
-                self.slot_previous_image.emit()
-                return
-            elif event.key() == Qt.Key.Key_D:
-                self.slot_next_image.emit()
-                return
+        modifiers = event.modifiers()
+        key = event.key()
+        match modifiers:
+            case Qt.KeyboardModifier.NoModifier:
+                match key:
+                    case Qt.Key.Key_Left:
+                        self.slot_previous_image.emit()
+                        return
+                    case Qt.Key.Key_Right:
+                        self.slot_next_image.emit()
+                        return
+                    case Qt.Key.Key_A:
+                        self.slot_previous_image.emit()
+                        return
+                    case Qt.Key.Key_D:
+                        self.slot_next_image.emit()
+                        return
+
+            case Qt.KeyboardModifier.ControlModifier:
+                match key:
+                    case Qt.Key.Key_S:
+                        self.__annotation_obj.is_modified = True
+                        self.__annotation_obj.save()
+                        return
 
         super().keyPressEvent(event)
 

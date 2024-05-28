@@ -1,4 +1,5 @@
 from typing import List
+import json
 
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
 from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
@@ -23,6 +24,11 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
     rect_annotation_list: List[XAnyLabelingRect]
 
+    image_path = ""
+    image_data = None
+    image_height = 0
+    image_width = 0
+
     def __init__(self, label: str = ""):
         super().__init__(label)
 
@@ -30,6 +36,42 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.flags = {}
 
         self.rect_annotation_list = []
+
+    def to_dict(self) -> dict:
+        result_dict = {}
+
+        result_dict["version"] = self.version
+        result_dict["flags"] = self.flags
+        result_dict["shapes"] = []
+        for rect_item in self.rect_annotation_list:
+            result_dict["shapes"].append({
+                "label": rect_item.label,
+                "text": rect_item.text,
+                "points": rect_item.get_rect_two_point(),
+                "group_id": rect_item.group_id,
+                "shape_type": rect_item.shape_type,
+                "flags": rect_item.flags
+            })
+        result_dict["imagePath"] = self.image_path
+        result_dict["imageData"] = self.image_data
+        result_dict["imageHeight"] = self.image_height
+        result_dict["imageWidth"] = self.image_width
+
+        return result_dict
+
+    def to_json_string(self) -> str:
+        result_dict = self.to_dict()
+
+        # Convert Dict to Json String
+        json_string = \
+            json.dumps(
+                result_dict,
+                sort_keys=False,
+                indent=2,
+                separators=(',', ': ')
+            )
+
+        return json_string.strip() + "\n"
 
     def save_json(self, save_path: str = ""):
         save_path = save_path.strip()
@@ -41,6 +83,18 @@ class XAnyLabelingAnnotation(AnnotationFile):
             return
 
         # Save to json file
+        with open(save_path, "w") as f:
+            f.write(self.to_json_string())
+
+        print("Save Json File Successfully: " + save_path)
+
+    def save(self) -> bool:
+        if not super().save():
+            return False
+
+        self.save_json(self.file_path)
+
+        return True
 
     def fix_bugs(self):
         for rect_item in self.rect_annotation_list:
@@ -87,6 +141,11 @@ def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
         else:
             print(f"Unknown shape type: {item_shape_type} in {json_path}")
 
+    current_annotation_obj.image_path = data.get("imagePath", "")
+    current_annotation_obj.image_data = data.get("imageData", None)
+    current_annotation_obj.image_height = data.get("imageHeight", 0)
+    current_annotation_obj.image_width = data.get("imageWidth", 0)
+
     return current_annotation_obj
 
 
@@ -109,7 +168,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             self.annotation_file.append(annotation)
 
     def save_json_files(self):
-        pass
+        for annotation_obj in self.annotation_file:
+            if annotation_obj.is_modified:
+                annotation_obj.save()
 
 
 if __name__ == '__main__':

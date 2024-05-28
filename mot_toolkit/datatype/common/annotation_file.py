@@ -1,5 +1,7 @@
 import os
 
+from PySide6.QtCore import Signal
+
 image_extension = [".jpg", ".png", ".jpeg", ".bmp"]
 
 final_image_extension = []
@@ -20,6 +22,8 @@ class AnnotationFile:
 
     pic_path: str
     __pic_path: str = ""
+
+    slot_modified: Signal = Signal()
 
     def __init__(self, label: str = ""):
         super().__init__()
@@ -53,3 +57,13 @@ class AnnotationFile:
 
     def check_pic_is_exist(self) -> bool:
         return self.pic_path != ""
+
+    def modifying(self):
+        self.is_modified = True
+        self.slot_modified.emit()
+
+    def save(self) -> bool:
+        if not self.is_modified:
+            return False
+
+        return True
