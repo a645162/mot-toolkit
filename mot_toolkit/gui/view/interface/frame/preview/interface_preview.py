@@ -105,8 +105,35 @@ class InterFacePreview(BaseInterfaceWindow):
         self.annotation_directory.sort_path(group_directory=True)
         self.annotation_directory.load_json_files()
 
+        directory_list = []
+        ext_list = []
         for annotation in self.annotation_directory.annotation_file:
-            self.r_file_list_widget.list_widget.addItem(annotation.file_path)
+            file_path = annotation.file_path
+            directory_path = os.path.dirname(file_path)
+            file_name = os.path.basename(file_path)
+            file_ext = os.path.splitext(file_name)[1]
+            if (
+                    directory_path not in directory_list and
+                    os.path.isdir(directory_path)
+            ):
+                directory_list.append(directory_path)
+            if file_ext not in ext_list:
+                ext_list.append(file_ext)
+
+        only_file_name = (
+                len(directory_list) == 1 and
+                len(ext_list) == 1
+        )
+
+        for annotation in self.annotation_directory.annotation_file:
+            path = annotation.file_path
+            if only_file_name:
+                path = os.path.basename(path)
+                path = os.path.splitext(path)[0]
+
+            self.r_file_list_widget.list_widget.addItem(path)
+
+        self.r_file_list_widget.update()
 
     def __auto_load_directory(self):
         if not os.path.isdir(self.work_directory_path):
@@ -117,16 +144,20 @@ class InterFacePreview(BaseInterfaceWindow):
     def __file_list_item_selection_changed(self):
         index = self.r_file_list_widget.selection_index
 
-        self.current_annotation_object = self.annotation_directory.annotation_file[index]
+        self.current_annotation_object = \
+            self.annotation_directory.annotation_file[index]
         self.current_file_path = self.current_annotation_object.file_path
 
-        self.main_image_view.update_dataset_annotation_path(self.current_annotation_object)
+        self.main_image_view.update_dataset_annotation_path(
+            self.current_annotation_object
+        )
 
         self.r_object_list_widget.list_widget.clear()
         for rect_item in self.current_annotation_object.rect_annotation_list:
             self.r_object_list_widget.list_widget.addItem(
                 f"{rect_item.label}({rect_item.group_id})"
             )
+        self.r_object_list_widget.update()
 
     def __slot_previous_image(self):
         selection_index = self.r_file_list_widget.selection_index

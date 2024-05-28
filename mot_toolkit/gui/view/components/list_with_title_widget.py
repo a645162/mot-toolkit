@@ -50,23 +50,30 @@ class ListWithTitleWidget(QWidget):
     def title(self, title: str):
         title_str = title.strip()
         self.__title = title_str
-        self.update_ui()
+        self.update()
 
     @property
     def __title_show(self) -> str:
         title_str = self.title
 
-        list_empty_str = ""
-        if self.list_widget.count() == 0:
-            list_empty_str = " (Empty)"
-        title_str = title_str + list_empty_str
+        end_str = ""
+
+        count = self.list_widget.count()
+        if count == 0:
+            end_str = end_str + " (Empty)"
+        else:
+            end_str = end_str + " (" + str(count) + ")"
+
+        title_str = title_str + end_str
 
         if not title_str.endswith(":"):
             title_str = title_str + ":"
 
         return title_str
 
-    def update_ui(self):
+    def update(self):
+        super().update()
+
         self.label_title.setText(self.__title_show)
 
     @property

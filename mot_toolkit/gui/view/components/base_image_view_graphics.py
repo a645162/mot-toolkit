@@ -11,6 +11,7 @@ from PySide6.QtWidgets import (
 
 class ImageViewGraphics(QGraphicsView):
     slot_image_changed: Signal = Signal()
+    slot_image_scale_factor_changed: Signal = Signal(float)
 
     # 双指外扩(放大)为正，双指内缩(缩小)为负
     # Two-finger expansion (zoom in) is positive(+),
@@ -25,7 +26,7 @@ class ImageViewGraphics(QGraphicsView):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.grabGesture(Qt.PinchGesture)
+        self.grabGesture(Qt.GestureType.PinchGesture)
 
         self.scene = QGraphicsScene()
         # self.scene.setSceneRect(-5000, -5000, 10000, 10000)
@@ -62,13 +63,13 @@ class ImageViewGraphics(QGraphicsView):
         return False
 
     def event(self, event):
-        if event.type() == QEvent.Gesture:
+        if event.type() == QEvent.Type.Gesture:
             self.__gesture_event(event)
             return True
         return super().event(event)
 
     def __gesture_event(self, event: QEvent):
-        pinch_gesture = event.gesture(Qt.PinchGesture)
+        pinch_gesture = event.gesture(Qt.GestureType.PinchGesture)
 
         if pinch_gesture:
             self.__pinch_triggered(pinch_gesture)
@@ -78,24 +79,24 @@ class ImageViewGraphics(QGraphicsView):
             factor_delta = gesture.totalScaleFactor() - gesture.scaleFactor()
             factor_delta = round(factor_delta, 6)
             self.pinch_triggered.emit(factor_delta)
-            print(
-                "Scale factor changed",
-                gesture.scaleFactor(),
-                gesture.totalScaleFactor(),
-                gesture.lastScaleFactor()
-            )
-            print("factor_delta", factor_delta)
+            # print(
+            #     "Scale factor changed",
+            #     gesture.scaleFactor(),
+            #     gesture.totalScaleFactor(),
+            #     gesture.lastScaleFactor()
+            # )
+            # print("factor_delta", factor_delta)
         if gesture.changeFlags() & QPinchGesture.ChangeFlag.RotationAngleChanged:
             angle_delta = gesture.totalRotationAngle() - gesture.rotationAngle()
             angle_delta = round(angle_delta, 6)
             self.rotate_triggered.emit(angle_delta)
-            print(
-                "Rotation angle changed",
-                gesture.rotationAngle(),
-                gesture.totalRotationAngle(),
-                gesture.lastRotationAngle()
-            )
-            print("angle_delta", angle_delta)
+            # print(
+            #     "Rotation angle changed",
+            #     gesture.rotationAngle(),
+            #     gesture.totalRotationAngle(),
+            #     gesture.lastRotationAngle()
+            # )
+            # print("angle_delta", angle_delta)
 
     def set_image_by_path(self, image_path: str):
         q_pixmap = QPixmap(image_path)
@@ -119,7 +120,7 @@ class ImageViewGraphics(QGraphicsView):
     @scale_factor.setter
     def scale_factor(self, value: float):
         self.__scale_factor = value
-
+        self.slot_image_scale_factor_changed.emit(value)
         self.update()
 
     def update(self):

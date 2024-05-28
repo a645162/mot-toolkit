@@ -76,19 +76,19 @@ class MainWindow(QMainWindow):
 
     def __button_stats_clicked(self):
         self.interface_statistics = InterfaceStatistics(
-            work_directory_path=self.__select_directory_path_widget.get_path()
+            work_directory_path=self.__select_directory_path_widget.get_absolute_path()
         )
         self.interface_statistics.show()
 
     def __button_preview_clicked(self):
         self.interface_preview = InterFacePreview(
-            work_directory_path=self.__select_directory_path_widget.get_path()
+            work_directory_path=self.__select_directory_path_widget.get_absolute_path()
         )
         self.interface_preview.show()
 
     def __button_frame_operation_clicked(self):
         self.interface_frame = InterfaceFrame(
-            work_directory_path=self.__select_directory_path_widget.get_path()
+            work_directory_path=self.__select_directory_path_widget.get_absolute_path()
         )
         self.interface_frame.show()
 

@@ -21,6 +21,8 @@ class DatasetImageView(ScrollImageView):
 
     annotation_widget_rect_list: List[AnnotationWidgetRect] = []
 
+    scale_factor_coefficient: float = 1.0
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -58,7 +60,10 @@ class DatasetImageView(ScrollImageView):
     def init_annotation(self):
         # Remove All Old Widget
         for rect_widget in self.annotation_widget_rect_list:
-            if rect_widget is not None:
+            if (
+                    rect_widget is not None and
+                    rect_widget.parent() is not None
+            ):
                 rect_widget.deleteLater()
 
         self.annotation_widget_rect_list.clear()

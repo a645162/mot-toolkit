@@ -102,3 +102,10 @@ class SelectDirectoryPathWidget(QGroupBox):
         if self.check_path_is_valid():
             return self.path_line_edit.text()
         return ""
+
+    def get_absolute_path(self):
+        path = self.get_path()
+        if path == "":
+            return ""
+        else:
+            return os.path.abspath(path)
