@@ -33,6 +33,8 @@ class InterFacePreview(BaseInterfaceWindow):
     current_annotation_object: XAnyLabelingAnnotation
     current_file_path: str = ""
 
+    basic_window_title: str = "Preview Interface"
+
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
 
@@ -42,8 +44,10 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.__auto_load_directory()
 
+        self.update()
+
     def __setup_window_properties(self):
-        self.setWindowTitle("Preview Interface")
+        self.setWindowTitle(self.basic_window_title)
 
         # self.setMinimumSize(QSize(640, 320))
         self.setMinimumSize(QSize(800, 600))
@@ -51,7 +55,6 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def __init_widgets(self):
         self.label_work_path = QLabel(parent=self)
-        self.label_work_path.setText("Work Directory: " + self.work_directory_path)
         self.v_layout.addWidget(self.label_work_path)
 
         self.main_h_widget = QWidget(parent=self)
@@ -85,6 +88,16 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_h_layout.setStretch(0, 0)
         self.main_h_layout.setStretch(1, 4)
         self.main_h_layout.setStretch(2, 1)
+
+    def update(self):
+        super().update()
+
+        self.setWindowTitle(
+            self.basic_window_title + " - " + self.work_directory_path
+        )
+        self.label_work_path.setText(
+            "Work Directory: " + self.work_directory_path
+        )
 
     def load_directory(self):
         self.annotation_directory.dir_path = self.work_directory_path

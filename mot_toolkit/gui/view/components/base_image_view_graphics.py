@@ -12,7 +12,14 @@ from PySide6.QtWidgets import (
 class ImageViewGraphics(QGraphicsView):
     slot_image_changed: Signal = Signal()
 
+    # 双指外扩(放大)为正，双指内缩(缩小)为负
+    # Two-finger expansion (zoom in) is positive(+),
+    # two-finger contraction (zoom out) is negative(-)
     pinch_triggered: Signal = Signal(float)
+
+    # 顺时针为负，逆时针为正
+    # Clockwise is negative(-)
+    # counterclockwise is positive(+)
     rotate_triggered: Signal = Signal(float)
 
     def __init__(self, parent=None):
@@ -88,6 +95,7 @@ class ImageViewGraphics(QGraphicsView):
                 gesture.totalRotationAngle(),
                 gesture.lastRotationAngle()
             )
+            print("angle_delta", angle_delta)
 
     def set_image_by_path(self, image_path: str):
         q_pixmap = QPixmap(image_path)
