@@ -11,6 +11,8 @@ Multiple Object Tracking (MOT) Toolkit
 
 ## Compatability
 
+Aim to compatible with `X-AnyLabeling` and these following tools:
+
 ### System
 
 - Microsoft Windows

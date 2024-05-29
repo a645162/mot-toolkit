@@ -47,7 +47,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
             result_dict["shapes"].append({
                 "label": rect_item.label,
                 "text": rect_item.text,
-                "points": rect_item.get_rect_two_point(),
+                "points": rect_item.get_rect_two_point_2dim_array(),
                 "group_id": rect_item.group_id,
                 "shape_type": rect_item.shape_type,
                 "flags": rect_item.flags
@@ -58,6 +58,12 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict["imageWidth"] = self.image_width
 
         return result_dict
+
+    def __dict__(self) -> dict:
+        return self.to_dict()
+
+    def __str__(self) -> str:
+        return self.to_json_string()
 
     def to_json_string(self) -> str:
         result_dict = self.to_dict()
@@ -96,9 +102,11 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return True
 
-    def fix_bugs(self):
+    def fix_bugs(self) -> bool:
         for rect_item in self.rect_annotation_list:
             rect_item.fix_bugs()
+
+        return True
 
 
 def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:

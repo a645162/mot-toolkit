@@ -43,10 +43,10 @@ class ImageViewGraphics(QGraphicsView):
 
     def __setup_widget_properties(self):
         # Disable horizontal scroll bar
-        # self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Disable vertical scroll bar
-        # self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
         # Disable wheel event
         def __disable_wheel_event(event):

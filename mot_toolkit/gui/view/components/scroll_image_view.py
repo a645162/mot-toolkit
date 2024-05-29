@@ -7,8 +7,6 @@ from PySide6.QtWidgets import (
 
 from mot_toolkit.gui.view. \
     components.base_image_view_graphics import ImageViewGraphics
-from mot_toolkit.gui.view. \
-    components.base_image_view_label import ImageViewLabel
 
 
 class ScrollImageView(QWidget):
@@ -40,24 +38,39 @@ class ScrollImageView(QWidget):
         # self.image_view = ImageViewGraphics(parent=self)
         # self.v_layout.addWidget(self.image_view)
 
+    def zoom_up(self, zoom=0):
+        pass
+
+    def zoom_down(self, zoom=0):
+        pass
+
+    def zoom_restore(self):
+        pass
+
     def keyPressEvent(self, event):
         key = event.key()
         if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
             self.ctrl_pressing = True
+
             match key:
+                case Qt.Key.Key_0:
+                    self.zoom_restore()
+                    return
                 case Qt.Key.Key_PageUp:
-                    print("Ctrl + Page Up")
+                    self.zoom_up()
                     return
                 case Qt.Key.Key_PageDown:
-                    print("Ctrl + Page Down")
+                    self.zoom_down()
                     return
 
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
-        # key = event.key()
-        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressing = False
+        key = event.key()
+        match key:
+            case Qt.Key.Key_Control:
+                self.ctrl_pressing = False
+                return False
 
         super().keyReleaseEvent(event)
 
@@ -69,6 +82,6 @@ class ScrollImageView(QWidget):
         angle = event.angleDelta()
 
         if angle.y() > 0:
-            print("Wheel Up")
+            self.zoom_up()
         else:
-            print("Wheel Down")
+            self.zoom_down()

@@ -74,7 +74,7 @@ class RectDataAnnotation(ObjectAnnotation):
         self.x2 = max(x1, x2)
         self.y2 = max(y1, y2)
 
-    def get_rect_two_point(self):
+    def get_rect_two_point_2dim_array(self):
         return [
             [self.x1, self.y1],
             [self.x2, self.y2]
