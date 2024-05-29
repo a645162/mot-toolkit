@@ -68,6 +68,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_image_view = DatasetImageView(parent=self)
         self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
+        self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
         self.main_h_layout.addWidget(self.main_image_view)
 
         self.right_widget = QWidget(parent=self)
@@ -80,6 +81,8 @@ class InterFacePreview(BaseInterfaceWindow):
         self.right_v_layout.addWidget(self.r_file_list_widget)
 
         self.r_object_list_widget = ObjectListWidget(parent=self)
+        self.r_object_list_widget. \
+            list_widget.itemSelectionChanged.connect(self.__object_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_object_list_widget)
 
         # self.right_widget.setFixedWidth(200)
@@ -172,3 +175,11 @@ class InterFacePreview(BaseInterfaceWindow):
         if selection_index >= self.r_file_list_widget.count:
             return
         self.r_file_list_widget.selection_index = selection_index
+
+    def __object_list_item_selection_changed(self):
+        index = self.r_object_list_widget.selection_index
+
+        self.main_image_view.set_selection_rect_index(index)
+
+    def __slot_selection_changed(self, index):
+        self.r_object_list_widget.selection_index = index

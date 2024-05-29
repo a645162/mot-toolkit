@@ -1,4 +1,5 @@
 import os
+import uuid
 
 from PySide6.QtCore import Signal
 
@@ -14,6 +15,8 @@ for ext in image_extension:
 
 
 class AnnotationFile:
+    uuid: str = ""
+
     label: str = ""
 
     file_path: str = ""
@@ -28,6 +31,8 @@ class AnnotationFile:
     def __init__(self, label: str = ""):
         super().__init__()
 
+        self.uuid = str(uuid.uuid4())
+
         self.label = label
 
     def check_file_is_exist(self) -> bool:
@@ -38,8 +43,11 @@ class AnnotationFile:
         filename_no_ext = os.path.splitext(filename)[0]
         directory = os.path.dirname(self.file_path)
 
-        for ext in final_image_extension:
-            image_path = os.path.join(directory, f"{filename_no_ext}{ext}")
+        for ext_name in final_image_extension:
+            image_path = os.path.join(
+                directory,
+                f"{filename_no_ext}{ext_name}"
+            )
             if os.path.exists(image_path):
                 return image_path
 
@@ -58,6 +66,12 @@ class AnnotationFile:
     def check_pic_is_exist(self) -> bool:
         return self.pic_path != ""
 
+    def is_valid(self) -> bool:
+        result = self.check_file_is_exist()
+        result = result and self.check_pic_is_exist()
+
+        return result
+
     def modifying(self):
         self.is_modified = True
         self.slot_modified.emit()
@@ -67,3 +81,12 @@ class AnnotationFile:
             return False
 
         return True
+
+    def __eq__(self, other):
+        return self.uuid == other.uuid
+
+    def __ne__(self, other):
+        return self.uuid != other.uuid
+
+    def __str__(self):
+        return self.label

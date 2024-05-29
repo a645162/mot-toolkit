@@ -4,6 +4,8 @@ def match_func(a: int) -> str:
             return "1"
         case 2:
             return "2"
+        case [3, 4]:
+            return "3,4"
         case _:
             return "default"
 

@@ -22,7 +22,8 @@ Aim to compatible with `X-AnyLabeling` and these following tools:
 
 ### Python
 
-Recommend to use `Python 3.8` or higher.
+Recommend to use `Python 3.10` or higher.
+(Because of the 'match' syntax)
 
 **Notice:**
 

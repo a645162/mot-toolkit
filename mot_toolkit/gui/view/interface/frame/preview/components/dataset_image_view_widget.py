@@ -14,6 +14,8 @@ class DatasetImageView(ScrollImageView):
     slot_previous_image: Signal = Signal()
     slot_next_image: Signal = Signal()
 
+    slot_selection_changed: Signal = Signal(int)
+
     __annotation_obj: XAnyLabelingAnnotation
     __picture_file_path: str = ""
 
@@ -40,6 +42,12 @@ class DatasetImageView(ScrollImageView):
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
                 match key:
+                    case Qt.Key.Key_Up:
+                        self.slot_previous_image.emit()
+                        return
+                    case Qt.Key.Key_Down:
+                        self.slot_next_image.emit()
+                        return
                     case Qt.Key.Key_Left:
                         self.slot_previous_image.emit()
                         return
@@ -85,15 +93,22 @@ class DatasetImageView(ScrollImageView):
 
         self.annotation_widget_rect_list.clear()
 
-        for rect_item in self.__annotation_obj.rect_annotation_list:
-            rect_widget = AnnotationWidgetRect(parent=self.image_view)
-            # print(rect_item)
-            rect_widget.set_rect_data_annotation(rect_item)
+        def try_to_select(obj: AnnotationWidgetRect):
+            index = -1
+            for i, rect_widget in enumerate(self.annotation_widget_rect_list):
+                if obj == rect_widget:
+                    index = i
+                    break
 
-            rect_widget.setBorderColor(Qt.GlobalColor.blue)
-            rect_widget.setBorderWidth(8)
-            rect_widget.setFillColor(Qt.GlobalColor.green)
-            rect_widget.setFillOpacity(0.3)
+            if index != -1:
+                self.slot_selection_changed.emit(index)
+
+        for rect_item in self.__annotation_obj.rect_annotation_list:
+            # print(rect_item)
+            rect_widget = AnnotationWidgetRect(parent=self.image_view)
+            rect_widget.label = rect_item.label
+            rect_widget.slot_try_to_select.connect(try_to_select)
+            rect_widget.set_rect_data_annotation(rect_item)
 
             # Set the boundary for the rectangle
             rect_widget.setBoundary(self.current_q_pixmap.rect())
@@ -101,3 +116,13 @@ class DatasetImageView(ScrollImageView):
             rect_widget.show()
 
             self.annotation_widget_rect_list.append(rect_widget)
+
+    def set_selection_rect_index(self, index):
+        if index < 0 or index >= len(self.annotation_widget_rect_list):
+            return
+
+        for i, rect_widget in enumerate(self.annotation_widget_rect_list):
+            if i == index:
+                rect_widget.selecting = True
+            else:
+                rect_widget.selecting = False

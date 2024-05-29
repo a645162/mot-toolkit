@@ -1,11 +1,17 @@
 import sys
 from PySide6.QtWidgets import QApplication, QLabel, QWidget, QGraphicsOpacityEffect
 from PySide6.QtGui import QPainter, QPen, QBrush, QPixmap
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtCore import Qt, QRect, Signal
 
 
 class ResizableRect(QWidget):
     scale_factor: float
+
+    __modified: bool = False
+
+    slot_modified: Signal = Signal(QWidget)
+
+    label: str = ""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -86,6 +92,16 @@ class ResizableRect(QWidget):
         if event.button() == Qt.MouseButton.LeftButton:
             self.lastPos = None
             self.resizing = False
+
+            # print("Modified!")
+            self.__modified = True
+            self.slot_modified.emit(self)
+
+    def is_modified(self) -> bool:
+        return self.__modified
+
+    def __str__(self):
+        return f"{self.label} {self.x_original} {self.y_original} {self.width_original} {self.height_original}"
 
     @property
     def scale_factor(self):
