@@ -1,0 +1,7 @@
+<RCC>
+
+    <qresource prefix="/toolbox">
+        <file alias="folder_open">./Icon/Toolbox/24gf-folderOpen.png</file>
+    </qresource>
+
+</RCC>
