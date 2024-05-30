@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QLineEdit,
 )
 
+from mot_toolkit.gui.view.components.base_interface_window import BaseInterfaceWindow
 from mot_toolkit.utils.statistics.stats_file import stats_file_count
 
 
@@ -56,7 +57,7 @@ class FileStatisticsWidget(QGroupBox):
         QMessageBox.information(self, "Info", f"File Count: {file_count}")
 
 
-class InterfaceStatistics(QWidget):
+class StatisticsWidget(QWidget):
     work_directory_path: str = ""
 
     def __init__(self, work_directory_path: str):
@@ -86,3 +87,21 @@ class InterfaceStatistics(QWidget):
             work_directory_path=self.work_directory_path
         )
         self.v_layout.addWidget(self.widget_file_statistics)
+
+
+class InterfaceStatistics(BaseInterfaceWindow):
+    work_directory_path: str = ""
+
+    def __init__(self, work_directory_path: str = ""):
+        super().__init__(work_directory_path=work_directory_path)
+
+        self.__setup_window_properties()
+
+        self.__init_widgets()
+
+    def __setup_window_properties(self):
+        pass
+
+    def __init_widgets(self):
+        self.statistics_widget = StatisticsWidget(self.work_directory_path)
+        self.v_layout.addWidget(self.statistics_widget)

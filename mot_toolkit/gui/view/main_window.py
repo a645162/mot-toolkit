@@ -1,6 +1,7 @@
 import sys
 from typing import Optional
 
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow, QWidget,
@@ -24,7 +25,7 @@ from mot_toolkit.gui.view.interface. \
 from mot_toolkit.utils.system_info import is_macos
 
 # Load Program Resources
-from mot_toolkit.gui.resources.resources import *
+from mot_toolkit.gui.resources import resources
 
 
 class MainWindow(QMainWindow):
@@ -40,7 +41,11 @@ class MainWindow(QMainWindow):
         self.__init_widgets()
 
     def __setup_window_properties(self):
+        # Set Title
         self.setWindowTitle("MOT-Tools")
+
+        # Set Logo
+        self.setWindowIcon(QIcon(":/general/logo"))
 
         current_menubar = None
 

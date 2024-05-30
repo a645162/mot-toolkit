@@ -1,3 +1,4 @@
+from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QMainWindow, QWidget,
     QVBoxLayout,
@@ -17,6 +18,9 @@ class BaseInterfaceWindow(QMainWindow):
 
     def __setup_window_properties(self):
         self.setWindowTitle("Base Interface Window")
+
+        # Set Logo
+        self.setWindowIcon(QIcon(":/general/logo"))
 
     def __init_widgets(self):
         self.central_widget = QWidget(parent=self)
