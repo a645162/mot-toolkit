@@ -1,0 +1,14 @@
+# Github Action
+!.github
+
+# PySide6 Resources
+mot_toolkit/gui/resources/resources.py
+
+# Picture
+*.svg
+
+# Configure
+
+
+# Plain Text
+LICENSE

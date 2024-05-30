@@ -1,7 +1,8 @@
 from typing import List
 
 from PySide6.QtCore import Signal, Qt
-from PySide6.QtGui import QPixmap
+from PySide6.QtGui import QPixmap, QCursor
+from PySide6.QtWidgets import QMenu
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
 from mot_toolkit.gui.view. \
@@ -22,6 +23,8 @@ class DatasetImageView(ScrollImageView):
     current_q_pixmap: QPixmap = None
 
     annotation_widget_rect_list: List[AnnotationWidgetRect]
+
+    object_menu: QMenu = None
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -117,6 +120,9 @@ class DatasetImageView(ScrollImageView):
             rect_widget = AnnotationWidgetRect(parent=self.image_view)
             rect_widget.slot_try_to_select.connect(try_to_select)
             rect_widget.slot_resized.connect(self.__rect_widget_resized)
+            rect_widget.slot_try_to_show_menu.connect(
+                self.__rect_widget_try_to_show_menu
+            )
 
             rect_widget.label = rect_item.label
 
@@ -129,7 +135,6 @@ class DatasetImageView(ScrollImageView):
             rect_widget.setBoundary(self.current_q_pixmap.rect())
 
             rect_widget.show()
-
             self.annotation_widget_rect_list.append(rect_widget)
 
     def __rect_widget_resized(self, obj: AnnotationWidgetRect):
@@ -173,3 +178,11 @@ class DatasetImageView(ScrollImageView):
 
         # Set Annotation Scale Factor
         self.set_annotation_scale_factor(float_value)
+
+    def __rect_widget_try_to_show_menu(self, widget_obj: AnnotationWidgetRect):
+        if self.object_menu is None:
+            return
+        print("try to show menu")
+        # Get Mouse Position
+        # self.
+        self.object_menu.exec_(QCursor.pos())

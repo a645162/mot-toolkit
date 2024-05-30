@@ -9,7 +9,9 @@ from mot_toolkit.gui.view. \
 
 class AnnotationWidgetRect(ResizableRect):
     slot_selected_object: Signal = Signal(QWidget)
+
     slot_try_to_select: Signal = Signal(QWidget)
+    slot_try_to_show_menu: Signal = Signal(QWidget)
 
     selecting: bool
     __selecting: bool = False
@@ -63,9 +65,14 @@ class AnnotationWidgetRect(ResizableRect):
         return True
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            if not self.is_responsible():
-                return
+        match event.button():
+            case Qt.MouseButton.LeftButton:
+                if not self.is_responsible():
+                    return
+            case Qt.MouseButton.RightButton:
+                if self.is_responsible():
+                    self.slot_try_to_show_menu.emit(self)
+                    return
 
         super().mousePressEvent(event)
 

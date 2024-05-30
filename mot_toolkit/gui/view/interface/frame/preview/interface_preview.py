@@ -89,6 +89,9 @@ class InterFacePreview(BaseInterfaceWindow):
         # self.right_widget.setFixedWidth(200)
         self.main_h_layout.addWidget(self.right_widget)
 
+        self.main_image_view.object_menu = \
+            self.r_object_list_widget.list_widget.menu
+
         self.main_h_layout.setStretch(0, 0)
         self.main_h_layout.setStretch(1, 8)
         self.main_h_layout.setStretch(2, 1)

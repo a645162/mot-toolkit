@@ -16,6 +16,11 @@ class BaseListWidgetWithMenu(QListWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.__init_menu()
+
+        self.itemSelectionChanged.connect(self.__selection_changed)
+
+    def __init_menu(self):
         self.menu = QMenu(self)
 
         self.menu_global_title = \
@@ -28,10 +33,12 @@ class BaseListWidgetWithMenu(QListWidget):
         self.menu_global_selection_index.setEnabled(False)
         self.menu.addAction(self.menu_global_selection_index)
 
-    def contextMenuEvent(self, event):
-        if not self.have_menu:
-            return
+        self.menu_global_total_count = \
+            QAction("", self)
+        self.menu_global_total_count.setEnabled(False)
+        self.menu.addAction(self.menu_global_total_count)
 
+    def update_menu(self):
         self.title = self.title.strip()
         if len(self.title) > 0:
             self.menu_global_title.setText(self.title)
@@ -49,8 +56,19 @@ class BaseListWidgetWithMenu(QListWidget):
         self.menu_global_selection_index.setText(current_action_text)
         self.menu_global_selection_index.setToolTip(current_action_text)
 
+        current_action_text = \
+            f"Total Count:{self.count()}"
+        self.menu_global_total_count.setText(current_action_text)
+        self.menu_global_total_count.setToolTip(current_action_text)
+
         for action in self.select_enable_list:
             action.setEnabled(selection_index != -1)
+
+    def contextMenuEvent(self, event):
+        if not self.have_menu:
+            return
+
+        self.update_menu()
 
         self.menu.exec_(event.globalPos())
 
@@ -84,3 +102,11 @@ class BaseListWidgetWithMenu(QListWidget):
                 index_list.append(index)
 
         return index_list
+
+    def clear(self):
+        super().clear()
+
+        self.update_menu()
+
+    def __selection_changed(self):
+        self.update_menu()

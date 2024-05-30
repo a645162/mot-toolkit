@@ -45,3 +45,13 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_operate_del_subsequent)
         select_enable_list.append(self.menu_operate_del_subsequent)
+
+        q_menu.addSeparator()
+
+        self.menu_mark_appear = \
+            QAction(
+                "Mark as Appear Frame",
+                q_menu
+            )
+        q_menu.addAction(self.menu_mark_appear)
+        select_enable_list.append(self.menu_mark_appear)
