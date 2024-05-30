@@ -119,9 +119,31 @@ class ImageViewGraphics(QGraphicsView):
 
     @scale_factor.setter
     def scale_factor(self, value: float):
+        self.try_to_set_scale_factor(value=value)
+
+    def check_new_scale_factor(self, value: float) -> bool:
+        new_size = self.calc_new_size(value)
+        if new_size.width() < 100 or new_size.height() < 100:
+            return False
+
+        return True
+
+    def try_to_set_scale_factor(self, value: float):
+        # Prevent too small
+        if not self.check_new_scale_factor(value):
+            return False
+
         self.__scale_factor = value
         self.slot_image_scale_factor_changed.emit(value)
         self.update()
+
+        return True
+
+    def calc_new_size(self, scale_factor: float) -> QSize:
+        return QSize(
+            int(self.image.width() * scale_factor),
+            int(self.image.height() * scale_factor)
+        )
 
     def update(self):
         if self.image is None:
@@ -129,10 +151,7 @@ class ImageViewGraphics(QGraphicsView):
 
         # Calculate New Size
         ori_size = self.image.size()
-        new_size = QSize(
-            int(ori_size.width() * self.scale_factor),
-            int(ori_size.height() * self.scale_factor)
-        )
+        new_size = self.calc_new_size(self.scale_factor)
 
         # Generate New Image
         self.image_display = self.image.scaled(new_size)

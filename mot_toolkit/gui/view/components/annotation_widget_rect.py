@@ -28,10 +28,17 @@ class AnnotationWidgetRect(ResizableRect):
         x1, y1 = int(rect_data.x1), int(rect_data.y1)
         width, height = int(rect_data.width), int(rect_data.height)
 
-        self.x_original = rect_data.x1
-        self.y_original = rect_data.y1
-        self.width_original = rect_data.width
-        self.height_original = rect_data.height
+        self.ori_x = x1
+        self.ori_y = y1
+        self.ori_w = width
+        self.ori_h = height
+
+        self.update()
+
+        # self.x_original = rect_data.x1
+        # self.y_original = rect_data.y1
+        # self.width_original = rect_data.width
+        # self.height_original = rect_data.height
 
         # print(
         #     x1, y1,

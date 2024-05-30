@@ -23,15 +23,20 @@ class DatasetImageView(ScrollImageView):
 
     annotation_widget_rect_list: List[AnnotationWidgetRect] = []
 
-    scale_factor_coefficient: float = 1.0
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
         self.__setup_widget_properties()
 
+        self.__init_widgets()
+
+        self.__init_shortcut()
+
     def __setup_widget_properties(self):
         pass
+
+    def __init_widgets(self):
+        self.slot_try_to_zoom.connect(self.__zoom_triggered)
 
     def __init_shortcut(self):
         pass
@@ -117,6 +122,14 @@ class DatasetImageView(ScrollImageView):
 
             self.annotation_widget_rect_list.append(rect_widget)
 
+    def set_annotation_scale_factor(self, scale_factor: float):
+        for rect_widget in self.annotation_widget_rect_list:
+            if (
+                    rect_widget is not None and
+                    rect_widget.parent() is not None
+            ):
+                rect_widget.scale_factor = scale_factor
+
     def set_selection_rect_index(self, index):
         if index < 0 or index >= len(self.annotation_widget_rect_list):
             return
@@ -126,3 +139,10 @@ class DatasetImageView(ScrollImageView):
                 rect_widget.selecting = True
             else:
                 rect_widget.selecting = False
+
+    def __zoom_triggered(self, float_value: float):
+        # Set Image Scale Factor
+        self.image_view.scale_factor = float_value
+
+        # Set Annotation Scale Factor
+        self.set_annotation_scale_factor(float_value)

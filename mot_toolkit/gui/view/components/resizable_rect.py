@@ -1,4 +1,6 @@
 import sys
+import uuid
+
 from PySide6.QtWidgets import QApplication, QLabel, QWidget, QGraphicsOpacityEffect
 from PySide6.QtGui import QPainter, QPen, QBrush, QPixmap
 from PySide6.QtCore import Qt, QRect, Signal
@@ -10,11 +12,21 @@ class ResizableRect(QWidget):
     __modified: bool = False
 
     slot_modified: Signal = Signal(QWidget)
+    slot_resized: Signal = Signal(QWidget)
 
     label: str = ""
 
+    ori_x: int = 0
+    ori_y: int = 0
+    ori_w: int = 0
+    ori_h: int = 0
+
+    uuid: str = ""
+
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.uuid = str(uuid.uuid4())
 
         self.setMouseTracking(True)
 
@@ -35,6 +47,9 @@ class ResizableRect(QWidget):
         self.boundary = QRect()  # Initialize with an empty rectangle
 
         self.__scale_factor: float = 1.0
+
+    def __eq__(self, other):
+        return len(self.uuid.strip()) > 0 and self.uuid == other.uuid
 
     def paintEvent(self, event):
         qp = QPainter(self)
@@ -93,6 +108,13 @@ class ResizableRect(QWidget):
             self.lastPos = None
             self.resizing = False
 
+            self.ori_x = int(self.x() / self.scale_factor)
+            self.ori_y = int(self.y() / self.scale_factor)
+            self.ori_w = int(self.width() / self.scale_factor)
+            self.ori_h = int(self.height() / self.scale_factor)
+
+            self.slot_resized.emit(self)
+
             # print("Modified!")
             self.__modified = True
             self.slot_modified.emit(self)
@@ -101,7 +123,7 @@ class ResizableRect(QWidget):
         return self.__modified
 
     def __str__(self):
-        return f"{self.label} {self.x_original} {self.y_original} {self.width_original} {self.height_original}"
+        return f"{self.label} {self.ori_x}, {self.ori_y}, {self.ori_w}, {self.ori_h}"
 
     @property
     def scale_factor(self):
@@ -111,76 +133,51 @@ class ResizableRect(QWidget):
     def scale_factor(self, value: float):
         self.__scale_factor = value
 
-        self.setGeometry(
-            int(self.x() * value), int(self.y() * value),
-            int(self.width() * value), int(self.height() * value)
-        )
-
         self.update()
 
     @property
-    def x_original(self):
-        return round(self.x() / self.scale_factor, 1)
+    def x1_original(self):
+        return self.ori_x
 
-    @x_original.setter
-    def x_original(self, value: float):
-        self.move(int(value * self.scale_factor), self.y())
+    @x1_original.setter
+    def x1_original(self, value: int):
+        self.ori_x = value
+        self.update()
 
     @property
-    def y_original(self):
-        return round(self.y() / self.scale_factor, 1)
+    def y1_original(self):
+        return self.ori_y
 
-    @y_original.setter
-    def y_original(self, value: float):
-        self.move(self.x(), int(value * self.scale_factor))
+    @y1_original.setter
+    def y1_original(self, value: int):
+        self.ori_y = value
+        self.update()
 
     @property
     def width_original(self):
-        return round(self.width() / self.scale_factor, 1)
+        return self.ori_w
 
     @width_original.setter
-    def width_original(self, value: float):
-        self.resize(int(value * self.scale_factor), self.height())
+    def width_original(self, value: int):
+        self.ori_w = value
+        self.update()
 
     @property
     def height_original(self):
-        return round(self.height() / self.scale_factor, 1)
+        return self.ori_h
 
     @height_original.setter
-    def height_original(self, value: float):
-        self.resize(self.width(), int(value * self.scale_factor))
+    def height_original(self, value: int):
+        self.ori_h = value
+        self.update()
 
     @property
-    def x1(self):
-        return self.x_original
-
-    @x1.setter
-    def x1(self, value: float):
-        self.x_original = value
+    def x2_original(self):
+        return self.ori_x + self.ori_w
 
     @property
-    def y1(self):
-        return self.y_original
-
-    @y1.setter
-    def y1(self, value: float):
-        self.y_original = value
-
-    @property
-    def x2(self):
-        return self.x_original + self.width_original
-
-    @x2.setter
-    def x2(self, value: float):
-        self.width_original = value - self.x_original
-
-    @property
-    def y2(self):
-        return self.y_original + self.height_original
-
-    @y2.setter
-    def y2(self, value: float):
-        self.height_original = value - self.y_original
+    def y2_original(self):
+        return self.ori_y + self.ori_h
 
 
 if __name__ == '__main__':

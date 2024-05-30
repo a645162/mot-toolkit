@@ -1,4 +1,4 @@
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -10,7 +10,11 @@ from mot_toolkit.gui.view. \
 
 
 class ScrollImageView(QWidget):
+    slot_try_to_zoom: Signal = Signal(float)
+
     ctrl_pressing: bool = False
+
+    scale_factor_coefficient: float = 0.1
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -29,6 +33,7 @@ class ScrollImageView(QWidget):
         # Normal Mode
         self.scroll_area = QScrollArea(parent=self)
         self.image_view = ImageViewGraphics(parent=self.scroll_area)
+        self.image_view.pinch_triggered.connect(self.__pinch_triggered)
         # self.image_view = ImageViewLabel(parent=self.scroll_area)
 
         self.scroll_area.setWidget(self.image_view)
@@ -39,13 +44,19 @@ class ScrollImageView(QWidget):
         # self.v_layout.addWidget(self.image_view)
 
     def zoom_up(self, zoom=0):
-        pass
+        if zoom == 0:
+            zoom = 1
+
+        self.slot_try_to_zoom.emit(zoom)
 
     def zoom_down(self, zoom=0):
-        pass
+        if zoom == 0:
+            zoom = -1
+
+        self.slot_try_to_zoom.emit(zoom)
 
     def zoom_restore(self):
-        pass
+        self.slot_try_to_zoom.emit(1.0)
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -85,3 +96,16 @@ class ScrollImageView(QWidget):
             self.zoom_up()
         else:
             self.zoom_down()
+
+    def __pinch_triggered(self, float_value: float):
+        if float_value != 0:
+
+            new_value = (
+                    self.image_view.scale_factor +
+                    float_value * self.scale_factor_coefficient
+            )
+
+            if not self.image_view.check_new_scale_factor(new_value):
+                return
+
+            self.slot_try_to_zoom.emit(new_value)
