@@ -1,3 +1,4 @@
+import os.path
 import sys
 from typing import Optional
 
@@ -64,7 +65,10 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.v_layout)
 
         self.__select_directory_path_widget = SelectDirectoryPathWidget()
-        self.__select_directory_path_widget.path_line_edit.setText("./Test")
+        default_path = "./Test"
+        if not os.path.isdir(default_path):
+            default_path = ""
+        self.__select_directory_path_widget.path_line_edit.setText(default_path)
         self.v_layout.addWidget(self.__select_directory_path_widget)
 
         self.__button_stats = QPushButton(parent=self)
