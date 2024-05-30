@@ -53,7 +53,7 @@ class MainWindow(QMainWindow):
             current_menubar = self.menuBar()
 
         init_system_menu(
-            parent=None,
+            parent=self,
             current_menubar=current_menubar
         )
 

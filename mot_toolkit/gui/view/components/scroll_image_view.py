@@ -76,18 +76,27 @@ class ScrollImageView(QWidget):
             self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
     def zoom_in(self, float_value: float = 0):
+        if self.image_view.image is None:
+            return
+
         if float_value == 0:
             float_value = 0.1
 
         self.__zoom_delta(float_value)
 
     def zoom_out(self, float_value: float = 0):
+        if self.image_view.image is None:
+            return
+
         if float_value == 0.0:
             float_value = -0.1
 
         self.__zoom_delta(float_value)
 
     def zoom_restore(self):
+        if self.image_view.image is None:
+            return
+
         self.slot_try_to_zoom.emit(1.0)
 
     def keyPressEvent(self, event):
