@@ -21,10 +21,12 @@ class DatasetImageView(ScrollImageView):
 
     current_q_pixmap: QPixmap = None
 
-    annotation_widget_rect_list: List[AnnotationWidgetRect] = []
+    annotation_widget_rect_list: List[AnnotationWidgetRect]
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
+
+        self.annotation_widget_rect_list = []
 
         self.__setup_widget_properties()
 

@@ -1,3 +1,4 @@
+from typing import List
 import os
 import uuid
 
@@ -28,12 +29,19 @@ class AnnotationFile(QObject):
 
     slot_modified: Signal = Signal()
 
+    ori_dict: dict
+
+    other_shape_dict_list: List[dict]
+
     def __init__(self, label: str = ""):
         super().__init__()
 
         self.uuid = str(uuid.uuid4())
 
         self.label = label
+
+        self.ori_dict = {}
+        self.other_shape_dict_list = []
 
     def check_file_is_exist(self) -> bool:
         return os.path.exists(self.file_path)

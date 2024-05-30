@@ -11,6 +11,8 @@ class RectDataAnnotation(ObjectAnnotation):
     width: float
     height: float
 
+    ori_dict: dict
+
     def __init__(self, label: str = ""):
         super().__init__(label)
 
@@ -19,6 +21,8 @@ class RectDataAnnotation(ObjectAnnotation):
 
         self.x2 = 0
         self.y2 = 0
+
+        self.ori_dict = {}
 
     @property
     def x(self):

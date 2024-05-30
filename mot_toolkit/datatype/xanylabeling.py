@@ -40,18 +40,32 @@ class XAnyLabelingAnnotation(AnnotationFile):
     def to_dict(self) -> dict:
         result_dict = {}
 
+        result_dict.update(self.ori_dict)
+
         result_dict["version"] = self.version
         result_dict["flags"] = self.flags
+
         result_dict["shapes"] = []
         for rect_item in self.rect_annotation_list:
-            result_dict["shapes"].append({
+            final_shape_dict = {}
+
+            final_shape_dict.update(rect_item.ori_dict)
+
+            current_shape_dict = {
                 "label": rect_item.label,
                 "text": rect_item.text,
                 "points": rect_item.get_rect_two_point_2dim_array(),
                 "group_id": rect_item.group_id,
                 "shape_type": rect_item.shape_type,
                 "flags": rect_item.flags
-            })
+            }
+            final_shape_dict.update(current_shape_dict)
+
+            result_dict["shapes"].append(final_shape_dict)
+
+        for other_shape_dict in self.other_shape_dict_list:
+            result_dict["shapes"].append(other_shape_dict)
+
         result_dict["imagePath"] = self.image_path
         result_dict["imageData"] = self.image_data
         result_dict["imageHeight"] = self.image_height
@@ -108,12 +122,34 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return True
 
+    def del_by_label(self, label: str) -> bool:
+        for rect_item in self.rect_annotation_list:
+            if rect_item.label == label:
+                self.rect_annotation_list.remove(rect_item)
+                self.modifying()
+                return True
+
+        return False
+
+    def del_by_group_id(self, group_id: str):
+        operate_result = False
+
+        for rect_item in self.rect_annotation_list:
+            if rect_item.group_id == group_id:
+                self.rect_annotation_list.remove(rect_item)
+                self.modifying()
+                operate_result = True
+
+        return operate_result
+
 
 def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
     data: dict = parse_json_to_dict(json_path)
 
     current_annotation_obj: XAnyLabelingAnnotation = \
         XAnyLabelingAnnotation()
+
+    current_annotation_obj.ori_dict.update(data)
 
     current_annotation_obj.version = data.get("version", "")
     current_annotation_obj.flags = data.get("flags", {})
@@ -132,6 +168,8 @@ def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
         if item_shape_type == "rectangle":
             current_rect_annotation = XAnyLabelingRect(item_label)
 
+            current_annotation_obj.ori_dict.update(shape_item)
+
             current_rect_annotation.text = item_text
 
             current_rect_annotation.set_by_rect_two_point(
@@ -147,6 +185,7 @@ def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
                 current_rect_annotation
             )
         else:
+            current_annotation_obj.other_shape_dict_list.append(shape_item)
             print(f"Unknown shape type: {item_shape_type} in {json_path}")
 
     current_annotation_obj.image_path = data.get("imagePath", "")
