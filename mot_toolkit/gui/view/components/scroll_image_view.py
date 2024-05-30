@@ -16,6 +16,8 @@ class ScrollImageView(QWidget):
 
     scale_factor_coefficient: float = 0.1
 
+    __prevent_scroll: bool = False
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -43,45 +45,87 @@ class ScrollImageView(QWidget):
         # self.image_view = ImageViewGraphics(parent=self)
         # self.v_layout.addWidget(self.image_view)
 
-    def zoom_up(self, zoom=0):
-        if zoom == 0:
-            zoom = 1
+    def set_prevent_scoll(self):
+        # Disable wheel event
+        def __disable_wheel_event(event):
+            # Block wheel event
+            if self.__prevent_scroll:
+                event.ignore()
 
-        self.slot_try_to_zoom.emit(zoom)
+        self.scroll_area.wheelEvent = __disable_wheel_event
 
-    def zoom_down(self, zoom=0):
-        if zoom == 0:
-            zoom = -1
+    @property
+    def prevent_scroll(self) -> bool:
+        return self.__prevent_scroll
 
-        self.slot_try_to_zoom.emit(zoom)
+    @prevent_scroll.setter
+    def prevent_scroll(self, value: bool):
+        self.__prevent_scroll = value
+
+        if value:
+            # Disable horizontal scroll bar
+            self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+
+            # Disable vertical scroll bar
+            self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        else:
+            # Restore horizontal scroll bar
+            self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+            # Restore vertical scroll bar
+            self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+    def zoom_up(self, float_value: float = 0):
+        if float_value == 0:
+            float_value = 0.1
+
+        self.__zoom_delta(float_value)
+
+    def zoom_down(self, float_value: float = 0):
+        if float_value == 0.0:
+            float_value = -0.1
+
+        self.__zoom_delta(float_value)
 
     def zoom_restore(self):
         self.slot_try_to_zoom.emit(1.0)
 
     def keyPressEvent(self, event):
+        modifiers = event.modifiers()
         key = event.key()
-        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
-            self.ctrl_pressing = True
 
-            match key:
-                case Qt.Key.Key_0:
-                    self.zoom_restore()
-                    return
-                case Qt.Key.Key_PageUp:
-                    self.zoom_up()
-                    return
-                case Qt.Key.Key_PageDown:
-                    self.zoom_down()
-                    return
+        match key:
+            case Qt.Key.Key_Control:
+                self.ctrl_pressing = True
+                self.prevent_scroll = True
+
+        match modifiers:
+            case Qt.KeyboardModifier.ControlModifier:
+                self.ctrl_pressing = True
+                self.prevent_scroll = True
+
+                match key:
+                    case Qt.Key.Key_0:
+                        self.zoom_restore()
+                        return
+                    case Qt.Key.Key_PageUp:
+                        self.zoom_up()
+                        return
+                    case Qt.Key.Key_PageDown:
+                        self.zoom_down()
+                        return
 
         super().keyPressEvent(event)
 
     def keyReleaseEvent(self, event):
         key = event.key()
+        print("Key Released:", key)
+
         match key:
             case Qt.Key.Key_Control:
                 self.ctrl_pressing = False
-                return False
+                self.prevent_scroll = False
+                print("Control Released")
 
         super().keyReleaseEvent(event)
 
@@ -97,7 +141,7 @@ class ScrollImageView(QWidget):
         else:
             self.zoom_down()
 
-    def __pinch_triggered(self, float_value: float):
+    def __zoom_delta(self, float_value: float):
         if float_value != 0:
 
             new_value = (
@@ -109,3 +153,6 @@ class ScrollImageView(QWidget):
                 return
 
             self.slot_try_to_zoom.emit(new_value)
+
+    def __pinch_triggered(self, float_value: float):
+        self.__zoom_delta(float_value)

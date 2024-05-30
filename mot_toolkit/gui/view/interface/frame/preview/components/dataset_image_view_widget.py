@@ -44,6 +44,7 @@ class DatasetImageView(ScrollImageView):
     def keyPressEvent(self, event):
         modifiers = event.modifiers()
         key = event.key()
+
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
                 match key:
