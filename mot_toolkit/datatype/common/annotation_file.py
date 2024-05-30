@@ -1,7 +1,7 @@
 import os
 import uuid
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Signal, QObject
 
 image_extension = [".jpg", ".png", ".jpeg", ".bmp"]
 
@@ -14,7 +14,7 @@ for ext in image_extension:
     final_image_extension.append(ext)
 
 
-class AnnotationFile:
+class AnnotationFile(QObject):
     uuid: str = ""
 
     label: str = ""

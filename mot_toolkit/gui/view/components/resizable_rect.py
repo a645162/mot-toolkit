@@ -179,6 +179,12 @@ class ResizableRect(QWidget):
     def y2_original(self):
         return self.ori_y + self.ori_h
 
+    def get_rect_two_point_2dim_array(self):
+        return [
+            [self.x1_original, self.y1_original],
+            [self.x2_original, self.y2_original]
+        ]
+
     def calc_new_size(self, scale_factor: float = 0) -> QRect:
         if scale_factor == 0:
             scale_factor = self.scale_factor

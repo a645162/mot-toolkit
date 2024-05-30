@@ -23,6 +23,9 @@ from mot_toolkit.gui.view.interface. \
 
 from mot_toolkit.utils.system_info import is_macos
 
+# Load Program Resources
+from mot_toolkit.gui.resources.resources import *
+
 
 class MainWindow(QMainWindow):
     __select_directory_path_widget: Optional[

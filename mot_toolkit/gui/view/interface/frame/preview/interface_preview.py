@@ -30,7 +30,7 @@ class InterFacePreview(BaseInterfaceWindow):
     annotation_directory: XAnyLabelingAnnotationDirectory = \
         XAnyLabelingAnnotationDirectory()
 
-    current_annotation_object: XAnyLabelingAnnotation
+    current_annotation_object: XAnyLabelingAnnotation = None
     current_file_path: str = ""
 
     basic_window_title: str = "Preview Interface"
@@ -145,6 +145,8 @@ class InterFacePreview(BaseInterfaceWindow):
         self.load_directory()
 
     def __file_list_item_selection_changed(self):
+        self.save_current_opened()
+
         index = self.r_file_list_widget.selection_index
 
         self.current_annotation_object = \
@@ -183,3 +185,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def __slot_selection_changed(self, index):
         self.r_object_list_widget.selection_index = index
+
+    def save_current_opened(self):
+        if self.current_annotation_object is not None:
+            self.current_annotation_object.save()

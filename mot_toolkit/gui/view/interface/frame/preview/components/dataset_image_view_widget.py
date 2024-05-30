@@ -84,11 +84,12 @@ class DatasetImageView(ScrollImageView):
 
         # print(annotation_obj.file_path)
         # print(annotation_obj.pic_path)
+
         self.current_q_pixmap = QPixmap(annotation_obj.pic_path)
-        self.init_annotation()
+        self.init_annotation_widget()
         self.image_view.set_image(self.current_q_pixmap)
 
-    def init_annotation(self):
+    def init_annotation_widget(self):
         # Remove All Old Widget
         for rect_widget in self.annotation_widget_rect_list:
             if (
@@ -113,6 +114,7 @@ class DatasetImageView(ScrollImageView):
             # print(rect_item)
             rect_widget = AnnotationWidgetRect(parent=self.image_view)
             rect_widget.slot_try_to_select.connect(try_to_select)
+            rect_widget.slot_resized.connect(self.__rect_widget_resized)
 
             rect_widget.label = rect_item.label
 
@@ -127,6 +129,23 @@ class DatasetImageView(ScrollImageView):
             rect_widget.show()
 
             self.annotation_widget_rect_list.append(rect_widget)
+
+    def __rect_widget_resized(self, obj: AnnotationWidgetRect):
+        index = -1
+
+        for i, rect_widget in enumerate(self.annotation_widget_rect_list):
+            if obj == rect_widget:
+                index = i
+                break
+
+        if index == -1:
+            return
+
+        self.__annotation_obj.rect_annotation_list[index]. \
+            set_rect_two_point_2dim_array(
+            obj.get_rect_two_point_2dim_array()
+        )
+        self.__annotation_obj.modifying()
 
     def set_annotation_scale_factor(self, scale_factor: float):
         for rect_widget in self.annotation_widget_rect_list:

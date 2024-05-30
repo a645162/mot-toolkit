@@ -74,6 +74,14 @@ class RectDataAnnotation(ObjectAnnotation):
         self.x2 = max(x1, x2)
         self.y2 = max(y1, y2)
 
+    def set_rect_two_point_2dim_array(self, rect_two_point_2dim_array):
+        self.set_by_rect_two_point(
+            rect_two_point_2dim_array[0][0],
+            rect_two_point_2dim_array[0][1],
+            rect_two_point_2dim_array[1][0],
+            rect_two_point_2dim_array[1][1]
+        )
+
     def get_rect_two_point_2dim_array(self):
         return [
             [self.x1, self.y1],
