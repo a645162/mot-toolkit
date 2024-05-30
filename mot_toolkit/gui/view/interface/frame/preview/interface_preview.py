@@ -304,9 +304,6 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.close()
 
-    def delete_target(self, annotation_file: XAnyLabelingAnnotation, label: str):
-        annotation_file.del_by_label(label)
-
     def __action_del_target(self):
         index = self.r_object_list_widget.selection_index
 
@@ -317,9 +314,28 @@ class InterFacePreview(BaseInterfaceWindow):
         self.__update_object_list_widget()
 
     def __action_del_subsequent_target(self):
+        file_index = self.r_file_list_widget.selection_index
+
         index = self.r_object_list_widget.selection_index
         print(f"[{index}]Delete the target in subsequent frames")
         label = self.current_annotation_object.rect_annotation_list[index].label
         print(f"Delete Label:{label}")
 
         # self.current_annotation_object.del_by_label(label)
+        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+            if i < file_index:
+                continue
+
+            annotation_obj.del_by_label(label)
+
+        self.__update_object_list_widget()
+
+    def check_is_have_modified(self) -> bool:
+        found = False
+
+        for annotation_obj in self.annotation_directory.annotation_file:
+            if annotation_obj.is_modified:
+                found = True
+                print(f"{annotation_obj.file_path} is modified but not save.")
+
+        return found
