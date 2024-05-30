@@ -3,6 +3,11 @@ import os
 
 import cairosvg
 
+small_icon_keywords = [
+    "Toolbox",
+    "Menu",
+]
+
 
 def get_jpg_path(svg_path):
     return os.path.splitext(svg_path)[0] + '.jpg'
@@ -52,7 +57,15 @@ if __name__ == '__main__':
 
     for svg_path in svg_path_list:
         target_jpg_path = get_jpg_path(svg_path)
-        if "Icon" in svg_path:
+
+        small_icon = False
+
+        for keyword in small_icon_keywords:
+            if keyword in svg_path:
+                small_icon = True
+                break
+
+        if small_icon:
             svg_to_jpg(
                 svg_path,
                 target_jpg_path,

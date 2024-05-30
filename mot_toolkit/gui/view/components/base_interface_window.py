@@ -25,4 +25,5 @@ class BaseInterfaceWindow(BaseQMainWindow):
         self.central_widget = QWidget(parent=self)
         self.setCentralWidget(self.central_widget)
         self.v_layout = QVBoxLayout()
+        self.v_layout.setSpacing(0)
         self.central_widget.setLayout(self.v_layout)
