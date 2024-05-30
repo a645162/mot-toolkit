@@ -118,6 +118,14 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return True
 
+    def reload(self) -> bool:
+        if not super().reload():
+            return False
+
+        # Read File
+
+        return True
+
     def fix_bugs(self) -> bool:
         for rect_item in self.rect_annotation_list:
             rect_item.fix_bugs()

@@ -85,6 +85,14 @@ class AnnotationFile(QObject):
         self.is_modified = True
         self.slot_modified.emit(self.index)
 
+    def reload(self) -> bool:
+        if not self.is_modified:
+            return False
+
+        self.is_modified = False
+
+        return True
+
     def save(self) -> bool:
         if not self.is_modified:
             return False

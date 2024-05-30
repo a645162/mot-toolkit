@@ -245,9 +245,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.load_directory()
 
-    def __file_list_item_selection_changed(self):
-        self.save_current_opened()
-
+    def __update_object_list_widget(self):
         index = self.r_file_list_widget.selection_index
 
         self.current_annotation_object = \
@@ -264,6 +262,11 @@ class InterFacePreview(BaseInterfaceWindow):
                 f"{rect_item.label}({rect_item.group_id})"
             )
         self.r_object_list_widget.update()
+
+    def __file_list_item_selection_changed(self):
+        # self.save_current_opened()
+
+        self.__update_object_list_widget()
 
     def __slot_previous_image(self):
         selection_index = self.r_file_list_widget.selection_index
@@ -311,7 +314,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.current_annotation_object.rect_annotation_list.remove(obj)
         self.current_annotation_object.modifying()
 
-        self.__file_list_item_selection_changed()
+        self.__update_object_list_widget()
 
     def __action_del_subsequent_target(self):
         index = self.r_object_list_widget.selection_index

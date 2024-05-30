@@ -173,6 +173,9 @@ class DatasetImageView(ScrollImageView):
                 rect_widget.selecting = False
 
     def __zoom_triggered(self, float_value: float):
+        if self.image_view.image is None:
+            return
+
         # Set Image Scale Factor
         self.image_view.scale_factor = float_value
 

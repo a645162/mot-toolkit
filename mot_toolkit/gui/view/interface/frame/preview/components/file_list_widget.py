@@ -30,6 +30,11 @@ class FileListWidget(ListWithTitleWidget):
         select_enable_list: List[QAction] = \
             self.list_widget.select_enable_list
 
+        self.menu_reload_file = \
+            QAction("Reload File", self)
+        q_menu.addAction(self.menu_reload_file)
+        select_enable_list.append(self.menu_reload_file)
+
         self.menu_show_in_explorer = \
             QAction("Show in Explorer", self)
         q_menu.addAction(self.menu_show_in_explorer)
