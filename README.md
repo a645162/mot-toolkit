@@ -5,9 +5,10 @@ Multiple Object Tracking (MOT) Toolkit
 ## Features
 
 - [x] Statistics of the dataset
-- [ ] Preview
+- [x] Preview
+- [x] Edit `Annotation Rectangle`
 - [ ] Preview certain target
-- [ ] Delete a certain target in subsequent frames
+- [x] Delete a certain target in subsequent frames
 
 ## Compatability
 
