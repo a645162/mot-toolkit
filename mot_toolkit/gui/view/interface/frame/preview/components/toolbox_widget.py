@@ -35,4 +35,19 @@ class ToolboxWidget(QWidget):
         self.btn_refresh_dir.setToolTip("Refresh Directory")
         self.v_layout.addWidget(self.btn_refresh_dir)
 
+        self.btn_zoom_in = QPushButton(parent=self)
+        self.btn_zoom_in.setIcon(QIcon(":/toolbox/zoom_in"))
+        self.btn_zoom_in.setToolTip("Zoom In")
+        self.v_layout.addWidget(self.btn_zoom_in)
+
+        self.btn_zoom_restore = QPushButton(parent=self)
+        self.btn_zoom_restore.setIcon(QIcon(":/toolbox/zoom_restore"))
+        self.btn_zoom_restore.setToolTip("Zoom Restore")
+        self.v_layout.addWidget(self.btn_zoom_restore)
+
+        self.btn_zoom_out = QPushButton(parent=self)
+        self.btn_zoom_out.setIcon(QIcon(":/toolbox/zoom_out"))
+        self.btn_zoom_out.setToolTip("Zoom Out")
+        self.v_layout.addWidget(self.btn_zoom_out)
+
         self.v_layout.addStretch()

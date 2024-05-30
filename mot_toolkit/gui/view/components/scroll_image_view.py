@@ -75,13 +75,13 @@ class ScrollImageView(QWidget):
             # Restore vertical scroll bar
             self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
 
-    def zoom_up(self, float_value: float = 0):
+    def zoom_in(self, float_value: float = 0):
         if float_value == 0:
             float_value = 0.1
 
         self.__zoom_delta(float_value)
 
-    def zoom_down(self, float_value: float = 0):
+    def zoom_out(self, float_value: float = 0):
         if float_value == 0.0:
             float_value = -0.1
 
@@ -109,10 +109,10 @@ class ScrollImageView(QWidget):
                         self.zoom_restore()
                         return
                     case Qt.Key.Key_PageUp:
-                        self.zoom_up()
+                        self.zoom_in()
                         return
                     case Qt.Key.Key_PageDown:
-                        self.zoom_down()
+                        self.zoom_out()
                         return
 
         super().keyPressEvent(event)
@@ -137,9 +137,9 @@ class ScrollImageView(QWidget):
         angle = event.angleDelta()
 
         if angle.y() > 0:
-            self.zoom_up()
+            self.zoom_in()
         else:
-            self.zoom_down()
+            self.zoom_out()
 
     def __zoom_delta(self, float_value: float):
         if float_value != 0:

@@ -11,10 +11,12 @@ class BaseListWidgetWithMenu(QListWidget):
     have_menu: bool = False
 
     # Only enable when selection is not empty
-    select_enable_list: List[QAction] = []
+    select_enable_list: List[QAction]
 
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.select_enable_list = []
 
         self.__init_menu()
 

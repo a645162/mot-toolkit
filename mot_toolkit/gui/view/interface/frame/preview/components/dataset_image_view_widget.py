@@ -182,7 +182,6 @@ class DatasetImageView(ScrollImageView):
     def __rect_widget_try_to_show_menu(self, widget_obj: AnnotationWidgetRect):
         if self.object_menu is None:
             return
-        print("try to show menu")
         # Get Mouse Position
-        # self.
+        # Show Menu
         self.object_menu.exec_(QCursor.pos())

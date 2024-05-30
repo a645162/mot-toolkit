@@ -14,6 +14,7 @@ def svg_to_jpg(
         height: int = 0,
         over_write=False
 ):
+    print(svg_path)
     if not isinstance(svg_path, str) or not isinstance(jpg_path, str):
         raise ValueError("Path is not a string.")
 
@@ -21,6 +22,7 @@ def svg_to_jpg(
         raise FileNotFoundError("SVG file not found.")
 
     if not over_write and os.path.exists(jpg_path):
+        print("JPG file already exists. Skipping conversion.")
         return
 
     cairosvg.svg2png(

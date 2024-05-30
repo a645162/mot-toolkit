@@ -2,11 +2,12 @@ from typing import List
 import os.path
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor
+from PySide6.QtGui import QColor, QAction
 
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
+    QMenuBar,
     QLabel,
 )
 
@@ -38,6 +39,8 @@ class InterFacePreview(BaseInterfaceWindow):
 
     basic_window_title: str = "Preview Interface"
 
+    menu: QMenuBar = None
+
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
 
@@ -49,9 +52,13 @@ class InterFacePreview(BaseInterfaceWindow):
             self.__slot_annotation_directory_modified
         )
 
+        self.menu = self.menuBar()
+
         self.__setup_window_properties()
 
         self.__init_widgets()
+
+        self.__init_menu()
 
         self.__auto_load_directory()
 
@@ -75,6 +82,15 @@ class InterFacePreview(BaseInterfaceWindow):
         self.v_layout.addWidget(self.main_h_widget)
 
         self.toolkit_widget = ToolboxWidget(parent=self)
+        self.toolkit_widget.btn_zoom_in.clicked.connect(
+            lambda: self.main_image_view.zoom_in()
+        )
+        self.toolkit_widget.btn_zoom_restore.clicked.connect(
+            lambda: self.main_image_view.zoom_restore()
+        )
+        self.toolkit_widget.btn_zoom_out.clicked.connect(
+            lambda: self.main_image_view.zoom_out()
+        )
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         self.main_image_view = DatasetImageView(parent=self)
@@ -106,6 +122,56 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_h_layout.setStretch(0, 0)
         self.main_h_layout.setStretch(1, 8)
         self.main_h_layout.setStretch(2, 1)
+
+    def __init_menu(self):
+        # Window Menu
+
+        # File Menu
+        self.menu_file = self.menu.addMenu("File")
+
+        self.menu_file_open_dir = \
+            QAction(
+                "Open Directory", self.menu_file
+            )
+        self.menu_file.addAction(self.menu_file_open_dir)
+
+        self.menu_file_refresh = \
+            QAction(
+                "Refresh", self.menu_file
+            )
+        self.menu_file.addAction(self.menu_file_refresh)
+
+        self.menu_file.addSeparator()
+
+        self.menu_file_save_all = \
+            QAction(
+                "Save All", self.menu_file
+            )
+        self.menu_file_save_all.triggered.connect(self.save_all)
+        self.menu_file.addAction(self.menu_file_save_all)
+
+        self.menu_file.addSeparator()
+
+        self.menu_file_exit = \
+            QAction(
+                "Exit", self.menu_file
+            )
+        self.menu_file_exit.triggered.connect(self.__try_to_exit)
+        self.menu_file.addAction(self.menu_file_exit)
+
+        # About Menu
+        self.menu_about = self.menu.addMenu("About")
+        self.menu_about_about = \
+            QAction(
+                "About", self.menu_about
+            )
+        self.menu_about.addAction(self.menu_about_about)
+
+        # Widget Menu
+        self.r_object_list_widget.menu_operate_del \
+            .triggered.connect(self.__action_del_target)
+        self.r_object_list_widget.menu_operate_del_subsequent \
+            .triggered.connect(self.__action_del_subsequent_target)
 
     def update(self):
         super().update()
@@ -224,3 +290,33 @@ class InterFacePreview(BaseInterfaceWindow):
     def save_current_opened(self):
         if self.current_annotation_object is not None:
             self.current_annotation_object.save()
+
+    def save_all(self):
+        for annotation in self.annotation_directory.annotation_file:
+            annotation.save()
+
+    def __try_to_exit(self):
+        # self.save_current_opened()
+        self.save_all()
+
+        self.close()
+
+    def delete_target(self, annotation_file: XAnyLabelingAnnotation, label: str):
+        annotation_file.del_by_label(label)
+
+    def __action_del_target(self):
+        index = self.r_object_list_widget.selection_index
+
+        obj = self.current_annotation_object.rect_annotation_list[index]
+        self.current_annotation_object.rect_annotation_list.remove(obj)
+        self.current_annotation_object.modifying()
+
+        self.__file_list_item_selection_changed()
+
+    def __action_del_subsequent_target(self):
+        index = self.r_object_list_widget.selection_index
+        print(f"[{index}]Delete the target in subsequent frames")
+        label = self.current_annotation_object.rect_annotation_list[index].label
+        print(f"Delete Label:{label}")
+
+        # self.current_annotation_object.del_by_label(label)
