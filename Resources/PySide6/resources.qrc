@@ -4,6 +4,13 @@
         <file alias="logo">./Logo/Logo.png</file>
     </qresource>
 
+    <qresource prefix="/menu/preview">
+        <file alias="file_restore">./Icon/Menu/restore.jpg</file>
+        <file alias="file_save">./Icon/Menu/save.jpg</file>
+
+        <file alias="file_exit">./Icon/Menu/exit.jpg</file>
+    </qresource>
+
     <qresource prefix="/toolbox">
         <file alias="folder_open">./Icon/Toolbox/24gf-folderOpen.jpg</file>
         <file alias="folder_refresh">./Icon/Toolbox/refresh.jpg</file>

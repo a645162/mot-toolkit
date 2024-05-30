@@ -2,7 +2,7 @@ from typing import List
 import os.path
 
 from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor, QAction
+from PySide6.QtGui import QColor, QAction, QIcon
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -72,8 +72,8 @@ class InterFacePreview(BaseInterfaceWindow):
         # self.setBaseSize(QSize(800, 600))
 
     def __init_widgets(self):
-        self.label_work_path = QLabel(parent=self)
-        self.v_layout.addWidget(self.label_work_path)
+        # self.label_work_path = QLabel(parent=self)
+        # self.v_layout.addWidget(self.label_work_path)
 
         self.main_h_widget = QWidget(parent=self)
         self.main_h_layout = QHBoxLayout()
@@ -133,21 +133,40 @@ class InterFacePreview(BaseInterfaceWindow):
             QAction(
                 "Open Directory", self.menu_file
             )
+        self.menu_file_open_dir.setIcon(
+            QIcon(":/toolbox/folder_open")
+        )
         self.menu_file.addAction(self.menu_file_open_dir)
 
         self.menu_file_refresh = \
             QAction(
                 "Refresh", self.menu_file
             )
+        self.menu_file_refresh.setIcon(
+            QIcon(":/toolbox/folder_refresh")
+        )
         self.menu_file.addAction(self.menu_file_refresh)
 
         self.menu_file.addSeparator()
+
+        self.menu_file_restore_all = \
+            QAction(
+                "Restore All", self.menu_file
+            )
+        self.menu_file_restore_all.setIcon(
+            QIcon(":/menu/preview/file_restore")
+        )
+        self.menu_file_restore_all.triggered.connect(self.__action_window_restore_all)
+        self.menu_file.addAction(self.menu_file_restore_all)
 
         self.menu_file_save_all = \
             QAction(
                 "Save All", self.menu_file
             )
-        self.menu_file_save_all.triggered.connect(self.save_all)
+        self.menu_file_save_all.setIcon(
+            QIcon(":/menu/preview/file_save")
+        )
+        self.menu_file_save_all.triggered.connect(self.__action_window_save_all)
         self.menu_file.addAction(self.menu_file_save_all)
 
         self.menu_file.addSeparator()
@@ -156,6 +175,9 @@ class InterFacePreview(BaseInterfaceWindow):
             QAction(
                 "Exit", self.menu_file
             )
+        self.menu_file_exit.setIcon(
+            QIcon(":/menu/preview/file_exit")
+        )
         self.menu_file_exit.triggered.connect(self.__try_to_exit)
         self.menu_file.addAction(self.menu_file_exit)
 
@@ -168,10 +190,17 @@ class InterFacePreview(BaseInterfaceWindow):
         self.menu_about.addAction(self.menu_about_about)
 
         # Widget Menu
+
+        # File List
+        self.r_file_list_widget.menu_reload_file.triggered.connect(
+            self.__action_file_reload
+        )
+
+        # Obj List
         self.r_object_list_widget.menu_operate_del \
-            .triggered.connect(self.__action_del_target)
+            .triggered.connect(self.__action_obj_del_target)
         self.r_object_list_widget.menu_operate_del_subsequent \
-            .triggered.connect(self.__action_del_subsequent_target)
+            .triggered.connect(self.__action_obj_del_subsequent_target)
 
     def update(self):
         super().update()
@@ -179,9 +208,9 @@ class InterFacePreview(BaseInterfaceWindow):
         self.setWindowTitle(
             self.basic_window_title + " - " + self.work_directory_path
         )
-        self.label_work_path.setText(
-            "Work Directory: " + self.work_directory_path
-        )
+        # self.label_work_path.setText(
+        #     "Work Directory: " + self.work_directory_path
+        # )
 
     def load_directory(self):
         self.annotation_directory.dir_path = self.work_directory_path
@@ -294,17 +323,30 @@ class InterFacePreview(BaseInterfaceWindow):
         if self.current_annotation_object is not None:
             self.current_annotation_object.save()
 
-    def save_all(self):
+    def __action_window_restore_all(self):
+        for annotation in self.annotation_directory.annotation_file:
+            annotation.reload()
+
+        self.__update_object_list_widget()
+
+    def __action_window_save_all(self):
         for annotation in self.annotation_directory.annotation_file:
             annotation.save()
 
     def __try_to_exit(self):
         # self.save_current_opened()
-        self.save_all()
+        self.__action_window_save_all()
 
         self.close()
 
-    def __action_del_target(self):
+    def __action_file_reload(self):
+        file_index = self.r_file_list_widget.selection_index
+
+        self.annotation_directory.annotation_file[file_index].reload()
+
+        self.__update_object_list_widget()
+
+    def __action_obj_del_target(self):
         index = self.r_object_list_widget.selection_index
 
         obj = self.current_annotation_object.rect_annotation_list[index]
@@ -313,7 +355,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.__update_object_list_widget()
 
-    def __action_del_subsequent_target(self):
+    def __action_obj_del_subsequent_target(self):
         file_index = self.r_file_list_widget.selection_index
 
         index = self.r_object_list_widget.selection_index
