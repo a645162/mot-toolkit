@@ -1,13 +1,17 @@
 from typing import List
 import os
 
+from PySide6.QtCore import QObject
 
-class AnnotationDirectory:
+
+class AnnotationDirectory(QObject):
     dir_path: str = ""
 
     file_list: List[str] = []
 
     def __init__(self, dir_path: str = ""):
+        super().__init__()
+
         self.dir_path = dir_path
 
     def sort_path(self, group_directory=False):

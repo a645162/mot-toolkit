@@ -1,6 +1,8 @@
 from typing import List
 import json
 
+from PySide6.QtCore import Signal
+
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
 from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
 from mot_toolkit.datatype.common.rect_data_annotation import (
@@ -197,6 +199,8 @@ def parse_xanylabeling_json(json_path: str) -> XAnyLabelingAnnotation:
 
 
 class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
+    slot_modified: Signal = Signal(int)
+
     annotation_file: List[XAnyLabelingAnnotation] = []
 
     def __init__(self):
@@ -208,9 +212,11 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         self.annotation_file.clear()
 
-        for json_file in self.file_list:
+        for i, json_file in enumerate(self.file_list):
             annotation = \
                 parse_xanylabeling_json(json_file)
+            annotation.index = i
+            annotation.slot_modified.connect(self.slot_modified)
 
             self.annotation_file.append(annotation)
 

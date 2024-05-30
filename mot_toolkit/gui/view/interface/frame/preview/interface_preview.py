@@ -1,6 +1,8 @@
+from typing import List
 import os.path
 
 from PySide6.QtCore import QSize
+from PySide6.QtGui import QColor
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -27,8 +29,9 @@ from mot_toolkit.gui.view.interface. \
 
 
 class InterFacePreview(BaseInterfaceWindow):
-    annotation_directory: XAnyLabelingAnnotationDirectory = \
-        XAnyLabelingAnnotationDirectory()
+    annotation_directory: XAnyLabelingAnnotationDirectory = None
+
+    file_str_list: List[str]
 
     current_annotation_object: XAnyLabelingAnnotation = None
     current_file_path: str = ""
@@ -37,6 +40,14 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
+
+        self.file_str_list = []
+
+        self.annotation_directory = \
+            XAnyLabelingAnnotationDirectory()
+        self.annotation_directory.slot_modified.connect(
+            self.__slot_annotation_directory_modified
+        )
 
         self.__setup_window_properties()
 
@@ -138,9 +149,29 @@ class InterFacePreview(BaseInterfaceWindow):
                 path = os.path.basename(path)
                 path = os.path.splitext(path)[0]
 
+            self.file_str_list.append(path)
             self.r_file_list_widget.list_widget.addItem(path)
 
         self.r_file_list_widget.update()
+
+    def __slot_annotation_directory_modified(self):
+        self.update_file_list_widget()
+
+    def update_file_list_widget(self):
+        annotation_obj_list: List[XAnyLabelingAnnotation] = \
+            self.annotation_directory.annotation_file
+
+        for i, current_annotation_obj in enumerate(annotation_obj_list):
+            current_item = self.r_file_list_widget.list_widget.item(i)
+
+            base_text = self.file_str_list[i]
+            if current_annotation_obj.is_modified:
+                current_item.setForeground(QColor(255, 0, 0))
+                base_text = f"* {base_text}"
+            else:
+                current_item.setForeground(QColor(0, 0, 0))
+
+            current_item.setText(base_text)
 
     def __auto_load_directory(self):
         if not os.path.isdir(self.work_directory_path):

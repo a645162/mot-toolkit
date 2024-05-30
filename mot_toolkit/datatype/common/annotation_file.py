@@ -17,6 +17,7 @@ for ext in image_extension:
 
 class AnnotationFile(QObject):
     uuid: str = ""
+    index = -1
 
     label: str = ""
 
@@ -27,7 +28,7 @@ class AnnotationFile(QObject):
     pic_path: str
     __pic_path: str = ""
 
-    slot_modified: Signal = Signal()
+    slot_modified: Signal = Signal(int)
 
     ori_dict: dict
 
@@ -82,12 +83,14 @@ class AnnotationFile(QObject):
 
     def modifying(self):
         self.is_modified = True
-        self.slot_modified.emit()
+        self.slot_modified.emit(self.index)
 
     def save(self) -> bool:
         if not self.is_modified:
             return False
 
+        self.is_modified = False
+        self.slot_modified.emit(self.index)
         return True
 
     def __eq__(self, other):
