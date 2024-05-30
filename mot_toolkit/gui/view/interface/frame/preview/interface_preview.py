@@ -17,7 +17,7 @@ from mot_toolkit.gui.view. \
     components.base_interface_window import BaseInterfaceWindow
 
 from mot_toolkit.gui.view.interface. \
-    frame.preview.components.toolkit_widget import ToolkitWidget
+    frame.preview.components.toolbox_widget import ToolboxWidget
 from mot_toolkit.gui.view.interface. \
     frame.preview.components.dataset_image_view_widget import DatasetImageView
 from mot_toolkit.gui.view.interface. \
@@ -62,7 +62,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_h_widget.setLayout(self.main_h_layout)
         self.v_layout.addWidget(self.main_h_widget)
 
-        self.toolkit_widget = ToolkitWidget(parent=self)
+        self.toolkit_widget = ToolboxWidget(parent=self)
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         self.main_image_view = DatasetImageView(parent=self)

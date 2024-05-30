@@ -5,7 +5,8 @@
     </qresource>
 
     <qresource prefix="/toolbox">
-        <file alias="folder_open">./Icon/Toolbox/24gf-folderOpen.png</file>
+        <file alias="folder_open">./Icon/Toolbox/24gf-folderOpen.jpg</file>
+        <file alias="folder_refresh">./Icon/Toolbox/refresh.jpg</file>
     </qresource>
 
 </RCC>
