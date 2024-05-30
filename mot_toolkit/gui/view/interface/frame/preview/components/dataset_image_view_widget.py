@@ -111,8 +111,13 @@ class DatasetImageView(ScrollImageView):
         for rect_item in self.__annotation_obj.rect_annotation_list:
             # print(rect_item)
             rect_widget = AnnotationWidgetRect(parent=self.image_view)
-            rect_widget.label = rect_item.label
             rect_widget.slot_try_to_select.connect(try_to_select)
+
+            rect_widget.label = rect_item.label
+
+            # Set Rect Scale Factor when the image is changed
+            rect_widget.scale_factor = self.image_view.scale_factor
+
             rect_widget.set_rect_data_annotation(rect_item)
 
             # Set the boundary for the rectangle
