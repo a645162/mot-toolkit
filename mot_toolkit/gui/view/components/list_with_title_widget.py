@@ -3,8 +3,11 @@ from typing import List
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
-    QLabel, QListWidget
+    QLabel
 )
+
+from mot_toolkit.gui.view. \
+    components.base_list_widget_with_menu import BaseListWidgetWithMenu
 
 
 class ListWithTitleWidget(QWidget):
@@ -27,14 +30,16 @@ class ListWithTitleWidget(QWidget):
         self.setLayout(self.v_layout)
 
         self.label_title = QLabel(parent=self)
-        self.label_title.setText("Title")
         self.v_layout.addWidget(self.label_title)
 
-        self.list_widget = QListWidget(parent=self)
+        self.list_widget = BaseListWidgetWithMenu(parent=self)
         self.v_layout.addWidget(self.list_widget)
+
+        self.label_title.setText("Title")
 
     def set_title(self, title: str):
         self.title = title
+        self.list_widget.title = self.title
 
     def get_title(self) -> str:
         return self.title

@@ -59,6 +59,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.main_h_widget = QWidget(parent=self)
         self.main_h_layout = QHBoxLayout()
+        self.main_h_layout.setSpacing(0)
         self.main_h_widget.setLayout(self.main_h_layout)
         self.v_layout.addWidget(self.main_h_widget)
 
@@ -89,7 +90,7 @@ class InterFacePreview(BaseInterfaceWindow):
         self.main_h_layout.addWidget(self.right_widget)
 
         self.main_h_layout.setStretch(0, 0)
-        self.main_h_layout.setStretch(1, 4)
+        self.main_h_layout.setStretch(1, 8)
         self.main_h_layout.setStretch(2, 1)
 
     def update(self):
