@@ -25,6 +25,9 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
     __current_valid_depth = 0
 
+    __list_widget_width: int = 200
+    __list_widget_max_width: int = 500
+
     __list_widget_list: List[FileListWidget]
 
     def __init__(self, work_directory_path: str = "", parent=None):
@@ -42,7 +45,9 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.__init_base_dir()
 
     def __init_widgets(self):
-        label_title = QLabel("Select the directory:")
+        self.label_title = QLabel(parent=self)
+        self.label_title.setText("Select the directory:")
+        self.label_title.setVisible(False)
 
         self.scroll_area = QScrollArea()
 
@@ -72,8 +77,9 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
         self.label_current_path = QLabel(parent=self)
         self.label_current_path.setText("Current Path:[None]")
+        self.label_current_path.setVisible(False)
 
-        self.v_layout.addWidget(label_title)
+        self.v_layout.addWidget(self.label_title)
         self.v_layout.addWidget(self.scroll_area)
         self.v_layout.addWidget(self.label_current_path)
 
@@ -116,9 +122,11 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         if is_dir:
             text = text[:-1]
 
+            # Remove unused list widget
             while widget_index < self.max_depth - 1:
                 self.remove_last_list_widget()
 
+            # Find the child object
             child_obj = None
             for current_child_obj in list_widget.current_directory_obj.child_dir_object_list:
                 if current_child_obj.directory_name == text:
@@ -126,11 +134,17 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             if child_obj is None:
                 return
 
+            # Walk the child object
             child_obj.walk_dir()
             child_obj.update()
 
+            # Generate New List Widget
             new_list_widget: FileListWidget = FileListWidget(parent=self.h_widget)
 
+            # Set appearance
+            new_list_widget.setFixedWidth(self.__list_widget_width)
+
+            # Set properties
             new_list_widget.current_depth = widget_index + 1
             new_list_widget.current_directory_obj = child_obj
             new_list_widget.update_list_content()
@@ -178,6 +192,15 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
     def path(self) -> str:
         return self.__current_path
 
+    def get_path(self) -> str:
+        return self.path
+
+    def is_directory(self) -> bool:
+        return os.path.isdir(self.path)
+
+    def is_file(self) -> bool:
+        return os.path.isfile(self.path)
+
     def __generate_path(self):
         path = ""
 
@@ -215,6 +238,34 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         # Notify the path changed
         self.slot_path_changed.emit(path)
 
+    def set_all_list_widget_width(self, value: int):
+        for list_widget in self.__list_widget_list:
+            list_widget.setFixedWidth(value)
+
+    @property
+    def list_widget_max_width(self) -> int:
+        return self.__list_widget_max_width
+
+    @list_widget_max_width.setter
+    def list_widget_max_width(self, value: int):
+        self.__list_widget_max_width = max(value, 50)
+
+        self.__auto_resize_list_widget()
+
+    def __auto_resize_list_widget(self):
+        current_count = 3
+        self.__list_widget_width = int(self.width() / current_count)
+        while self.__list_widget_width > self.list_widget_max_width:
+            current_count += 1
+            self.__list_widget_width = int(self.width() / current_count)
+
+        self.set_all_list_widget_width(self.__list_widget_width)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+
+        self.__auto_resize_list_widget()
+
 
 if __name__ == "__main__":
     import sys
@@ -226,8 +277,8 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     widget = MultiLevelFinderWidget(work_directory_path=path)
-    # widget.setFixedWidth(1200)
-    # widget.setFixedHeight(400)
+    widget.label_title.setVisible(True)
+    widget.label_current_path.setVisible(True)
     widget.setMinimumSize(400, 400)
     widget.show()
     sys.exit(app.exec())
