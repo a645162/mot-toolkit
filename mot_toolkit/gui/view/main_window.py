@@ -128,3 +128,7 @@ def init_main_window():
     main_window.show()
 
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    init_main_window()

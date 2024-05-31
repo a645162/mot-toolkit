@@ -200,13 +200,41 @@ class InterFacePreview(BaseInterfaceWindow):
         self.menu_file_exit.triggered.connect(self.__try_to_exit)
         self.menu_file.addAction(self.menu_file_exit)
 
-        # About Menu
-        self.menu_about = self.menu.addMenu("About")
-        self.menu_about_about = \
+        # Edit Menu
+        self.menu_edit = self.menu.addMenu("Edit")
+
+        # Settings Menu
+        self.menu_settings = self.menu.addMenu("Settings")
+
+        self.menu_settings_settings = \
             QAction(
-                "About", self.menu_about
+                "Settings", self.menu_settings
             )
-        self.menu_about.addAction(self.menu_about_about)
+        self.menu_settings.addAction(self.menu_settings_settings)
+
+        self.menu_settings.addSeparator()
+
+        self.menu_settings_auto_save = \
+            QAction(
+                "Switching automatically to save", self.menu_settings
+            )
+        self.menu_settings_auto_save.setCheckable(True)
+        self.menu_settings.addAction(self.menu_settings_auto_save)
+
+        # Help Menu
+        self.menu_help = self.menu.addMenu("Help")
+
+        self.menu_help_website = \
+            QAction(
+                "Open Website", self.menu_help
+            )
+        self.menu_help.addAction(self.menu_help_website)
+
+        self.menu_help_about = \
+            QAction(
+                "About", self.menu_help
+            )
+        self.menu_help.addAction(self.menu_help_about)
 
         # Widget Menu
 
@@ -312,7 +340,8 @@ class InterFacePreview(BaseInterfaceWindow):
         self.r_object_list_widget.update()
 
     def __file_list_item_selection_changed(self):
-        # self.save_current_opened()
+        if self.menu_settings_auto_save.isChecked():
+            self.save_current_opened()
 
         self.__update_object_list_widget()
 
