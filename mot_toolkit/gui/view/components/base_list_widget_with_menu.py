@@ -87,6 +87,10 @@ class BaseListWidgetWithMenu(QListWidget):
 
     @selection_index.setter
     def selection_index(self, index: int):
+        if index == -1:
+            self.clearSelection()
+            return
+
         if index < 0 or index >= self.count():
             return
 

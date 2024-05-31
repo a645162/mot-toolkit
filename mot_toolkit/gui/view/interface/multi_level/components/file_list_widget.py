@@ -18,6 +18,7 @@ class FileListWidget(BaseListWidgetWithMenu):
     current_directory_obj: DirectoryAndFile
 
     slot_selection_changed: Signal = Signal(int)
+    slot_double_clicked: Signal = Signal(int)
     slot_focused: Signal = Signal(int)
     slot_refreshed: Signal = Signal(int)
 
@@ -34,6 +35,9 @@ class FileListWidget(BaseListWidgetWithMenu):
 
     def __init_widgets(self):
         self.itemSelectionChanged.connect(self.__file_list_selection_changed)
+        self.itemDoubleClicked.connect(
+            lambda: self.slot_double_clicked.emit(self.current_depth)
+        )
 
     def __set_widget_properties(self):
         self.setFixedWidth(200)

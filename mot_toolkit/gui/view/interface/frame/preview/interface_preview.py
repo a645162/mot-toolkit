@@ -1,8 +1,8 @@
 from typing import List
 import os.path
 
-from PySide6.QtCore import QSize
-from PySide6.QtGui import QColor, QAction, QIcon
+from PySide6.QtCore import QSize, QUrl
+from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
 
 from PySide6.QtWidgets import (
     QWidget,
@@ -228,6 +228,11 @@ class InterFacePreview(BaseInterfaceWindow):
             QAction(
                 "Open Website", self.menu_help
             )
+        self.menu_help_website.triggered.connect(
+            lambda: QDesktopServices.openUrl(QUrl(
+                r"https://github.com/a645162/mot-toolkit"
+            ))
+        )
         self.menu_help.addAction(self.menu_help_website)
 
         self.menu_help_about = \

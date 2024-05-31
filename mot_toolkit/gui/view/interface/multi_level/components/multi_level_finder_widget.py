@@ -31,6 +31,7 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
     __list_widget_list: List[FileListWidget]
 
     always_walk: bool = False
+    double_click_enter_sub_directory: bool = True
 
     def __init__(self, work_directory_path: str = "", parent=None):
         super().__init__(
@@ -113,11 +114,20 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.base_list_widget.slot_refreshed.connect(
             self.__list_widget_refreshed
         )
+        self.base_list_widget.slot_double_clicked.connect(
+            self.__list_widget_double_clicked
+        )
 
         self.list_widget_layout.addWidget(self.base_list_widget)
         self.__list_widget_list.append(self.base_list_widget)
 
     def __list_widget_selection_changed(self, widget_index: int):
+        if not self.double_click_enter_sub_directory:
+            self.__try_to_open_next_level(widget_index=widget_index)
+
+        self.__list_widget_focused(widget_index)
+
+    def __try_to_open_next_level(self, widget_index: int):
         list_widget: FileListWidget = \
             self.__list_widget_list[widget_index]
 
@@ -173,6 +183,13 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             new_list_widget.slot_refreshed.connect(
                 self.__list_widget_refreshed
             )
+            new_list_widget.slot_double_clicked.connect(
+                self.__list_widget_double_clicked
+            )
+
+    def __list_widget_double_clicked(self, widget_index: int):
+        if self.double_click_enter_sub_directory:
+            self.__try_to_open_next_level(widget_index=widget_index)
 
         self.__list_widget_focused(widget_index)
 
@@ -191,6 +208,9 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
         while index < self.max_depth - 1:
             self.remove_last_list_widget()
+
+        list_widget = self.__list_widget_list[index]
+        list_widget.selection_index = -1
 
         self.__list_widget_focused(index)
 
