@@ -4,9 +4,11 @@ from typing import List
 
 class DirectoryAndFile:
     directory_path: str = ""
+    directory_name: str = ""
 
     child_dir_object_list: List["DirectoryAndFile"]
-    file_path: List[str]
+    file_path_list: List[str]
+    file_name_list: List[str]
 
     __walked: bool = False
 
@@ -14,7 +16,10 @@ class DirectoryAndFile:
         self.directory_path = directory_path
 
         self.child_dir_object_list = []
-        self.file_path = []
+        self.file_path_list = []
+        self.file_name_list = []
+
+        self.update()
 
     def walk_dir(self, max_depth=0):
         self.__walked = True
@@ -34,10 +39,18 @@ class DirectoryAndFile:
                     child_dir.walk_dir(max_depth=max_depth - 1)
             else:
                 # Add file_path to the list
-                self.file_path.append(entry_path)
+                self.file_path_list.append(entry_path)
 
     def is_walked(self) -> bool:
         return self.__walked
+
+    def update(self):
+        self.directory_path = os.path.abspath(self.directory_path)
+        self.directory_name = os.path.basename(self.directory_path)
+
+        self.file_name_list.clear()
+        for file_path in self.file_path_list:
+            self.file_name_list.append(os.path.basename(file_path))
 
 
 if __name__ == "__main__":

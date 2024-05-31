@@ -2,7 +2,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QWidget
 
 
-class BaseQMainWindow(QWidget):
+class BaseQWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
