@@ -4,7 +4,6 @@ from typing import List
 
 class DirectoryAndFile:
     directory_path: str = ""
-    directory_name: str = ""
 
     child_dir_object_list: List["DirectoryAndFile"]
     file_path_list: List[str]
@@ -44,9 +43,12 @@ class DirectoryAndFile:
     def is_walked(self) -> bool:
         return self.__walked
 
+    @property
+    def directory_name(self) -> str:
+        return os.path.basename(self.directory_path)
+
     def update(self):
         self.directory_path = os.path.abspath(self.directory_path)
-        self.directory_name = os.path.basename(self.directory_path)
 
         self.file_name_list.clear()
         for file_path in self.file_path_list:

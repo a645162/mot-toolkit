@@ -6,9 +6,10 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow, QWidget,
-    QVBoxLayout, QPushButton,
+    QVBoxLayout, QPushButton, QLabel,
 )
 
+from gui.view.interface.multi_level.interface_multi_level import InterfaceMultiLevel
 from mot_toolkit.gui.common.system_wide_menu import (
     init_system_menu
 )
@@ -43,7 +44,7 @@ class MainWindow(QMainWindow):
 
     def __setup_window_properties(self):
         # Set Title
-        self.setWindowTitle("MOT-Tools")
+        self.setWindowTitle("MOT-Tools Author:Haomin Kong")
 
         # Set Logo
         self.setWindowIcon(QIcon(":/general/logo"))
@@ -71,6 +72,11 @@ class MainWindow(QMainWindow):
         self.__select_directory_path_widget.path_line_edit.setText(default_path)
         self.v_layout.addWidget(self.__select_directory_path_widget)
 
+        self.__button_interface_multi_level = QPushButton(parent=self)
+        self.__button_interface_multi_level.setText("Multi Level Finder")
+        self.__button_interface_multi_level.clicked.connect(self.__button_interface_multi_level_clicked)
+        self.v_layout.addWidget(self.__button_interface_multi_level)
+
         self.__button_stats = QPushButton(parent=self)
         self.__button_stats.setText("Statistics")
         self.__button_stats.clicked.connect(self.__button_stats_clicked)
@@ -85,6 +91,16 @@ class MainWindow(QMainWindow):
         self.__button_frame_operation.setText("Frame Operation")
         self.__button_frame_operation.clicked.connect(self.__button_frame_operation_clicked)
         self.v_layout.addWidget(self.__button_frame_operation)
+
+        author_label = QLabel(parent=self)
+        author_label.setText("Author:Haomin Kong")
+        self.v_layout.addWidget(author_label)
+
+    def __button_interface_multi_level_clicked(self):
+        self.interface_multi_level = InterfaceMultiLevel(
+            work_directory_path=self.__select_directory_path_widget.get_absolute_path()
+        )
+        self.interface_multi_level.show()
 
     def __button_stats_clicked(self):
         self.interface_statistics = InterfaceStatistics(

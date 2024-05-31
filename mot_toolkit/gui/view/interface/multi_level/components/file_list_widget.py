@@ -15,6 +15,7 @@ class FileListWidget(BaseListWidgetWithMenu):
     current_directory_obj: DirectoryAndFile
 
     slot_selection_changed: Signal = Signal(int)
+    slot_focused: Signal = Signal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -38,7 +39,17 @@ class FileListWidget(BaseListWidgetWithMenu):
         child_obj_list: List[DirectoryAndFile] = \
             self.current_directory_obj.child_dir_object_list
         for child_obj in child_obj_list:
-            pass
+            dir_name = child_obj.directory_name
+            self.add_dir(dir_name + "/")
+
+        for file_name in self.current_directory_obj.file_name_list:
+            self.add_file(file_name)
+
+    def add_dir(self, dir_name: str):
+        self.addItem(dir_name)
+
+    def add_file(self, file_name: str):
+        self.addItem(file_name)
 
     def setFixedWidth(self, w: int = 0):
         if w == 0:
@@ -51,6 +62,10 @@ class FileListWidget(BaseListWidgetWithMenu):
             h = 200
 
         super().setFixedHeight(h)
+
+    def focusInEvent(self, event):
+        super().focusInEvent(event)
+        self.slot_focused.emit(self.current_depth)
 
     def item_is_dir(self, index: int) -> bool:
         text = self.item(index).text()

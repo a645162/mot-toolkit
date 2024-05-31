@@ -1,7 +1,7 @@
 import os.path
 from typing import List
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -15,7 +15,11 @@ from gui.view.interface.multi_level. \
 
 
 class MultiLevelFinderWidget(BaseQWidgetWithLayout):
-    list_widget_list: List[FileListWidget]
+    slot_path_changed: Signal = Signal(str)
+
+    __current_path: str = ""
+
+    __list_widget_list: List[FileListWidget]
 
     def __init__(self, work_directory_path: str = "", parent=None):
         super().__init__(
@@ -23,7 +27,7 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             parent=parent
         )
 
-        self.list_widget_list = []
+        self.__list_widget_list = []
 
         self.__init_widgets()
 
@@ -48,10 +52,21 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
     @property
     def current_depth(self) -> int:
-        return len(self.list_widget_list)
+        return len(self.__list_widget_list)
 
     def check_work_directory_path(self) -> bool:
         return os.path.isdir(self.work_directory_path)
+
+    def remove_last_list_widget(self):
+        if self.current_depth > 0:
+            self.h_layout.removeWidget(self.__list_widget_list[-1])
+            self.__list_widget_list[-1].deleteLater()
+
+            self.__list_widget_list.pop()
+
+    @property
+    def selection_path(self) -> str:
+        return ""
 
 
 if __name__ == "__main__":
