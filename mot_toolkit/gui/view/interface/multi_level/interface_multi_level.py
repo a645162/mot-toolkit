@@ -37,6 +37,7 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
                 work_directory_path=self.work_directory_path,
                 parent=self
             )
+        self.multi_level_finder.list_widget_max_width = 300
         self.multi_level_finder.label_title.setVisible(True)
         self.multi_level_finder.label_current_path.setVisible(True)
         self.multi_level_finder.slot_path_changed.connect(
@@ -69,12 +70,15 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
             self.setWindowTitle(self.base_title)
 
     def __finder_path_changed(self, path: str):
-        is_dir = os.path.isdir(path)
+        # is_dir = os.path.isdir(path)
+
+        dir_path = self.multi_level_finder.get_dir()
+        is_dir = len(dir_path) > 0
 
         self.btn_toolbox_preview.setEnabled(is_dir)
 
     def __btn_toolbox_preview_clicked(self):
-        path = self.multi_level_finder.path
+        path = self.multi_level_finder.get_dir()
 
         path = os.path.abspath(path)
 

@@ -196,6 +196,25 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
     def get_path(self) -> str:
         return self.path
 
+    def get_dir(self) -> str:
+        path = self.path
+
+        if os.path.exists(path):
+            return ""
+
+        if os.path.isdir(path):
+            return path
+        else:
+            path = os.path.dirname(path)
+
+            if os.path.exists(path):
+                return ""
+
+            if os.path.isdir(path):
+                return path
+            else:
+                return ""
+
     def is_directory(self) -> bool:
         return os.path.isdir(self.path)
 
