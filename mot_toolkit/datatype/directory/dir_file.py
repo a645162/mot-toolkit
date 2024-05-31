@@ -20,6 +20,15 @@ class DirectoryAndFile:
 
         self.update()
 
+    def __eq__(self, other):
+        if not isinstance(other, DirectoryAndFile):
+            return False
+
+        return self.directory_path == other.directory_path
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     def walk_dir(self, max_depth=0):
         self.__walked = True
 

@@ -72,7 +72,10 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.h_layout.addWidget(self.list_widget_container)
         self.h_layout.addStretch()
 
-        self.h_widget.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        self.h_widget.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Expanding
+        )
 
         self.scroll_area.setWidget(self.h_widget)
         self.scroll_area.setWidgetResizable(True)
@@ -106,6 +109,9 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         )
         self.base_list_widget.slot_focused.connect(
             self.__list_widget_focused
+        )
+        self.base_list_widget.slot_refreshed.connect(
+            self.__list_widget_refreshed
         )
 
         self.list_widget_layout.addWidget(self.base_list_widget)
@@ -164,12 +170,29 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             new_list_widget.slot_focused.connect(
                 self.__list_widget_focused
             )
+            new_list_widget.slot_refreshed.connect(
+                self.__list_widget_refreshed
+            )
 
         self.__list_widget_focused(widget_index)
 
     def __list_widget_focused(self, index: int):
+        list_widget = self.__list_widget_list[index]
+
+        if list_widget.selection_index == -1:
+            if list_widget.count() > 0:
+                list_widget.selection_index = 0
+
         self.__current_valid_depth = index
         self.__generate_path()
+
+    def __list_widget_refreshed(self, index: int):
+        self.__list_widget_focused(index)
+
+        while index < self.max_depth - 1:
+            self.remove_last_list_widget()
+
+        self.__list_widget_focused(index)
 
     @property
     def current_valid_depth(self):
