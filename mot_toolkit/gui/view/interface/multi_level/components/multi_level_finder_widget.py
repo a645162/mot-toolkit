@@ -212,14 +212,22 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
             return name
 
-        for i in range(self.current_valid_depth + 1):
-            list_widget = self.__list_widget_list[i]
+        activate_list_widget: FileListWidget = \
+            self.__list_widget_list[self.current_valid_depth]
+        base_dir = activate_list_widget.current_directory_obj.directory_path
+        name = activate_list_widget.selection_text
+        name = fix_name(name)
 
-            text = fix_name(list_widget.selection_text)
-            if len(text) == 0:
-                break
+        path = os.path.join(base_dir, name)
 
-            path = os.path.join(path, text)
+        # for i in range(self.current_valid_depth + 1):
+        #     list_widget = self.__list_widget_list[i]
+        #
+        #     text = fix_name(list_widget.selection_text)
+        #     if len(text) == 0:
+        #         break
+        #
+        #     path = os.path.join(path, text)
 
         if os.path.exists(path):
             path = os.path.abspath(path)
