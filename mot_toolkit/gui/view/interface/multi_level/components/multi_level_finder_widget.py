@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
-    QScrollArea, QLabel
+    QScrollArea, QLabel, QSizePolicy
 )
 
 from datatype.directory.dir_file import DirectoryAndFile
@@ -51,6 +51,12 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.h_layout.setSpacing(0)
         self.h_widget.setLayout(self.h_layout)
 
+        # Set Color for Debug
+        # self.h_widget.setStyleSheet(
+        #     "background-color: rgb(255, 255, 255);"
+        #     "border: 1px solid rgb(0, 0, 0);"
+        # )
+
         self.scroll_area.setWidget(self.h_widget)
 
         self.list_widget_container = QWidget(self.h_widget)
@@ -59,8 +65,10 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.h_layout.addWidget(self.list_widget_container)
         self.h_layout.addStretch()
 
-        self.h_widget.setFixedWidth(800)
-        self.h_widget.setFixedHeight(300)
+        self.h_widget.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.scroll_area.setWidget(self.h_widget)
+        self.scroll_area.setWidgetResizable(True)
 
         self.label_current_path = QLabel(parent=self)
         self.label_current_path.setText("Current Path:[None]")
@@ -130,6 +138,11 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             self.list_widget_layout.addWidget(new_list_widget)
             self.__list_widget_list.append(new_list_widget)
 
+            h_scroll_bar = self.scroll_area.horizontalScrollBar()
+            # Set the horizontal scroll bar to the right
+            h_scroll_bar.setValue(h_scroll_bar.maximum())
+            h_scroll_bar.update()
+
             new_list_widget.slot_selection_changed.connect(
                 self.__list_widget_selection_changed
             )
@@ -185,10 +198,19 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
             path = os.path.join(path, text)
 
+        if os.path.exists(path):
+            path = os.path.abspath(path)
+
         self.__current_path = path
 
         # Show the current path
-        self.label_current_path.setText(f"Current Path:{path}")
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                self.label_current_path.setText(f"Current Directory Path:{path}")
+            else:
+                self.label_current_path.setText(f"Current File Path:{path}")
+        else:
+            self.label_current_path.setText(f"Current Path:{path}")
 
         # Notify the path changed
         self.slot_path_changed.emit(path)
@@ -204,7 +226,8 @@ if __name__ == "__main__":
 
     app = QApplication(sys.argv)
     widget = MultiLevelFinderWidget(work_directory_path=path)
-    widget.setFixedWidth(1200)
-    widget.setFixedHeight(400)
+    # widget.setFixedWidth(1200)
+    # widget.setFixedHeight(400)
+    widget.setMinimumSize(400, 400)
     widget.show()
     sys.exit(app.exec())

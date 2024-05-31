@@ -1,6 +1,7 @@
 from typing import List
 
 from PySide6.QtCore import Signal
+from PySide6.QtWidgets import QSizePolicy
 
 from datatype.directory.dir_file import DirectoryAndFile
 
@@ -29,7 +30,11 @@ class FileListWidget(BaseListWidgetWithMenu):
 
     def __set_widget_properties(self):
         self.setFixedWidth(200)
-        self.setFixedHeight(200)
+        # self.setFixedHeight(200)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Expanding
+        )
 
     def update_list_content(self):
         if self.current_directory_obj is None:
