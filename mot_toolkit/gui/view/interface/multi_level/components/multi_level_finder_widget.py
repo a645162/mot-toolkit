@@ -199,7 +199,7 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
     def get_dir(self) -> str:
         path = self.path
 
-        if os.path.exists(path):
+        if not os.path.exists(path):
             return ""
 
         if os.path.isdir(path):
@@ -207,7 +207,7 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         else:
             path = os.path.dirname(path)
 
-            if os.path.exists(path):
+            if not os.path.exists(path):
                 return ""
 
             if os.path.isdir(path):
