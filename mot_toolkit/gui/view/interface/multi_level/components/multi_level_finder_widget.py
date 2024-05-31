@@ -30,6 +30,8 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
 
     __list_widget_list: List[FileListWidget]
 
+    always_walk: bool = False
+
     def __init__(self, work_directory_path: str = "", parent=None):
         super().__init__(
             work_directory_path=work_directory_path,
@@ -93,7 +95,6 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
         self.base_directory_obj = \
             DirectoryAndFile(self.work_directory_path)
         self.base_directory_obj.walk_dir()
-        self.base_directory_obj.update()
 
         self.base_list_widget = FileListWidget(parent=self.h_widget)
 
@@ -135,8 +136,8 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
                 return
 
             # Walk the child object
-            child_obj.walk_dir()
-            child_obj.update()
+            if self.always_walk or not child_obj.is_walked():
+                child_obj.walk_dir()
 
             # Generate New List Widget
             new_list_widget: FileListWidget = FileListWidget(parent=self.h_widget)

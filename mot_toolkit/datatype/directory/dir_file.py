@@ -44,6 +44,8 @@ class DirectoryAndFile:
                 # Add file_path to the list
                 self.file_path_list.append(entry_path)
 
+        self.update()
+
     def is_walked(self) -> bool:
         return self.__walked
 
