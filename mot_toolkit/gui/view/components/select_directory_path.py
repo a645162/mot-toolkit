@@ -78,13 +78,20 @@ class SelectDirectoryPathWidget(QGroupBox):
         self.dropEvent = drop_event
 
     def __button_select_path_clicked(self):
+        current_dir = self.get_path()
+        if len(current_dir) == 0:
+            current_dir = "."
+
         directory = QFileDialog.getExistingDirectory(
             self,
-            "Select Directory", ".",
-            QFileDialog.Option.ShowDirsOnly | QFileDialog.Option.DontResolveSymlinks
+            "Select Directory", current_dir,
+            (
+                    QFileDialog.Option.ShowDirsOnly |
+                    QFileDialog.Option.DontResolveSymlinks
+            )
         )
 
-        # 如果用户选择了目录，打印出来
+        # If user selected a directory
         if directory and os.path.isdir(directory):
             self.path_line_edit.setText(directory)
 
