@@ -82,6 +82,8 @@ class ScrollImageView(QWidget):
         if float_value == 0:
             float_value = 0.1
 
+        float_value = abs(float_value)
+
         self.__zoom_delta(float_value)
 
     def zoom_out(self, float_value: float = 0):
@@ -91,7 +93,9 @@ class ScrollImageView(QWidget):
         if float_value == 0.0:
             float_value = -0.1
 
-        self.__zoom_delta(float_value)
+        float_value = abs(float_value)
+
+        self.__zoom_delta(-float_value)
 
     def zoom_restore(self):
         if self.image_view.image is None:

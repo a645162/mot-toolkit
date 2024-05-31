@@ -8,7 +8,6 @@ from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
     QMenuBar,
-    QLabel,
 )
 
 from mot_toolkit.datatype.xanylabeling import (
@@ -82,6 +81,20 @@ class InterFacePreview(BaseInterfaceWindow):
         self.v_layout.addWidget(self.main_h_widget)
 
         self.toolkit_widget = ToolboxWidget(parent=self)
+
+        self.toolkit_widget.btn_previous_frame.clicked.connect(
+            self.__slot_previous_image
+        )
+        self.toolkit_widget.btn_next_frame.clicked.connect(
+            self.__slot_next_image
+        )
+
+        self.toolkit_widget.btn_zoom_in_10.clicked.connect(
+            lambda: self.main_image_view.zoom_in(1.0)
+        )
+        self.toolkit_widget.btn_zoom_in_5.clicked.connect(
+            lambda: self.main_image_view.zoom_in(0.5)
+        )
         self.toolkit_widget.btn_zoom_in.clicked.connect(
             lambda: self.main_image_view.zoom_in()
         )
@@ -90,6 +103,12 @@ class InterFacePreview(BaseInterfaceWindow):
         )
         self.toolkit_widget.btn_zoom_out.clicked.connect(
             lambda: self.main_image_view.zoom_out()
+        )
+        self.toolkit_widget.btn_zoom_out_5.clicked.connect(
+            lambda: self.main_image_view.zoom_out(0.5)
+        )
+        self.toolkit_widget.btn_zoom_out_10.clicked.connect(
+            lambda: self.main_image_view.zoom_out(1.0)
         )
         self.main_h_layout.addWidget(self.toolkit_widget)
 

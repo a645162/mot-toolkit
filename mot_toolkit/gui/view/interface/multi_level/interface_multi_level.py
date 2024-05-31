@@ -13,6 +13,8 @@ from gui.view.interface.multi_level. \
 
 from gui.view.interface. \
     frame.preview.interface_preview import InterFacePreview
+from gui.view.interface. \
+    statistics.interface_statistics import InterfaceStatistics
 
 
 class InterfaceMultiLevel(BaseInterfaceWindow):
@@ -59,6 +61,16 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
         self.btn_toolbox_preview.clicked.connect(self.__btn_toolbox_preview_clicked)
         self.toolbox_layout.addWidget(self.btn_toolbox_preview)
 
+        self.btn_toolbox_statistics = QPushButton(parent=self)
+        self.btn_toolbox_statistics.setText("Statistics")
+        self.btn_toolbox_statistics.setVisible(False)
+        self.btn_toolbox_statistics.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Minimum
+        )
+        self.btn_toolbox_statistics.clicked.connect(self.__btn_toolbox_statistics_clicked)
+        self.toolbox_layout.addWidget(self.btn_toolbox_statistics)
+
         self.toolbox_layout.addStretch()
 
     def update(self):
@@ -76,6 +88,7 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
         is_dir = len(dir_path) > 0
 
         self.btn_toolbox_preview.setEnabled(is_dir)
+        self.btn_toolbox_statistics.setEnabled(is_dir)
 
     def __btn_toolbox_preview_clicked(self):
         path = self.multi_level_finder.get_dir()
@@ -86,3 +99,13 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
             work_directory_path=path
         )
         interface_preview.show()
+
+    def __btn_toolbox_statistics_clicked(self):
+        path = self.multi_level_finder.get_dir()
+
+        path = os.path.abspath(path)
+
+        interface_statistics = InterfaceStatistics(
+            work_directory_path=path
+        )
+        interface_statistics.show()
