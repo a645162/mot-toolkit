@@ -23,6 +23,10 @@ class DirectoryAndFile:
     def walk_dir(self, max_depth=0):
         self.__walked = True
 
+        # Clear
+        self.child_dir_object_list.clear()
+        self.file_path_list.clear()
+
         # Walk Current Dir
         for entry in os.listdir(self.directory_path):
             # Get the full path of the entry

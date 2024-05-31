@@ -93,6 +93,15 @@ class BaseListWidgetWithMenu(QListWidget):
         self.setCurrentRow(index)
 
     @property
+    def selection_text(self) -> str:
+        index = self.selection_index
+        if index == -1:
+            return ""
+
+        selected_item = self.item(index)
+        return selected_item.text()
+
+    @property
     def selection_index_list(self) -> List[int]:
         selected_items = self.selectedItems()
 

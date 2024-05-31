@@ -28,7 +28,8 @@ class FileListWidget(BaseListWidgetWithMenu):
         self.itemSelectionChanged.connect(self.__file_list_selection_changed)
 
     def __set_widget_properties(self):
-        pass
+        self.setFixedWidth(200)
+        self.setFixedHeight(200)
 
     def update_list_content(self):
         if self.current_directory_obj is None:
