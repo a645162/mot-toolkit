@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append(".")
+
 from mot_toolkit.gui.view.main_window import init_main_window
 
 if __name__ == "__main__":

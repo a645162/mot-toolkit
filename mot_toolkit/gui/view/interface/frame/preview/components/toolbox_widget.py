@@ -17,7 +17,11 @@ class ToolboxWidget(QWidget):
         self.__init_widgets()
 
     def __setup_widget_properties(self):
-        self.setFixedWidth(48)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Expanding
+        )
+        # self.setFixedWidth(48)
         # pass
 
     def __init_widgets(self):
