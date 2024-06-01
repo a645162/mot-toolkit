@@ -12,7 +12,7 @@ from gui.view.interface.multi_level. \
     components.multi_level_finder_widget import MultiLevelFinderWidget
 
 from gui.view.interface. \
-    frame.preview.interface_preview import InterFacePreview
+    preview.interface_preview import InterFacePreview
 from gui.view.interface. \
     statistics.interface_statistics import InterfaceStatistics
 

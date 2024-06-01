@@ -17,10 +17,9 @@ from mot_toolkit.gui.common.system_wide_menu import (
 from mot_toolkit.gui.view.components.select_directory_path import (
     SelectDirectoryPathWidget
 )
+
 from mot_toolkit.gui.view.interface. \
-    frame.interface_frame import InterfaceFrame
-from mot_toolkit.gui.view.interface. \
-    frame.preview.interface_preview import InterFacePreview
+    preview.interface_preview import InterFacePreview
 from mot_toolkit.gui.view.interface. \
     statistics.interface_statistics import InterfaceStatistics
 
@@ -87,11 +86,6 @@ class MainWindow(QMainWindow):
         self.__button_preview.clicked.connect(self.__button_preview_clicked)
         self.v_layout.addWidget(self.__button_preview)
 
-        self.__button_frame_operation = QPushButton(parent=self)
-        self.__button_frame_operation.setText("Frame Operation")
-        self.__button_frame_operation.clicked.connect(self.__button_frame_operation_clicked)
-        self.v_layout.addWidget(self.__button_frame_operation)
-
         author_label = QLabel(parent=self)
         author_label.setText("Author:Haomin Kong")
         self.v_layout.addWidget(author_label)
@@ -113,12 +107,6 @@ class MainWindow(QMainWindow):
             work_directory_path=self.__select_directory_path_widget.get_absolute_path()
         )
         self.interface_preview.show()
-
-    def __button_frame_operation_clicked(self):
-        self.interface_frame = InterfaceFrame(
-            work_directory_path=self.__select_directory_path_widget.get_absolute_path()
-        )
-        self.interface_frame.show()
 
 
 def init_main_window():

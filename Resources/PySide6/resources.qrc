@@ -19,8 +19,9 @@
         <file alias="frame_next">./Icon/Toolbox/next_frame.jpg</file>
 
         <file alias="zoom_in">./Icon/Toolbox/zoom_in.jpg</file>
-        <file alias="zoom_restore">./Icon/Toolbox/zoom.jpg</file>
+        <file alias="zoom_restore">./Icon/Toolbox/zoom_restore.jpg</file>
         <file alias="zoom_out">./Icon/Toolbox/zoom_out.jpg</file>
+        <file alias="zoom_fit">./Icon/Toolbox/zoom_fit.jpg</file>
     </qresource>
 
 </RCC>

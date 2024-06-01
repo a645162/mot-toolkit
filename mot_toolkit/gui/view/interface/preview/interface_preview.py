@@ -19,13 +19,13 @@ from mot_toolkit.gui.view. \
     components.base_interface_window import BaseInterfaceWindow
 
 from mot_toolkit.gui.view.interface. \
-    frame.preview.components.toolbox_widget import ToolboxWidget
+    preview.components.toolbox_widget import ToolboxWidget
 from mot_toolkit.gui.view.interface. \
-    frame.preview.components.dataset_image_view_widget import DatasetImageView
+    preview.components.dataset_image_view_widget import DatasetImageView
 from mot_toolkit.gui.view.interface. \
-    frame.preview.components.file_list_widget import FileListWidget
+    preview.components.file_list_widget import FileListWidget
 from mot_toolkit.gui.view.interface. \
-    frame.preview.components.object_list_widget import ObjectListWidget
+    preview.components.object_list_widget import ObjectListWidget
 
 
 class InterFacePreview(BaseInterfaceWindow):

@@ -100,6 +100,12 @@ class ToolboxWidget(QWidget):
         self.btn_zoom_out_10.setToolTip("Zoom Out - 1.0")
         self.v_layout.addWidget(self.btn_zoom_out_10)
 
+        self.btn_zoom_fit = QPushButton(parent=self)
+        self.__set_size_policy(self.btn_zoom_fit)
+        self.btn_zoom_fit.setIcon(QIcon(":/toolbox/zoom_fit"))
+        self.btn_zoom_fit.setToolTip("Zoom Fit")
+        self.v_layout.addWidget(self.btn_zoom_fit)
+
         self.v_layout.addStretch()
 
     @staticmethod
