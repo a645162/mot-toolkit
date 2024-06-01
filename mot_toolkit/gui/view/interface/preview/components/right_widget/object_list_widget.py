@@ -19,7 +19,7 @@ class ObjectListWidget(ListWithTitleWidget):
         self.__init_menu()
 
     def __setup_widget_properties(self):
-        self.set_title("Object List")
+        self.set_title("Annotation Object")
 
     def __init_widgets(self):
         pass

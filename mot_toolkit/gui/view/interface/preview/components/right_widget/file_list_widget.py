@@ -19,7 +19,7 @@ class FileListWidget(ListWithTitleWidget):
         self.__init_menu()
 
     def __setup_widget_properties(self):
-        self.set_title("File List")
+        self.set_title("File")
 
     def __init_widgets(self):
         pass

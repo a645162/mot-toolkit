@@ -18,14 +18,17 @@ from mot_toolkit.datatype.xanylabeling import (
 from mot_toolkit.gui.view. \
     components.base_interface_window import BaseInterfaceWindow
 
-from mot_toolkit.gui.view.interface. \
-    preview.components.toolbox_widget import ToolboxWidget
-from mot_toolkit.gui.view.interface. \
-    preview.components.dataset_image_view_widget import DatasetImageView
-from mot_toolkit.gui.view.interface. \
-    preview.components.file_list_widget import FileListWidget
-from mot_toolkit.gui.view.interface. \
-    preview.components.object_list_widget import ObjectListWidget
+from mot_toolkit.gui.view.interface.preview. \
+    components.toolbox_widget import ToolboxWidget
+from mot_toolkit.gui.view.interface.preview. \
+    components.dataset_image_view_widget import DatasetImageView
+
+from gui.view.interface.preview. \
+    components.right_widget.label_list_widget import LabelListWidget
+from gui.view.interface.preview. \
+    components.right_widget.file_list_widget import FileListWidget
+from gui.view.interface.preview. \
+    components.right_widget.object_list_widget import ObjectListWidget
 
 
 class InterFacePreview(BaseInterfaceWindow):
@@ -125,15 +128,24 @@ class InterFacePreview(BaseInterfaceWindow):
         self.right_v_layout = QVBoxLayout()
         self.right_widget.setLayout(self.right_v_layout)
 
-        self.r_file_list_widget = FileListWidget(parent=self)
-        self.r_file_list_widget. \
-            list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
-        self.right_v_layout.addWidget(self.r_file_list_widget)
+        self.r_label_list_widget = LabelListWidget(parent=self)
+        self.r_label_list_widget. \
+            list_widget.itemSelectionChanged.connect(self.__label_list_item_selection_changed)
+        self.right_v_layout.addWidget(self.r_label_list_widget)
 
         self.r_object_list_widget = ObjectListWidget(parent=self)
         self.r_object_list_widget. \
             list_widget.itemSelectionChanged.connect(self.__object_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_object_list_widget)
+
+        self.r_file_list_widget = FileListWidget(parent=self)
+        self.r_file_list_widget. \
+            list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
+        self.right_v_layout.addWidget(self.r_file_list_widget)
+
+        self.right_v_layout.setStretch(0, 1)
+        self.right_v_layout.setStretch(1, 1)
+        self.right_v_layout.setStretch(2, 2)
 
         # self.right_widget.setFixedWidth(200)
         self.main_h_layout.addWidget(self.right_widget)
@@ -268,10 +280,20 @@ class InterFacePreview(BaseInterfaceWindow):
         # )
 
     def load_directory(self):
+        # Clear
+        self.file_str_list.clear()
+        self.r_label_list_widget.list_widget.clear()
+        self.r_object_list_widget.list_widget.clear()
+        self.r_file_list_widget.list_widget.clear()
+
         self.annotation_directory.dir_path = self.work_directory_path
         self.annotation_directory.walk_dir()
         self.annotation_directory.sort_path(group_directory=True)
         self.annotation_directory.load_json_files()
+        self.annotation_directory.update_label_list()
+
+        for label_name in self.annotation_directory.label_list:
+            self.r_label_list_widget.list_widget.addItem(label_name)
 
         directory_list = []
         ext_list = []
@@ -346,6 +368,9 @@ class InterFacePreview(BaseInterfaceWindow):
                 f"{rect_item.label}({rect_item.group_id})"
             )
         self.r_object_list_widget.update()
+
+    def __label_list_item_selection_changed(self):
+        pass
 
     def __file_list_item_selection_changed(self):
         if self.menu_settings_auto_save.isChecked():
