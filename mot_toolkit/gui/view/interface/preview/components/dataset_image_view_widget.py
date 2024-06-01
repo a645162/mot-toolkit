@@ -21,6 +21,7 @@ class DatasetImageView(ScrollImageView):
     __picture_file_path: str = ""
 
     current_q_pixmap: QPixmap = None
+    __zoom_factor: float = 1.0
 
     annotation_widget_rect_list: List[AnnotationWidgetRect]
 
@@ -172,6 +173,15 @@ class DatasetImageView(ScrollImageView):
             else:
                 rect_widget.selecting = False
 
+    @property
+    def zoom_factor(self) -> float:
+        return self.__zoom_factor
+
+    @zoom_factor.setter
+    def zoom_factor(self, value: float):
+        self.__zoom_factor = value
+        self.slot_try_to_zoom.emit(value)
+
     def __zoom_triggered(self, float_value: float):
         if self.image_view.image is None:
             return
@@ -188,3 +198,23 @@ class DatasetImageView(ScrollImageView):
         # Get Mouse Position
         # Show Menu
         self.object_menu.exec_(QCursor.pos())
+
+    def get_fit_scale_factor(self) -> float:
+        if self.image_view.image is None:
+            return 1.0
+
+        max_width = self.scroll_area.width() - 5
+        max_height = self.scroll_area.height() - 5
+
+        ori_width = self.image_view.image.width()
+        ori_height = self.image_view.image.height()
+
+        factor = max_width / ori_width
+        if ori_height * factor > max_height:
+            factor = max_height / ori_height
+
+        return factor
+
+    def set_to_fit_scale_factor(self):
+        factor = self.get_fit_scale_factor()
+        self.image_view.scale_factor = factor

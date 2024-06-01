@@ -128,7 +128,11 @@ class ImageViewGraphics(QGraphicsView):
 
         return True
 
-    def try_to_set_scale_factor(self, value: float):
+    def try_to_set_scale_factor(self, value: float) -> bool:
+        # Check NULL Point
+        if self.image is None:
+            return False
+
         # Prevent too small
         if not self.check_new_scale_factor(value):
             return False

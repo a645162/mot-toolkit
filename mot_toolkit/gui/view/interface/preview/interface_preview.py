@@ -110,6 +110,9 @@ class InterFacePreview(BaseInterfaceWindow):
         self.toolkit_widget.btn_zoom_out_10.clicked.connect(
             lambda: self.main_image_view.zoom_out(1.0)
         )
+        self.toolkit_widget.btn_zoom_fit.clicked.connect(
+            lambda: self.main_image_view.set_to_fit_scale_factor()
+        )
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         self.main_image_view = DatasetImageView(parent=self)
