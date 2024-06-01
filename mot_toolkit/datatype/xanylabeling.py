@@ -1,5 +1,5 @@
-from typing import List
 import json
+from typing import List
 
 from PySide6.QtCore import Signal
 
@@ -195,6 +195,16 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return operate_result
 
+    def get_label_list(self) -> List[str]:
+        label_list = []
+
+        for rect_item in self.rect_annotation_list:
+            text = rect_item.label
+            if text not in label_list:
+                label_list.append(text)
+
+        return label_list
+
 
 def parse_xanylabeling_json(
         json_path: str,
@@ -221,10 +231,18 @@ def parse_xanylabeling_json(
 class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     slot_modified: Signal = Signal(int)
 
-    annotation_file: List[XAnyLabelingAnnotation] = []
+    annotation_file: List[XAnyLabelingAnnotation]
+
+    label_list: List[str]
+
+    # {"1": ["000001.json"]}
+    label_obj_list_dict: dict = {}
 
     def __init__(self):
         super().__init__()
+
+        self.annotation_file = []
+        self.label_list = []
 
     def load_json_files(self):
         if self.is_empty():
@@ -248,6 +266,27 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             if annotation_obj.is_modified:
                 annotation_obj.save()
 
+    def update_label_list(self) -> List[str]:
+        # Clear
+        label_list = self.label_list
+        label_list.clear()
+        self.label_obj_list_dict = {}
+
+        for annotation_obj in self.annotation_file:
+
+            current_label_list = annotation_obj.get_label_list()
+            for label in current_label_list:
+                # Update Label List
+                if label not in label_list:
+                    label_list.append(label)
+
+                # Update Label-List[Obj] Dict
+                if label not in self.label_obj_list_dict.keys():
+                    self.label_obj_list_dict[label] = []
+                self.label_obj_list_dict[label].append(annotation_obj)
+
+        return label_list
+
 
 if __name__ == '__main__':
     # Single File Test
@@ -262,8 +301,10 @@ if __name__ == '__main__':
     # Directory Test
     annotation_directory = XAnyLabelingAnnotationDirectory()
     annotation_directory.dir_path = r"../../Test"
-    annotation_directory.walk_dir(recursive=True)
+    annotation_directory.walk_dir(recursive=False)
     annotation_directory.sort_path(group_directory=True)
     annotation_directory.load_json_files()
+
+    print(annotation_directory.update_label_list())
 
     print()
