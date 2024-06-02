@@ -122,6 +122,7 @@ class DatasetImageView(ScrollImageView):
 
             # Set Theme
             rect_widget.activate_theme_name = self.__theme_name
+            rect_widget.set_appearance()
 
             # Set Label
             rect_widget.label = rect_item.label
