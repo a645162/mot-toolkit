@@ -113,5 +113,16 @@ class ListWithTitleWidget(QWidget):
         return index_list
 
     @property
+    def selection_text(self) -> str:
+        return self.list_widget.selection_text
+
+    @selection_text.setter
+    def selection_text(self, text: str):
+        self.list_widget.selection_text = text
+
+    @property
     def count(self) -> int:
         return self.list_widget.count()
+
+    def is_selected_last(self) -> bool:
+        return self.selection_index == self.count - 1

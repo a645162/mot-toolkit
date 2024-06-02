@@ -34,7 +34,10 @@ from gui.view.interface.preview. \
 class InterFacePreview(BaseInterfaceWindow):
     annotation_directory: XAnyLabelingAnnotationDirectory = None
 
-    file_str_list: List[str]
+    current_file_list: List[XAnyLabelingAnnotation]
+    current_file_str_list: List[str]
+
+    only_file_name: bool = False
 
     current_annotation_object: XAnyLabelingAnnotation = None
     current_file_path: str = ""
@@ -46,7 +49,8 @@ class InterFacePreview(BaseInterfaceWindow):
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
 
-        self.file_str_list = []
+        self.current_file_list = []
+        self.current_file_str_list = []
 
         self.annotation_directory = \
             XAnyLabelingAnnotationDirectory()
@@ -281,7 +285,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def load_directory(self):
         # Clear
-        self.file_str_list.clear()
+        self.current_file_str_list.clear()
         self.r_label_list_widget.list_widget.clear()
         self.r_object_list_widget.list_widget.clear()
         self.r_file_list_widget.list_widget.clear()
@@ -292,51 +296,41 @@ class InterFacePreview(BaseInterfaceWindow):
         self.annotation_directory.load_json_files()
         self.annotation_directory.update_label_list()
 
+        self.only_file_name = self.annotation_directory.can_only_file_name
+
+        # Update Label List
         for label_name in self.annotation_directory.label_list:
             self.r_label_list_widget.list_widget.addItem(label_name)
+        self.r_label_list_widget.list_widget.addItem("Disable Filter")
 
-        directory_list = []
-        ext_list = []
-        for annotation in self.annotation_directory.annotation_file:
-            file_path = annotation.file_path
-            directory_path = os.path.dirname(file_path)
-            file_name = os.path.basename(file_path)
-            file_ext = os.path.splitext(file_name)[1]
-            if (
-                    directory_path not in directory_list and
-                    os.path.isdir(directory_path)
-            ):
-                directory_list.append(directory_path)
-            if file_ext not in ext_list:
-                ext_list.append(file_ext)
+        # Update File List
+        self.current_file_list = \
+            self.annotation_directory.annotation_file
+        self.current_file_str_list = \
+            self.annotation_directory.file_name_list
 
-        only_file_name = (
-                len(directory_list) == 1 and
-                len(ext_list) == 1
-        )
-
-        for annotation in self.annotation_directory.annotation_file:
-            path = annotation.file_path
-            if only_file_name:
-                path = os.path.basename(path)
-                path = os.path.splitext(path)[0]
-
-            self.file_str_list.append(path)
-            self.r_file_list_widget.list_widget.addItem(path)
-
-        self.r_file_list_widget.update()
+        self.update_file_list_widget()
 
     def __slot_annotation_directory_modified(self):
         self.update_file_list_widget()
 
     def update_file_list_widget(self):
         annotation_obj_list: List[XAnyLabelingAnnotation] = \
-            self.annotation_directory.annotation_file
+            self.current_file_list
+
+        if len(annotation_obj_list) != self.r_file_list_widget.count:
+            # Clear
+            self.r_file_list_widget.list_widget.clear()
+
+            for i, current_annotation_obj in enumerate(annotation_obj_list):
+                self.r_file_list_widget.list_widget.addItem(
+                    self.current_file_str_list[i]
+                )
 
         for i, current_annotation_obj in enumerate(annotation_obj_list):
             current_item = self.r_file_list_widget.list_widget.item(i)
 
-            base_text = self.file_str_list[i]
+            base_text = self.current_file_str_list[i]
             if current_annotation_obj.is_modified:
                 current_item.setForeground(QColor(255, 0, 0))
                 base_text = f"* {base_text}"
@@ -345,6 +339,8 @@ class InterFacePreview(BaseInterfaceWindow):
 
             current_item.setText(base_text)
 
+        self.r_file_list_widget.update()
+
     def __auto_load_directory(self):
         if not os.path.isdir(self.work_directory_path):
             return
@@ -352,7 +348,14 @@ class InterFacePreview(BaseInterfaceWindow):
         self.load_directory()
 
     def __update_object_list_widget(self):
-        index = self.r_file_list_widget.selection_index
+        selection_text = self.r_file_list_widget.selection_text
+        index = -1
+        for i, file_name in enumerate(self.annotation_directory.file_name_list):
+            if file_name == selection_text:
+                index = i
+                break
+        if index == -1:
+            return
 
         self.current_annotation_object = \
             self.annotation_directory.annotation_file[index]
@@ -370,7 +373,23 @@ class InterFacePreview(BaseInterfaceWindow):
         self.r_object_list_widget.update()
 
     def __label_list_item_selection_changed(self):
-        pass
+        if self.r_label_list_widget.is_selected_last():
+            self.current_file_list = \
+                self.annotation_directory.annotation_file
+            self.current_file_str_list = \
+                self.annotation_directory.file_name_list
+            return
+
+        label_text = self.r_label_list_widget.selection_text
+
+        self.current_file_list = \
+            self.annotation_directory.label_obj_list_dict[label_text]
+
+        self.current_file_str_list = []
+        for annotation_obj in self.current_file_list:
+            self.current_file_str_list.append(annotation_obj.file_name_no_extension)
+
+        self.update_file_list_widget()
 
     def __file_list_item_selection_changed(self):
         if self.menu_settings_auto_save.isChecked():

@@ -1,5 +1,6 @@
-import json
 from typing import List
+import json
+import os.path
 
 from PySide6.QtCore import Signal
 
@@ -238,17 +239,24 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     # {"1": ["000001.json"]}
     label_obj_list_dict: dict = {}
 
+    file_name_list: List[str]
+    __can_only_file_name: bool = False
+
     def __init__(self):
         super().__init__()
 
         self.annotation_file = []
         self.label_list = []
+        self.file_name_list = []
 
     def load_json_files(self):
+        # Check File Path List
         if self.is_empty():
             return
 
+        # Clear
         self.annotation_file.clear()
+        self.file_name_list.clear()
 
         for i, json_file in enumerate(self.file_list):
             annotation = \
@@ -260,6 +268,11 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             annotation.slot_modified.connect(self.slot_modified)
 
             self.annotation_file.append(annotation)
+
+        self.__check_can_only_file_name()
+
+        for annotation in self.annotation_file:
+            self.file_name_list.append(annotation.file_name_no_extension)
 
     def save_json_files(self):
         for annotation_obj in self.annotation_file:
@@ -286,6 +299,35 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                 self.label_obj_list_dict[label].append(annotation_obj)
 
         return label_list
+
+    def __check_can_only_file_name(self) -> bool:
+        directory_list = []
+        ext_list = []
+        for annotation in self.annotation_file:
+            file_path = annotation.file_path
+            directory_path = os.path.dirname(file_path)
+            file_name = os.path.basename(file_path)
+            file_ext = os.path.splitext(file_name)[1]
+            if (
+                    directory_path not in directory_list and
+                    os.path.isdir(directory_path)
+            ):
+                directory_list.append(directory_path)
+            if file_ext not in ext_list:
+                ext_list.append(file_ext)
+
+        only_file_name = (
+                len(directory_list) == 1 and
+                len(ext_list) == 1
+        )
+
+        self.__can_only_file_name = only_file_name
+
+        return only_file_name
+
+    @property
+    def can_only_file_name(self) -> bool:
+        return self.__can_only_file_name
 
 
 if __name__ == '__main__':

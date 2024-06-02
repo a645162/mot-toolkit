@@ -72,6 +72,24 @@ class AnnotationFile(QObject):
 
         return self.__pic_path
 
+    @property
+    def file_name(self) -> str:
+        path = self.file_path.strip()
+
+        if len(path) == 0:
+            return ""
+
+        return os.path.basename(path)
+
+    @property
+    def file_name_no_extension(self) -> str:
+        file_name = self.file_name
+
+        if len(file_name) == 0:
+            return ""
+
+        return os.path.splitext(file_name)[0]
+
     def check_pic_is_exist(self) -> bool:
         return self.pic_path != ""
 

@@ -105,6 +105,15 @@ class BaseListWidgetWithMenu(QListWidget):
         selected_item = self.item(index)
         return selected_item.text()
 
+    @selection_text.setter
+    def selection_text(self, text: str):
+        index = self.selection_index
+        if index == -1:
+            return
+
+        selected_item = self.item(index)
+        selected_item.setText(text)
+
     @property
     def selection_index_list(self) -> List[int]:
         selected_items = self.selectedItems()
