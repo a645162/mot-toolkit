@@ -2,6 +2,12 @@ import os.path
 import sys
 from typing import Optional
 
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
+
+logger.info("Start To Load MainWindow Package")
+
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
@@ -9,7 +15,6 @@ from PySide6.QtWidgets import (
     QVBoxLayout, QPushButton, QLabel,
 )
 
-from gui.view.interface.multi_level.interface_multi_level import InterfaceMultiLevel
 from mot_toolkit.gui.common.system_wide_menu import (
     init_system_menu
 )
@@ -19,6 +24,8 @@ from mot_toolkit.gui.view.components.select_directory_path import (
 )
 
 from mot_toolkit.gui.view.interface. \
+    multi_level.interface_multi_level import InterfaceMultiLevel
+from mot_toolkit.gui.view.interface. \
     preview.interface_preview import InterFacePreview
 from mot_toolkit.gui.view.interface. \
     statistics.interface_statistics import InterfaceStatistics
@@ -26,11 +33,19 @@ from mot_toolkit.gui.view.interface. \
 from mot_toolkit.utils.system_info import is_macos
 
 # Load Settings
-from mot_toolkit.gui.view.interface. \
-    settings.global_settings import program_settings
+from mot_toolkit.gui.common.global_settings import program_settings
+
+logger.info("Start To Load Qt Resource")
 
 # Load Program Resources
-from mot_toolkit.gui.resources import resources
+
+logger.info("Load Qt Resource Success")
+
+from mot_toolkit.gui.resources.resources import qInitResources
+
+qInitResources()
+
+logger.info("Load Package Finished!")
 
 
 class MainWindow(QMainWindow):

@@ -1,11 +1,14 @@
 from PySide6.QtCore import QSettings
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
 
 
 class ProgramSettings:
     settings = QSettings("KHM", "mot-toolkit")
 
     def __init__(self):
-        pass
+        logger.info("ProgramSettings Init")
 
     def load(self):
         pass
@@ -25,6 +28,21 @@ class ProgramSettings:
     def last_work_directory(self, value: str):
         self.settings.setValue(
             "last/last_work_directory",
+            value
+        )
+
+    @property
+    def preview_auto_save(self) -> bool:
+        return bool(self.settings.value(
+            "preview/auto_save",
+            False,
+            type=bool
+        ))
+
+    @preview_auto_save.setter
+    def preview_auto_save(self, value: bool):
+        self.settings.setValue(
+            "preview/auto_save",
             value
         )
 

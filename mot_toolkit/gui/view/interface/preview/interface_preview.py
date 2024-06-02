@@ -23,12 +23,19 @@ from mot_toolkit.gui.view.interface.preview. \
 from mot_toolkit.gui.view.interface.preview. \
     components.dataset_image_view_widget import DatasetImageView
 
-from gui.view.interface.preview. \
+from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.label_list_widget import LabelListWidget
-from gui.view.interface.preview. \
+from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.file_list_widget import FileListWidget
-from gui.view.interface.preview. \
+from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.object_list_widget import ObjectListWidget
+
+# Load Settings
+from mot_toolkit.gui.common.global_settings import program_settings
+
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
 
 
 class InterFacePreview(BaseInterfaceWindow):
@@ -48,6 +55,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
+        logger.info(f"Preview Work Directory: {work_directory_path}")
 
         self.current_file_list = []
         self.current_file_str_list = []
@@ -241,6 +249,13 @@ class InterFacePreview(BaseInterfaceWindow):
                 "Switching automatically to save", self.menu_settings
             )
         self.menu_settings_auto_save.setCheckable(True)
+        self.menu_settings_auto_save.setChecked(program_settings.preview_auto_save)
+        self.menu_settings_auto_save.triggered.connect(
+            lambda: setattr(
+                program_settings, "preview_auto_save",
+                self.menu_settings_auto_save.isChecked()
+            )
+        )
         self.menu_settings.addAction(self.menu_settings_auto_save)
 
         # Help Menu

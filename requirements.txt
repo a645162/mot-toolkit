@@ -1,3 +1,5 @@
+loguru
+
 pyside6
 opencv-python
 

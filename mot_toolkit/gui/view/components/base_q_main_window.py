@@ -2,8 +2,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMainWindow
 
 # Load Settings
-from mot_toolkit.gui.view.interface. \
-    settings.global_settings import program_settings
+from mot_toolkit.gui.common.global_settings import program_settings
 
 
 class BaseQMainWindow(QMainWindow):
