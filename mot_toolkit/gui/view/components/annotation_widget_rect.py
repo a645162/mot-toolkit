@@ -16,6 +16,30 @@ class AnnotationWidgetRect(ResizableRect):
     selecting: bool
     __selecting: bool = False
 
+    final_theme_color: dict = {
+        "light_default": {
+            "border": Qt.GlobalColor.blue,
+            "fill": Qt.GlobalColor.transparent,
+            "opacity": 0.3,
+
+            "border_selected": Qt.GlobalColor.red,
+            "fill_selected": Qt.GlobalColor.green,
+            "opacity_selected": 0.5,
+        },
+        "dark_default": {
+            "border": Qt.GlobalColor.green,
+            "fill": Qt.GlobalColor.transparent,
+            "opacity": 0.3,
+
+            "border_selected": Qt.GlobalColor.red,
+            "fill_selected": Qt.GlobalColor.green,
+            "opacity_selected": 0.5,
+        }
+    }
+    theme_color: dict = {}
+
+    activate_theme_name: str = "light_default"
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -105,14 +129,22 @@ class AnnotationWidgetRect(ResizableRect):
         self.set_appearance()
 
     def set_appearance(self):
-        if self.selecting:
-            self.setBorderColor(Qt.GlobalColor.red)
-            self.setFillColor(Qt.GlobalColor.green)
-            self.setFillOpacity(0.5)
+        theme_name = self.activate_theme_name
+        if theme_name not in self.final_theme_color.keys():
+            theme_name = "light_default"
+
+        theme: dict = self.final_theme_color[theme_name]
+
+        if not self.selecting:
+            # Not Select
+            self.setBorderColor(theme["border"])
+            self.setFillColor(theme["fill"])
+            self.setFillOpacity(theme["opacity"])
         else:
-            self.setBorderColor(Qt.GlobalColor.blue)
-            self.setFillColor(Qt.GlobalColor.transparent)
-            self.setFillOpacity(0.3)
+            # Selecting
+            self.setBorderColor(theme["border_selected"])
+            self.setFillColor(theme["fill_selected"])
+            self.setFillOpacity(theme["opacity_selected"])
 
     def keyPressEvent(self, event):
         modifiers = event.modifiers()

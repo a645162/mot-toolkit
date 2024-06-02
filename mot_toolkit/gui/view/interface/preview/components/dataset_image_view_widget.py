@@ -26,6 +26,8 @@ class DatasetImageView(ScrollImageView):
     annotation_widget_rect_list: List[AnnotationWidgetRect]
 
     object_menu: QMenu = None
+    __reverse_color: bool = False
+    __theme_name: str = "light_default"
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -54,18 +56,6 @@ class DatasetImageView(ScrollImageView):
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
                 match key:
-                    case Qt.Key.Key_Up:
-                        self.slot_previous_image.emit()
-                        return
-                    case Qt.Key.Key_Down:
-                        self.slot_next_image.emit()
-                        return
-                    case Qt.Key.Key_Left:
-                        self.slot_previous_image.emit()
-                        return
-                    case Qt.Key.Key_Right:
-                        self.slot_next_image.emit()
-                        return
                     case Qt.Key.Key_A:
                         self.slot_previous_image.emit()
                         return
@@ -123,12 +113,17 @@ class DatasetImageView(ScrollImageView):
         for rect_item in self.__annotation_obj.rect_annotation_list:
             # print(rect_item)
             rect_widget = AnnotationWidgetRect(parent=self.image_view)
+
             rect_widget.slot_try_to_select.connect(try_to_select)
             rect_widget.slot_resized.connect(self.__rect_widget_resized)
             rect_widget.slot_try_to_show_menu.connect(
                 self.__rect_widget_try_to_show_menu
             )
 
+            # Set Theme
+            rect_widget.activate_theme_name = self.__theme_name
+
+            # Set Label
             rect_widget.label = rect_item.label
 
             # Set Rect Scale Factor when the image is changed
@@ -222,3 +217,33 @@ class DatasetImageView(ScrollImageView):
     def set_to_fit_scale_factor(self):
         factor = self.get_fit_scale_factor()
         self.image_view.scale_factor = factor
+
+    def try_to_reverse_color(self):
+        self.reverse_color = not self.reverse_color
+
+    @property
+    def reverse_color(self) -> bool:
+        return self.__reverse_color
+
+    @reverse_color.setter
+    def reverse_color(self, value: bool):
+        self.__reverse_color = value
+
+        theme_name = "light_default"
+        if value:
+            theme_name = "dark_default"
+        self.__theme_name = theme_name
+
+        self.update_theme()
+
+    def update_theme(self, theme_name: str = ""):
+        theme_name = theme_name.strip()
+
+        if len(theme_name) == 0:
+            theme_name = self.__theme_name
+        else:
+            self.__theme_name = theme_name
+
+        for rect_widget in self.annotation_widget_rect_list:
+            rect_widget.activate_theme_name = theme_name
+            rect_widget.set_appearance()

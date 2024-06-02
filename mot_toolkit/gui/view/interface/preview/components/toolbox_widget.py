@@ -106,6 +106,14 @@ class ToolboxWidget(QWidget):
         self.btn_zoom_fit.setToolTip("Zoom Fit")
         self.v_layout.addWidget(self.btn_zoom_fit)
 
+        self.v_layout.addWidget(QLabel(parent=self))
+
+        self.btn_reverse_color = QPushButton(parent=self)
+        self.__set_size_policy(self.btn_reverse_color)
+        self.btn_reverse_color.setIcon(QIcon(":/toolbox/reverse_color"))
+        self.btn_reverse_color.setToolTip("Reverse Color")
+        self.v_layout.addWidget(self.btn_reverse_color)
+
         self.v_layout.addStretch()
 
     @staticmethod

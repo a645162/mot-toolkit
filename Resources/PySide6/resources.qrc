@@ -22,6 +22,8 @@
         <file alias="zoom_restore">./Icon/Toolbox/zoom_restore.jpg</file>
         <file alias="zoom_out">./Icon/Toolbox/zoom_out.jpg</file>
         <file alias="zoom_fit">./Icon/Toolbox/zoom_fit.jpg</file>
+
+        <file alias="reverse_color">./Icon/Toolbox/reverse_color.jpg</file>
     </qresource>
 
 </RCC>

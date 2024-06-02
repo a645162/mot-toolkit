@@ -120,6 +120,9 @@ class InterFacePreview(BaseInterfaceWindow):
         self.toolkit_widget.btn_zoom_fit.clicked.connect(
             lambda: self.main_image_view.set_to_fit_scale_factor()
         )
+        self.toolkit_widget.btn_reverse_color.clicked.connect(
+            lambda: self.main_image_view.try_to_reverse_color()
+        )
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         self.main_image_view = DatasetImageView(parent=self)
