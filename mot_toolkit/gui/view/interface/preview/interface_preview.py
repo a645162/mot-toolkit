@@ -311,6 +311,9 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.update_file_list_widget()
 
+        if self.r_file_list_widget.count > 0:
+            self.r_file_list_widget.selection_index = 0
+
     def __slot_annotation_directory_modified(self):
         self.update_file_list_widget()
 

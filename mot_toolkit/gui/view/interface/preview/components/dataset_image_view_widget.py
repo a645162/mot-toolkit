@@ -91,9 +91,13 @@ class DatasetImageView(ScrollImageView):
         # print(annotation_obj.file_path)
         # print(annotation_obj.pic_path)
 
-        self.current_q_pixmap = QPixmap(annotation_obj.pic_path)
-        self.init_annotation_widget()
-        self.image_view.set_image(self.current_q_pixmap)
+        try:
+            self.current_q_pixmap = QPixmap(annotation_obj.pic_path)
+            self.init_annotation_widget()
+            self.image_view.set_image(self.current_q_pixmap)
+        except Exception as e:
+            print(e)
+            self.image_view.set_image(None)
 
     def init_annotation_widget(self):
         # Remove All Old Widget
