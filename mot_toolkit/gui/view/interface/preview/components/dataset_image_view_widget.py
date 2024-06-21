@@ -217,7 +217,8 @@ class DatasetImageView(ScrollImageView):
 
     def set_to_fit_scale_factor(self):
         factor = self.get_fit_scale_factor()
-        self.image_view.scale_factor = factor
+        self.slot_try_to_zoom.emit(factor)
+        # self.image_view.scale_factor = factor
 
     def try_to_reverse_color(self):
         self.reverse_color = not self.reverse_color
