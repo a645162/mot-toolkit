@@ -40,7 +40,9 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
     csv_ori_data_list: List[Tuple[str, str, str, str, str, str]] = []
 
     video_list = walk_dir_get_dir_list(dir_path)
-    # print("Video:", len(video_list))
+    video_count = len(video_list)
+    print("Video Count:", video_count)
+    csv_ori_data_list.append((dir_path, str(video_count), "", "", "", ""))
 
     for video_dir_path in video_list:
         print(video_dir_path)
@@ -57,11 +59,12 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
             annotation_directory.dir_path = sequence_dir_path
             annotation_directory.walk_dir(recursive=False)
             annotation_directory.sort_path(group_directory=True)
-            annotation_directory.load_json_files()
 
             # Frame Count
             frame_count = len(annotation_directory.annotation_file)
             print("\t\tFrame:", frame_count)
+
+            annotation_directory.load_json_files()
 
             # Class Sum(Same Tag)
             class_sum_list = annotation_directory.update_label_list()
