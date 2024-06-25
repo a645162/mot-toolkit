@@ -61,7 +61,7 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
             annotation_directory.sort_path(group_directory=True)
 
             # Frame Count
-            frame_count = len(annotation_directory.annotation_file)
+            frame_count = len(annotation_directory.file_list)
             print("\t\tFrame:", frame_count)
 
             annotation_directory.load_json_files()
@@ -116,5 +116,9 @@ def save_to_csv(
 
 if __name__ == "__main__":
     result_list = \
-        stat_count(r"M:\Track\TrackShipOnlineVideo\sea_video_20240313_part2\OnboardTL")
+        stat_count(r"C:\Users\user\Desktop\Datasets\TrackShipOnlineVideo\sea_video_20240313_part2\OnboardTL")
     save_to_csv(result_list, "part2.csv")
+
+    result_list = \
+        stat_count(r"C:\Users\user\Desktop\Datasets\TrackShipOnlineVideo\sea_video_20240313_part4\OnshoreTL")
+    save_to_csv(result_list, "part4.csv")
