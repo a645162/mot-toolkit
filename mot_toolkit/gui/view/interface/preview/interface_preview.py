@@ -1,9 +1,8 @@
-from typing import List
 import os.path
+from typing import List
 
 from PySide6.QtCore import QSize, QUrl
 from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
-
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
@@ -14,25 +13,20 @@ from mot_toolkit.datatype.xanylabeling import (
     XAnyLabelingAnnotationDirectory,
     XAnyLabelingAnnotation
 )
-
+# Load Settings
+from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view. \
     components.base_interface_window import BaseInterfaceWindow
-
-from mot_toolkit.gui.view.interface.preview. \
-    components.toolbox_widget import ToolboxWidget
 from mot_toolkit.gui.view.interface.preview. \
     components.dataset_image_view_widget import DatasetImageView
-
-from mot_toolkit.gui.view.interface.preview. \
-    components.right_widget.label_list_widget import LabelListWidget
 from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.file_list_widget import FileListWidget
 from mot_toolkit.gui.view.interface.preview. \
+    components.right_widget.label_list_widget import LabelListWidget
+from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.object_list_widget import ObjectListWidget
-
-# Load Settings
-from mot_toolkit.gui.common.global_settings import program_settings
-
+from mot_toolkit.gui.view.interface.preview. \
+    components.toolbox_widget import ToolboxWidget
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -320,6 +314,7 @@ class InterFacePreview(BaseInterfaceWindow):
         for label_name in self.annotation_directory.label_list:
             self.r_label_list_widget.list_widget.addItem(label_name)
         self.r_label_list_widget.list_widget.addItem("Disable Filter")
+        self.r_label_list_widget.update()
 
         # Update File List
         self.current_file_list = \

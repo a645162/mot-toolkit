@@ -15,6 +15,8 @@ class ListWithTitleWidget(QWidget):
     __title: str
     __title_show: str
 
+    __count_offset: int = 0
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -58,16 +60,27 @@ class ListWithTitleWidget(QWidget):
         self.update()
 
     @property
+    def count_offset(self) -> int:
+        return self.__count_offset
+
+    @count_offset.setter
+    def count_offset(self, value: int):
+        self.__count_offset = value
+
+        self.update()
+
+    @property
     def __title_show(self) -> str:
         title_str = self.title
 
         end_str = ""
 
-        count = self.list_widget.count()
+        count = self.list_widget.count() + self.count_offset
+
         if count == 0:
-            end_str = end_str + " (Empty)"
+            end_str = end_str + " [Empty]"
         else:
-            end_str = end_str + " (" + str(count) + ")"
+            end_str = end_str + " [" + str(count) + "]"
 
         title_str = title_str + end_str
 

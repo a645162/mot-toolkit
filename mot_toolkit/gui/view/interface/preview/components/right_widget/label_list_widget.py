@@ -14,7 +14,8 @@ class LabelListWidget(ListWithTitleWidget):
         self.__init_menu()
 
     def __setup_widget_properties(self):
-        self.set_title("Label")
+        self.set_title("Label(Classes)")
+        self.count_offset = -1
 
     def __init_widgets(self):
         pass
