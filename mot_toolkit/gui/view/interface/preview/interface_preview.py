@@ -450,21 +450,23 @@ class InterFacePreview(BaseInterfaceWindow):
         return True
 
     def __label_class_list_item_selection_changed(self):
-        if self.r_label_class_list_widget.is_selected_last():
+        if (
+                self.r_label_class_list_widget.count == 1 or
+                self.r_label_class_list_widget.is_selected_last()
+        ):
             self.current_file_list = \
                 self.annotation_directory.annotation_file
             self.current_file_str_list = \
                 self.annotation_directory.file_name_list
-            return
+        else:
+            label_text = self.r_label_class_list_widget.selection_text
 
-        label_text = self.r_label_class_list_widget.selection_text
+            self.current_file_list = \
+                self.annotation_directory.label_obj_list_dict[label_text]
 
-        self.current_file_list = \
-            self.annotation_directory.label_obj_list_dict[label_text]
-
-        self.current_file_str_list = []
-        for annotation_obj in self.current_file_list:
-            self.current_file_str_list.append(annotation_obj.file_name_no_extension)
+            self.current_file_str_list = []
+            for annotation_obj in self.current_file_list:
+                self.current_file_str_list.append(annotation_obj.file_name_no_extension)
 
         self.update_file_list_widget()
 

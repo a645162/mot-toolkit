@@ -141,5 +141,8 @@ class ListWithTitleWidget(QWidget):
     def count(self) -> int:
         return self.list_widget.count()
 
+    def is_no_selected(self) -> bool:
+        return self.list_widget.selection_index == -1
+
     def is_selected_last(self) -> bool:
         return self.selection_index == self.count - 1
