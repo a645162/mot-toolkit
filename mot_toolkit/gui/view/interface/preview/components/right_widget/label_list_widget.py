@@ -2,7 +2,7 @@ from mot_toolkit.gui.view. \
     components.list_with_title_widget import ListWithTitleWidget
 
 
-class LabelListWidget(ListWithTitleWidget):
+class LabelClassListWidget(ListWithTitleWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)

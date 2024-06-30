@@ -22,7 +22,7 @@ from mot_toolkit.gui.view.interface.preview. \
 from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.file_list_widget import FileListWidget
 from mot_toolkit.gui.view.interface.preview. \
-    components.right_widget.label_list_widget import LabelListWidget
+    components.right_widget.label_list_widget import LabelClassListWidget
 from mot_toolkit.gui.view.interface.preview. \
     components.right_widget.object_list_widget import ObjectListWidget
 from mot_toolkit.gui.view.interface.preview. \
@@ -137,10 +137,10 @@ class InterFacePreview(BaseInterfaceWindow):
         self.right_v_layout = QVBoxLayout()
         self.right_widget.setLayout(self.right_v_layout)
 
-        self.r_label_list_widget = LabelListWidget(parent=self)
-        self.r_label_list_widget. \
+        self.r_label_class_list_widget = LabelClassListWidget(parent=self)
+        self.r_label_class_list_widget. \
             list_widget.itemSelectionChanged.connect(self.__label_list_item_selection_changed)
-        self.right_v_layout.addWidget(self.r_label_list_widget)
+        self.right_v_layout.addWidget(self.r_label_class_list_widget)
 
         self.r_object_list_widget = ObjectListWidget(parent=self)
         self.r_object_list_widget. \
@@ -298,7 +298,7 @@ class InterFacePreview(BaseInterfaceWindow):
     def load_directory(self):
         # Clear
         self.current_file_str_list.clear()
-        self.r_label_list_widget.list_widget.clear()
+        self.r_label_class_list_widget.list_widget.clear()
         self.r_object_list_widget.list_widget.clear()
         self.r_file_list_widget.list_widget.clear()
 
@@ -312,9 +312,9 @@ class InterFacePreview(BaseInterfaceWindow):
 
         # Update Label List
         for label_name in self.annotation_directory.label_list:
-            self.r_label_list_widget.list_widget.addItem(label_name)
-        self.r_label_list_widget.list_widget.addItem("Disable Filter")
-        self.r_label_list_widget.update()
+            self.r_label_class_list_widget.list_widget.addItem(label_name)
+        self.r_label_class_list_widget.list_widget.addItem("Disable Filter")
+        self.r_label_class_list_widget.update()
 
         # Update File List
         self.current_file_list = \
@@ -388,15 +388,32 @@ class InterFacePreview(BaseInterfaceWindow):
             )
         self.r_object_list_widget.update()
 
+        self.__update_label_class_auto_select()
+
+    def __update_label_class_auto_select(self):
+        if (
+                self.r_label_class_list_widget.count > 1 and
+                self.r_label_class_list_widget.selection_index != self.r_label_class_list_widget.count - 1
+        ):
+            # Have Selected Label Class
+            label_name = self.r_label_class_list_widget.selection_text
+            target_label_index = -1
+            for i, rect_item in enumerate(self.current_annotation_object.rect_annotation_list):
+                if rect_item.label == label_name:
+                    target_label_index = i
+                    break
+            if target_label_index != -1:
+                self.r_object_list_widget.selection_index = target_label_index
+
     def __label_list_item_selection_changed(self):
-        if self.r_label_list_widget.is_selected_last():
+        if self.r_label_class_list_widget.is_selected_last():
             self.current_file_list = \
                 self.annotation_directory.annotation_file
             self.current_file_str_list = \
                 self.annotation_directory.file_name_list
             return
 
-        label_text = self.r_label_list_widget.selection_text
+        label_text = self.r_label_class_list_widget.selection_text
 
         self.current_file_list = \
             self.annotation_directory.label_obj_list_dict[label_text]
@@ -406,6 +423,8 @@ class InterFacePreview(BaseInterfaceWindow):
             self.current_file_str_list.append(annotation_obj.file_name_no_extension)
 
         self.update_file_list_widget()
+
+        self.__update_label_class_auto_select()
 
     def __file_list_item_selection_changed(self):
         if self.menu_settings_auto_save.isChecked():
