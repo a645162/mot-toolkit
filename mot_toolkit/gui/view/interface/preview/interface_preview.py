@@ -381,10 +381,18 @@ class InterFacePreview(BaseInterfaceWindow):
         self.load_directory()
 
     def __update_object_list_widget(self):
-        selection_text = self.r_file_list_widget.selection_text
+        obj_selection_index = self.r_object_list_widget.selection_index
+        current_label_text = ""
+        if obj_selection_index >= 0:
+            current_label_text = \
+                self.current_annotation_object \
+                    .rect_annotation_list[obj_selection_index] \
+                    .label
+
+        file_selection_text = self.r_file_list_widget.selection_text
         index = -1
         for i, file_name in enumerate(self.annotation_directory.file_name_list):
-            if file_name == selection_text:
+            if file_name == file_selection_text:
                 index = i
                 break
         if index == -1:
@@ -408,11 +416,12 @@ class InterFacePreview(BaseInterfaceWindow):
         if self.is_in_class_filter_mode():
             self.__update_label_class_auto_select()
         else:
-            pass
+            self.select_target_tag(current_label_text)
 
     def is_in_class_filter_mode(self) -> bool:
         return (
                 self.r_label_class_list_widget.count > 1 and
+                self.r_label_class_list_widget.selection_index != -1 and
                 self.r_label_class_list_widget.selection_index != self.r_label_class_list_widget.count - 1
         )
 
@@ -420,13 +429,25 @@ class InterFacePreview(BaseInterfaceWindow):
         if self.is_in_class_filter_mode():
             # Have Selected Label Class
             label_name = self.r_label_class_list_widget.selection_text
-            target_label_index = -1
-            for i, rect_item in enumerate(self.current_annotation_object.rect_annotation_list):
-                if rect_item.label == label_name:
-                    target_label_index = i
-                    break
-            if target_label_index != -1:
-                self.r_object_list_widget.selection_index = target_label_index
+            self.select_target_tag(label_name)
+
+    def select_target_tag(self, tag_text: str) -> bool:
+        if len(tag_text.strip()) == 0:
+            return False
+
+        target_label_index = -1
+        for i, rect_item in enumerate(self.current_annotation_object.rect_annotation_list):
+            if rect_item.label == tag_text:
+                target_label_index = i
+                break
+
+        # Not Found
+        if target_label_index == -1:
+            return False
+
+        self.r_object_list_widget.selection_index = target_label_index
+
+        return True
 
     def __label_class_list_item_selection_changed(self):
         if self.r_label_class_list_widget.is_selected_last():

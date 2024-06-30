@@ -16,6 +16,7 @@ class AnnotationWidgetRect(ResizableRect):
     selecting: bool
     __selecting: bool = False
 
+    # Theme Settings
     final_theme_color: dict = {
         "light_default": {
             "border": Qt.GlobalColor.blue,
@@ -29,11 +30,11 @@ class AnnotationWidgetRect(ResizableRect):
         "dark_default": {
             "border": Qt.GlobalColor.green,
             "fill": Qt.GlobalColor.transparent,
-            "opacity": 0.2,
+            "opacity": 0.3,
 
-            "border_selected": Qt.GlobalColor.red,
-            "fill_selected": Qt.GlobalColor.green,
-            "opacity_selected": 0.2,
+            "border_selected": Qt.GlobalColor.white,
+            "fill_selected": Qt.GlobalColor.transparent,
+            "opacity_selected": 0.3,
         }
     }
     theme_color: dict = {}
