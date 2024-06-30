@@ -107,7 +107,11 @@ class ListWithTitleWidget(QWidget):
 
     @selection_index.setter
     def selection_index(self, index: int):
-        if index < 0 or index >= self.list_widget.count():
+        if index < -1 or index >= self.list_widget.count():
+            return
+
+        if index == -1:
+            self.list_widget.clearSelection()
             return
 
         self.list_widget.setCurrentRow(index)

@@ -164,7 +164,7 @@ class DatasetImageView(ScrollImageView):
                 rect_widget.scale_factor = scale_factor
 
     def set_selection_rect_index(self, index):
-        if index < 0 or index >= len(self.annotation_widget_rect_list):
+        if index < -1 or index >= len(self.annotation_widget_rect_list):
             return
 
         for i, rect_widget in enumerate(self.annotation_widget_rect_list):

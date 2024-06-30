@@ -55,3 +55,13 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_mark_appear)
         select_enable_list.append(self.menu_mark_appear)
+
+        q_menu.addSeparator()
+
+        self.menu_unselect_all = \
+            QAction(
+                "Unselect All",
+                q_menu
+            )
+        q_menu.addAction(self.menu_unselect_all)
+        select_enable_list.append(self.menu_unselect_all)

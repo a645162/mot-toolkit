@@ -139,7 +139,7 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.r_label_class_list_widget = LabelClassListWidget(parent=self)
         self.r_label_class_list_widget. \
-            list_widget.itemSelectionChanged.connect(self.__label_list_item_selection_changed)
+            list_widget.itemSelectionChanged.connect(self.__label_class_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_label_class_list_widget)
 
         self.r_object_list_widget = ObjectListWidget(parent=self)
@@ -242,7 +242,7 @@ class InterFacePreview(BaseInterfaceWindow):
             QAction(
                 "Switching automatically to save", self.menu_settings
             )
-        self.menu_settings_auto_save.setCheckable(True)
+        self.menu_settings_auto_save.setCheckable(False)
         self.menu_settings_auto_save.setChecked(program_settings.preview_auto_save)
         self.menu_settings_auto_save.triggered.connect(
             lambda: setattr(
@@ -251,6 +251,20 @@ class InterFacePreview(BaseInterfaceWindow):
             )
         )
         self.menu_settings.addAction(self.menu_settings_auto_save)
+
+        self.menu_settings_auto_select_same_tag = \
+            QAction(
+                "Switching automatically select same tag", self.menu_settings
+            )
+        self.menu_settings_auto_select_same_tag.setCheckable(True)
+        self.menu_settings_auto_select_same_tag.setChecked(program_settings.preview_auto_save)
+        self.menu_settings_auto_select_same_tag.triggered.connect(
+            lambda: setattr(
+                program_settings, "preview_auto_select_same_tag",
+                self.menu_settings_auto_select_same_tag.isChecked()
+            )
+        )
+        self.menu_settings.addAction(self.menu_settings_auto_select_same_tag)
 
         # Help Menu
         self.menu_help = self.menu.addMenu("Help")
@@ -284,6 +298,9 @@ class InterFacePreview(BaseInterfaceWindow):
             .triggered.connect(self.__action_obj_del_target)
         self.r_object_list_widget.menu_operate_del_subsequent \
             .triggered.connect(self.__action_obj_del_subsequent_target)
+
+        self.r_object_list_widget.menu_unselect_all \
+            .triggered.connect(self.__action_obj_unselect_all)
 
     def update(self):
         super().update()
@@ -388,13 +405,19 @@ class InterFacePreview(BaseInterfaceWindow):
             )
         self.r_object_list_widget.update()
 
-        self.__update_label_class_auto_select()
+        if self.is_in_class_filter_mode():
+            self.__update_label_class_auto_select()
+        else:
+            pass
 
-    def __update_label_class_auto_select(self):
-        if (
+    def is_in_class_filter_mode(self) -> bool:
+        return (
                 self.r_label_class_list_widget.count > 1 and
                 self.r_label_class_list_widget.selection_index != self.r_label_class_list_widget.count - 1
-        ):
+        )
+
+    def __update_label_class_auto_select(self):
+        if self.is_in_class_filter_mode():
             # Have Selected Label Class
             label_name = self.r_label_class_list_widget.selection_text
             target_label_index = -1
@@ -405,7 +428,7 @@ class InterFacePreview(BaseInterfaceWindow):
             if target_label_index != -1:
                 self.r_object_list_widget.selection_index = target_label_index
 
-    def __label_list_item_selection_changed(self):
+    def __label_class_list_item_selection_changed(self):
         if self.r_label_class_list_widget.is_selected_last():
             self.current_file_list = \
                 self.annotation_directory.annotation_file
@@ -506,6 +529,9 @@ class InterFacePreview(BaseInterfaceWindow):
             annotation_obj.del_by_label(label)
 
         self.__update_object_list_widget()
+
+    def __action_obj_unselect_all(self):
+        self.r_object_list_widget.selection_index = -1
 
     def check_is_have_modified(self) -> bool:
         found = False

@@ -20,20 +20,20 @@ class AnnotationWidgetRect(ResizableRect):
         "light_default": {
             "border": Qt.GlobalColor.blue,
             "fill": Qt.GlobalColor.transparent,
-            "opacity": 0.3,
+            "opacity": 0.2,
 
             "border_selected": Qt.GlobalColor.red,
             "fill_selected": Qt.GlobalColor.green,
-            "opacity_selected": 0.5,
+            "opacity_selected": 0.2,
         },
         "dark_default": {
             "border": Qt.GlobalColor.green,
             "fill": Qt.GlobalColor.transparent,
-            "opacity": 0.3,
+            "opacity": 0.2,
 
             "border_selected": Qt.GlobalColor.red,
             "fill_selected": Qt.GlobalColor.green,
-            "opacity_selected": 0.5,
+            "opacity_selected": 0.2,
         }
     }
     theme_color: dict = {}
