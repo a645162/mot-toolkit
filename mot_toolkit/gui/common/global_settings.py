@@ -1,4 +1,5 @@
 from PySide6.QtCore import QSettings
+
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -31,6 +32,8 @@ class ProgramSettings:
             value
         )
 
+    # Setting Options
+
     @property
     def preview_auto_save(self) -> bool:
         return bool(self.settings.value(
@@ -43,6 +46,21 @@ class ProgramSettings:
     def preview_auto_save(self, value: bool):
         self.settings.setValue(
             "preview/auto_save",
+            value
+        )
+
+    @property
+    def preview_auto_select_same_tag(self) -> bool:
+        return bool(self.settings.value(
+            "preview/auto_select_same_tag",
+            True,
+            type=bool
+        ))
+
+    @preview_auto_select_same_tag.setter
+    def preview_auto_select_same_tag(self, value: bool):
+        self.settings.setValue(
+            "preview/auto_select_same_tag",
             value
         )
 

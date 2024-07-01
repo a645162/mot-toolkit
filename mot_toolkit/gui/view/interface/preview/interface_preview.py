@@ -257,7 +257,7 @@ class InterFacePreview(BaseInterfaceWindow):
                 "Switching automatically select same tag", self.menu_settings
             )
         self.menu_settings_auto_select_same_tag.setCheckable(True)
-        self.menu_settings_auto_select_same_tag.setChecked(program_settings.preview_auto_save)
+        self.menu_settings_auto_select_same_tag.setChecked(program_settings.preview_auto_select_same_tag)
         self.menu_settings_auto_select_same_tag.triggered.connect(
             lambda: setattr(
                 program_settings, "preview_auto_select_same_tag",
@@ -416,7 +416,8 @@ class InterFacePreview(BaseInterfaceWindow):
         if self.is_in_class_filter_mode():
             self.__update_label_class_auto_select()
         else:
-            self.select_target_tag(current_label_text)
+            if program_settings.preview_auto_select_same_tag:
+                self.select_target_tag(current_label_text)
 
     def is_in_class_filter_mode(self) -> bool:
         return (
