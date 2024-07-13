@@ -381,15 +381,18 @@ class InterFacePreview(BaseInterfaceWindow):
         self.load_directory()
 
     def __update_object_list_widget(self):
+        # Save Current Selected Label
         obj_selection_index = self.r_object_list_widget.selection_index
         current_label_text = ""
-        if obj_selection_index >= 0:
+        if 0 <= obj_selection_index < len(self.current_annotation_object.rect_annotation_list):
             current_label_text = \
                 self.current_annotation_object \
                     .rect_annotation_list[obj_selection_index] \
                     .label
 
         file_selection_text = self.r_file_list_widget.selection_text
+        if file_selection_text.startswith("* "):
+            file_selection_text = file_selection_text[2:]
         index = -1
         for i, file_name in enumerate(self.annotation_directory.file_name_list):
             if file_name == file_selection_text:
@@ -413,6 +416,7 @@ class InterFacePreview(BaseInterfaceWindow):
             )
         self.r_object_list_widget.update()
 
+        # Auto Select
         if self.is_in_class_filter_mode():
             self.__update_label_class_auto_select()
         else:
@@ -531,9 +535,13 @@ class InterFacePreview(BaseInterfaceWindow):
     def __action_obj_del_target(self):
         index = self.r_object_list_widget.selection_index
 
-        obj = self.current_annotation_object.rect_annotation_list[index]
-        self.current_annotation_object.rect_annotation_list.remove(obj)
+        rect_annotation_list = self.current_annotation_object.rect_annotation_list
+        obj = rect_annotation_list[index]
+        rect_annotation_list.remove(obj)
+
         self.current_annotation_object.modifying()
+
+        self.r_object_list_widget.selection_index = -1
 
         self.__update_object_list_widget()
 
@@ -551,6 +559,8 @@ class InterFacePreview(BaseInterfaceWindow):
                 continue
 
             annotation_obj.del_by_label(label)
+
+        self.r_object_list_widget.selection_index = -1
 
         self.__update_object_list_widget()
 
