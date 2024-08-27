@@ -16,7 +16,7 @@ from mot_toolkit.datatype.xanylabeling import (
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view. \
-    components.base_interface_window import BaseInterfaceWindow
+    components.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.gui.view.interface.preview. \
     components.dataset_image_view_widget import DatasetImageView
 from mot_toolkit.gui.view.interface.preview. \
@@ -32,7 +32,7 @@ from mot_toolkit.utils.logs import get_logger
 logger = get_logger()
 
 
-class InterFacePreview(BaseInterfaceWindow):
+class InterFacePreview(BaseWorkInterfaceWindow):
     annotation_directory: XAnyLabelingAnnotationDirectory = None
 
     current_file_list: List[XAnyLabelingAnnotation]
@@ -625,5 +625,5 @@ class InterFacePreview(BaseInterfaceWindow):
 
         if annotation_obj.check_file_is_exist():
             if annotation_obj.file_path not in open(record_path).read():
-                with open(record_path, "a") as f:
+                with open(record_path, "a", encoding="utf-8") as f:
                     f.write(f"{annotation_obj.file_name}\n")

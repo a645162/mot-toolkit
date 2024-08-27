@@ -5,7 +5,7 @@ from PySide6.QtCore import QObject
 
 
 class AnnotationDirectory(QObject):
-    dir_path: str = ""
+    __dir_path: str = ""
 
     file_list: List[str] = []
 
@@ -13,6 +13,17 @@ class AnnotationDirectory(QObject):
         super().__init__()
 
         self.dir_path = dir_path
+
+    @property
+    def dir_path(self) -> str:
+        return self.__dir_path
+
+    @dir_path.setter
+    def dir_path(self, dir_path: str):
+        dir_path = os.path.abspath(dir_path)
+
+        if dir_path != self.__dir_path:
+            self.__dir_path = dir_path
 
     def sort_path(self, group_directory=False):
         if group_directory:

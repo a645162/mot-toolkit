@@ -229,6 +229,16 @@ def parse_xanylabeling_json(
     return current_annotation_obj
 
 
+class AnnotationFileInterval:
+    first_file: XAnyLabelingAnnotation = None
+    last_file: XAnyLabelingAnnotation = None
+
+    other_files_list: List[XAnyLabelingAnnotation]
+
+    def __init__(self):
+        self.other_files_list = []
+
+
 class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     slot_modified: Signal = Signal(int)
 
@@ -338,6 +348,105 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return path
 
+    @property
+    def first_file(self) -> XAnyLabelingAnnotation:
+        return self.annotation_file[0] if len(self.annotation_file) > 0 else None
+
+    @property
+    def last_file(self) -> XAnyLabelingAnnotation:
+        return self.annotation_file[-1] if len(self.annotation_file) > 0 else None
+
+    def get_file_object_by_file_name(self, file_name: str) -> XAnyLabelingAnnotation | None:
+        for annotation_obj in self.annotation_file:
+            if annotation_obj.file_name == file_name:
+                return annotation_obj
+
+        return None
+
+    def get_file_object_index(self, file_obj: XAnyLabelingAnnotation) -> int:
+        for i, annotation_obj in enumerate(self.annotation_file):
+            if annotation_obj.is_same_path(file_obj):
+                return i
+
+        return -1
+
+    def get_file_object_index_by_name(self, file_name: str) -> int:
+        for i, annotation_obj in enumerate(self.annotation_file):
+            if annotation_obj.file_name == file_name:
+                return i
+
+        return -1
+
+    def check_is_last_file(self, file_obj: XAnyLabelingAnnotation) -> bool:
+        index = self.get_file_object_index(file_obj)
+
+        if index == -1:
+            return False
+
+        return index == len(self.annotation_file) - 1
+
+    def get_annotation_file_interval_list(self) -> List[AnnotationFileInterval]:
+        interval_list: List[AnnotationFileInterval] = []
+
+        if len(self.annotation_file) == 0:
+            return interval_list
+
+        with open(self.save_record_path, "r", encoding="utf-8") as f:
+            file_name_list = f.readlines()
+
+        # Remove Empty Line
+        file_name_list = [
+            file_name.strip()
+            for file_name in file_name_list
+            if len(file_name.strip())
+        ]
+
+        # Remove File Not Exist
+        file_name_list = [
+            file_name
+            for file_name in file_name_list
+            if os.path.exists(os.path.join(self.dir_path, file_name))
+        ]
+
+        all_file_name_list = [
+            file_obj.file_name
+            for file_obj in self.annotation_file
+        ]
+
+        # Remove File Name Not Exist
+        file_name_list = [
+            file_name
+            for file_name in all_file_name_list
+            if file_name in file_name_list
+        ]
+
+        first_file_name = all_file_name_list[0]
+        last_file_name = all_file_name_list[-1]
+
+        if first_file_name not in file_name_list:
+            file_name_list.append(first_file_name)
+
+        if last_file_name not in file_name_list:
+            file_name_list.append(last_file_name)
+
+        file_name_list.sort()
+
+        # Create AnnotationFileInterval objects
+        for i in range(len(file_name_list) - 1):
+            first_file_index = self.get_file_object_index_by_name(file_name_list[i])
+            last_file_index = self.get_file_object_index_by_name(file_name_list[i + 1])
+
+            interval = AnnotationFileInterval()
+            interval.first_file = self.annotation_file[first_file_index]
+            interval.last_file = self.annotation_file[last_file_index]
+
+            for j in range(first_file_index + 1, last_file_index):
+                interval.other_files_list.append(self.annotation_file[j])
+
+            interval_list.append(interval)
+
+        return interval_list
+
 
 if __name__ == '__main__':
     # Single File Test
@@ -357,5 +466,9 @@ if __name__ == '__main__':
     annotation_directory.load_json_files()
 
     print(annotation_directory.update_label_list())
+
+    print()
+
+    smooth_list = annotation_directory.get_annotation_file_interval_list()
 
     print()

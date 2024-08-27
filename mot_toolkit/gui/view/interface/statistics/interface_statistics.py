@@ -5,7 +5,8 @@ from PySide6.QtWidgets import (
     QLabel, QPushButton, QLineEdit,
 )
 
-from mot_toolkit.gui.view.components.base_interface_window import BaseInterfaceWindow
+from mot_toolkit.gui.view.components. \
+    base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.utils.statistics.stats_file import stats_file_count
 
 
@@ -89,7 +90,7 @@ class StatisticsWidget(QWidget):
         self.v_layout.addWidget(self.widget_file_statistics)
 
 
-class InterfaceStatistics(BaseInterfaceWindow):
+class WorkInterfaceStatistics(BaseWorkInterfaceWindow):
     work_directory_path: str = ""
 
     def __init__(self, work_directory_path: str = ""):

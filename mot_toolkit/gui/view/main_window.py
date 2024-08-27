@@ -24,11 +24,13 @@ from mot_toolkit.gui.view.components.select_directory_path import (
 )
 
 from mot_toolkit.gui.view.interface. \
-    multi_level.interface_multi_level import InterfaceMultiLevel
+    multi_level.interface_multi_level import WorkInterfaceMultiLevel
 from mot_toolkit.gui.view.interface. \
     preview.interface_preview import InterFacePreview
 from mot_toolkit.gui.view.interface. \
-    statistics.interface_statistics import InterfaceStatistics
+    statistics.interface_statistics import WorkInterfaceStatistics
+from mot_toolkit.gui.view.interface. \
+    smooth.interface_smooth import InterFaceSmooth
 
 from mot_toolkit.utils.system_info import is_macos
 
@@ -105,6 +107,11 @@ class MainWindow(QMainWindow):
         self.__button_preview.clicked.connect(self.__button_preview_clicked)
         self.v_layout.addWidget(self.__button_preview)
 
+        self.__button_smooth = QPushButton(parent=self)
+        self.__button_smooth.setText("Smooth")
+        self.__button_smooth.clicked.connect(self.__button_smooth_clicked)
+        self.v_layout.addWidget(self.__button_smooth)
+
         author_label = QLabel(parent=self)
         author_label.setText("Author:Haomin Kong")
         self.v_layout.addWidget(author_label)
@@ -113,7 +120,7 @@ class MainWindow(QMainWindow):
         path = self.__select_directory_path_widget.get_absolute_path()
         program_settings.last_work_directory = path
 
-        self.interface_multi_level = InterfaceMultiLevel(
+        self.interface_multi_level = WorkInterfaceMultiLevel(
             work_directory_path=path
         )
         self.interface_multi_level.show()
@@ -122,7 +129,7 @@ class MainWindow(QMainWindow):
         path = self.__select_directory_path_widget.get_absolute_path()
         program_settings.last_work_directory = path
 
-        self.interface_statistics = InterfaceStatistics(
+        self.interface_statistics = WorkInterfaceStatistics(
             work_directory_path=path
         )
         self.interface_statistics.show()
@@ -135,6 +142,15 @@ class MainWindow(QMainWindow):
             work_directory_path=path
         )
         self.interface_preview.show()
+
+    def __button_smooth_clicked(self):
+        path = self.__select_directory_path_widget.get_absolute_path()
+        program_settings.last_work_directory = path
+
+        self.interface_smooth = InterFaceSmooth(
+            work_directory_path=path
+        )
+        self.interface_smooth.show()
 
 
 def init_main_window():

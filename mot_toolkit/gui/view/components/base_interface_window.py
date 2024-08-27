@@ -7,7 +7,7 @@ from mot_toolkit.gui.view. \
     components.base_q_main_window import BaseQMainWindow
 
 
-class BaseInterfaceWindow(BaseQMainWindow):
+class BaseWorkInterfaceWindow(BaseQMainWindow):
 
     def __init__(self, work_directory_path: str):
         super().__init__()

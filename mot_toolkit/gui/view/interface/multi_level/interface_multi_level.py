@@ -7,17 +7,19 @@ from PySide6.QtWidgets import (
 )
 
 from gui.view.components. \
-    base_interface_window import BaseInterfaceWindow
+    base_interface_window import BaseWorkInterfaceWindow
 from gui.view.interface.multi_level. \
     components.multi_level_finder_widget import MultiLevelFinderWidget
 
 from gui.view.interface. \
     preview.interface_preview import InterFacePreview
 from gui.view.interface. \
-    statistics.interface_statistics import InterfaceStatistics
+    statistics.interface_statistics import WorkInterfaceStatistics
+from gui.view.interface. \
+    smooth.interface_smooth import InterFaceSmooth
 
 
-class InterfaceMultiLevel(BaseInterfaceWindow):
+class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
     base_title = "Multi Level Finder"
 
     def __init__(self, work_directory_path: str):
@@ -71,6 +73,15 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
         self.btn_toolbox_statistics.clicked.connect(self.__btn_toolbox_statistics_clicked)
         self.toolbox_layout.addWidget(self.btn_toolbox_statistics)
 
+        self.btn_toolbox_smooth = QPushButton(parent=self)
+        self.btn_toolbox_smooth.setText("Smooth")
+        self.btn_toolbox_smooth.setSizePolicy(
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Minimum
+        )
+        self.btn_toolbox_smooth.clicked.connect(self.__btn_toolbox_smooth_clicked)
+        self.toolbox_layout.addWidget(self.btn_toolbox_smooth)
+
         self.toolbox_layout.addStretch()
 
     def update(self):
@@ -89,6 +100,7 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
 
         self.btn_toolbox_preview.setEnabled(is_dir)
         self.btn_toolbox_statistics.setEnabled(is_dir)
+        self.btn_toolbox_smooth.setEnabled(is_dir)
 
     def __btn_toolbox_preview_clicked(self):
         path = self.multi_level_finder.get_dir()
@@ -105,7 +117,17 @@ class InterfaceMultiLevel(BaseInterfaceWindow):
 
         path = os.path.abspath(path)
 
-        interface_statistics = InterfaceStatistics(
+        interface_statistics = WorkInterfaceStatistics(
             work_directory_path=path
         )
         interface_statistics.show()
+
+    def __btn_toolbox_smooth_clicked(self):
+        path = self.multi_level_finder.get_dir()
+
+        path = os.path.abspath(path)
+
+        interface_smooth = InterFaceSmooth(
+            work_directory_path=path
+        )
+        interface_smooth.show()

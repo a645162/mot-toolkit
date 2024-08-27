@@ -127,3 +127,10 @@ class AnnotationFile(QObject):
 
     def __str__(self):
         return self.label
+
+    def is_same_path(self, other: "AnnotationFile") -> bool:
+        return (
+                os.path.abspath(self.file_path)
+                ==
+                os.path.abspath(other.file_path)
+        )
