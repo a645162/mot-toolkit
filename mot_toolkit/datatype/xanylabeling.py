@@ -329,6 +329,15 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     def can_only_file_name(self) -> bool:
         return self.__can_only_file_name
 
+    @property
+    def save_record_path(self) -> str:
+        path = os.path.join(self.dir_path, "modified_files.txt")
+
+        if not os.path.exists(path):
+            open(path, "w").close()
+
+        return path
+
 
 if __name__ == '__main__':
     # Single File Test

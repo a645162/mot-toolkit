@@ -534,7 +534,8 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def save_current_opened(self):
         if self.current_annotation_object is not None:
-            self.current_annotation_object.save()
+            if self.current_annotation_object.save():
+                self.__successful_saved(self.current_annotation_object)
 
     def __action_window_restore_all(self):
         for annotation in self.annotation_directory.annotation_file:
@@ -544,7 +545,8 @@ class InterFacePreview(BaseInterfaceWindow):
 
     def __action_window_save_all(self):
         for annotation in self.annotation_directory.annotation_file:
-            annotation.save()
+            if annotation.save():
+                self.__successful_saved(annotation)
 
     def __try_to_exit(self):
         # self.save_current_opened()
@@ -617,3 +619,11 @@ class InterFacePreview(BaseInterfaceWindow):
     def __set_jump_file_count(self, jump_file_count: int = 1):
         self.jump_file_count = jump_file_count
         self.menu_item_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
+
+    def __successful_saved(self, annotation_obj: XAnyLabelingAnnotation):
+        record_path = self.annotation_directory.save_record_path
+
+        if annotation_obj.check_file_is_exist():
+            if annotation_obj.file_path not in open(record_path).read():
+                with open(record_path, "a") as f:
+                    f.write(f"{annotation_obj.file_path}\n")
