@@ -239,6 +239,9 @@ class AnnotationFileInterval:
         self.other_files_list = []
 
 
+modify_store_file_name = "modified_files.json"
+
+
 class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     slot_modified: Signal = Signal(int)
 
@@ -258,6 +261,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         self.annotation_file = []
         self.label_list = []
         self.file_name_list = []
+
+        self.file_name_black_list.append(modify_store_file_name)
 
     def load_json_files(self):
         # Check File Path List
@@ -341,7 +346,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     @property
     def save_record_path(self) -> str:
-        path = os.path.join(self.dir_path, "modified_files.txt")
+        path = os.path.join(self.dir_path, modify_store_file_name)
 
         if not os.path.exists(path):
             open(path, "w").close()
@@ -392,7 +397,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             return interval_list
 
         with open(self.save_record_path, "r", encoding="utf-8") as f:
-            file_name_list = f.readlines()
+            json_data: dict = json.load(f)
+
+        file_name_list = json_data.keys()
 
         # Remove Empty Line
         file_name_list = [

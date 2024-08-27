@@ -1,3 +1,4 @@
+import json
 import os.path
 from typing import List
 
@@ -135,6 +136,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.main_image_view = DatasetImageView(parent=self)
         self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
+        self.main_image_view.slot_save.connect(self.save_current_opened)
         self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
         self.main_h_layout.addWidget(self.main_image_view)
 
@@ -621,9 +623,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_item_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
 
     def __successful_saved(self, annotation_obj: XAnyLabelingAnnotation):
-        record_path = self.annotation_directory.save_record_path
+        # print("Save Successful!")
 
-        if annotation_obj.check_file_is_exist():
-            if annotation_obj.file_path not in open(record_path).read():
-                with open(record_path, "a", encoding="utf-8") as f:
-                    f.write(f"{annotation_obj.file_name}\n")
+        record_path = self.annotation_directory.save_record_path
+        # print(record_path)
+
+        modify_record_dict: dict
+        with open(record_path, "r", encoding="utf-8") as f:
+            record_text = f.read().strip()
+            if len(record_text):
+                modify_record_dict = json.loads(record_text)
+            else:
+                modify_record_dict = {}
+
+        if annotation_obj.file_name not in modify_record_dict.keys():
+            modify_record_dict[annotation_obj.file_name] = {}
+
+        json_str = json.dumps(modify_record_dict, indent=4)
+        # print("json_str\n", json_str)
+
+        with open(record_path, "w", encoding="utf-8") as f:
+            f.write(json_str)

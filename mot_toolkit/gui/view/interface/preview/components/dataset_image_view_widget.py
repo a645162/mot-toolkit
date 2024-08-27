@@ -15,6 +15,8 @@ class DatasetImageView(ScrollImageView):
     slot_previous_image: Signal = Signal()
     slot_next_image: Signal = Signal()
 
+    slot_save: Signal = Signal()
+
     slot_selection_changed: Signal = Signal(int)
 
     __annotation_obj: XAnyLabelingAnnotation
@@ -66,8 +68,7 @@ class DatasetImageView(ScrollImageView):
             case Qt.KeyboardModifier.ControlModifier:
                 match key:
                     case Qt.Key.Key_S:
-                        self.__annotation_obj.is_modified = True
-                        self.__annotation_obj.save()
+                        self.slot_save.emit()
                         return
 
         super().keyPressEvent(event)

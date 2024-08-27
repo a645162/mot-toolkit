@@ -7,10 +7,18 @@ from PySide6.QtCore import QObject
 class AnnotationDirectory(QObject):
     __dir_path: str = ""
 
-    file_list: List[str] = []
+    file_list: List[str]
+    file_name_black_list: List[str]
 
     def __init__(self, dir_path: str = ""):
         super().__init__()
+
+        self.file_list = []
+        self.file_name_black_list = [
+            "__MACOSX",
+            "Thumbs.db",
+            ".DS_Store"
+        ]
 
         self.dir_path = dir_path
 
@@ -116,6 +124,9 @@ class AnnotationDirectory(QObject):
             if not recursive:
                 dirs.clear()
             for file in files:
+                if file in self.file_name_black_list:
+                    continue
+
                 if file.startswith("."):
                     # Ignore macOS Hidden Files
                     continue
