@@ -227,6 +227,14 @@ class InterFacePreview(BaseInterfaceWindow):
         # Edit Menu
         self.menu_edit = self.menu.addMenu("Edit")
 
+        # Item Menu
+        self.menu_item = self.menu.addMenu("Item")
+
+        # Jump File Count
+        self.menu_item_jump_file_count = \
+            QAction("Jump File Count", self.menu_item)
+        self.menu_item.addAction(self.menu_item_jump_file_count)
+
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
 
@@ -576,3 +584,10 @@ class InterFacePreview(BaseInterfaceWindow):
                 print(f"{annotation_obj.file_path} is modified but not save.")
 
         return found
+
+    def __set_jump_file_count_dialog(self):
+        pass
+
+    def __set_jump_file_count(self, jump_file_count=1):
+        self.jump_file_count = jump_file_count
+        self.menu_item_jump_file_count.setText(f"Jump File Count({self.jump_file_count})")
