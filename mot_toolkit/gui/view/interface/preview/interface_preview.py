@@ -626,4 +626,4 @@ class InterFacePreview(BaseInterfaceWindow):
         if annotation_obj.check_file_is_exist():
             if annotation_obj.file_path not in open(record_path).read():
                 with open(record_path, "a") as f:
-                    f.write(f"{annotation_obj.file_path}\n")
+                    f.write(f"{annotation_obj.file_name}\n")
