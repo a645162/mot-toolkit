@@ -29,7 +29,7 @@ class DirectoryAndFile:
     def __ne__(self, other):
         return not self.__eq__(other)
 
-    def walk_dir(self, max_depth=0):
+    def walk_dir(self, max_depth=0, include_hide=False):
         self.__walked = True
 
         # Clear
@@ -38,6 +38,9 @@ class DirectoryAndFile:
 
         # Walk Current Dir
         for entry in os.listdir(self.directory_path):
+            if not include_hide and entry.startswith("."):
+                continue
+
             # Get the full path of the entry
             entry_path = os.path.join(self.directory_path, entry)
 

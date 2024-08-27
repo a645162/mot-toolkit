@@ -105,6 +105,10 @@ class AnnotationDirectory(QObject):
             if not recursive:
                 dirs.clear()
             for file in files:
+                if file.startswith("."):
+                    # Ignore macOS Hidden Files
+                    continue
+
                 if file.endswith(file_extension):
                     self.file_list.append(os.path.join(root, file))
 
