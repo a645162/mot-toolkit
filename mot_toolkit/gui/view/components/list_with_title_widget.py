@@ -114,6 +114,9 @@ class ListWithTitleWidget(QWidget):
             self.list_widget.clearSelection()
             return
 
+        if self.selection_index == index:
+            return
+
         self.list_widget.setCurrentRow(index)
 
     @property

@@ -501,17 +501,27 @@ class InterFacePreview(BaseInterfaceWindow):
         self.__update_object_list_widget()
 
     def __slot_previous_image(self):
-        selection_index = self.r_file_list_widget.selection_index
-        selection_index -= 1
-        if selection_index < 0:
-            return
-        self.r_file_list_widget.selection_index = selection_index
+        self.next_previous_image(next=False)
 
     def __slot_next_image(self):
+        self.next_previous_image(next=True)
+
+    def next_previous_image(self, next: bool = True):
         selection_index = self.r_file_list_widget.selection_index
-        selection_index += 1
-        if selection_index >= self.r_file_list_widget.count:
-            return
+        file_count = self.r_file_list_widget.count
+        jump_file_count = self.jump_file_count
+
+        if next:
+            selection_index += jump_file_count
+        else:
+            selection_index -= jump_file_count
+
+        while selection_index >= file_count:
+            selection_index -= 1
+
+        while selection_index < 0:
+            selection_index += 1
+
         self.r_file_list_widget.selection_index = selection_index
 
     def __object_list_item_selection_changed(self):
