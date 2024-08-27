@@ -6,7 +6,7 @@ from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
-    QMenuBar,
+    QMenuBar, QInputDialog,
 )
 
 from mot_toolkit.datatype.xanylabeling import (
@@ -62,6 +62,8 @@ class InterFacePreview(BaseInterfaceWindow):
 
         self.menu = self.menuBar()
 
+        self.__init_configure()
+
         self.__setup_window_properties()
 
         self.__init_widgets()
@@ -71,6 +73,9 @@ class InterFacePreview(BaseInterfaceWindow):
         self.__auto_load_directory()
 
         self.update()
+
+    def __init_configure(self):
+        self.jump_file_count = 1
 
     def __setup_window_properties(self):
         self.setWindowTitle(self.basic_window_title)
@@ -233,6 +238,10 @@ class InterFacePreview(BaseInterfaceWindow):
         # Jump File Count
         self.menu_item_jump_file_count = \
             QAction("Jump File Count", self.menu_item)
+        self.__set_jump_file_count(self.jump_file_count)
+        self.menu_item_jump_file_count.triggered.connect(
+            self.__action_item_jump_file_count
+        )
         self.menu_item.addAction(self.menu_item_jump_file_count)
 
         # Settings Menu
@@ -585,9 +594,16 @@ class InterFacePreview(BaseInterfaceWindow):
 
         return found
 
-    def __set_jump_file_count_dialog(self):
-        pass
+    def __action_item_jump_file_count(self):
+        number, ok = QInputDialog.getInt(
+            self,
+            "Input Dialog",
+            "Enter a number for Jump File Count:",
+            value=self.jump_file_count
+        )
+        if ok:
+            self.__set_jump_file_count(number)
 
-    def __set_jump_file_count(self, jump_file_count=1):
+    def __set_jump_file_count(self, jump_file_count: int = 1):
         self.jump_file_count = jump_file_count
-        self.menu_item_jump_file_count.setText(f"Jump File Count({self.jump_file_count})")
+        self.menu_item_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
