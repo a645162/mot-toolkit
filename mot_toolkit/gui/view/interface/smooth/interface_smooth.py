@@ -3,7 +3,10 @@ from typing import List
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QTreeView, QWidget, QHBoxLayout
 
-from datatype.xanylabeling import AnnotationFileInterval, XAnyLabelingAnnotationDirectory
+from mot_toolkit.datatype.xanylabeling \
+    import XAnyLabelingAnnotationDirectory
+from mot_toolkit.gui.view.interface.smooth. \
+    data.smooth_interval import SmoothInterval
 from mot_toolkit.gui.view.components. \
     base_interface_window import BaseWorkInterfaceWindow
 
@@ -13,7 +16,7 @@ logger = get_logger()
 
 
 class InterFaceSmooth(BaseWorkInterfaceWindow):
-    annotation_file_interval_list: List[AnnotationFileInterval]
+    interval_obj_list: List[SmoothInterval]
 
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
@@ -53,15 +56,18 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         self.annotation_directory.load_json_files()
         self.annotation_directory.update_label_list()
 
-        self.annotation_file_interval_list = \
-            self.annotation_directory.get_annotation_file_interval_list()
+        self.interval_obj_list = \
+            [
+                SmoothInterval.from_parent(parent_obj=ori_obj)
+                for ori_obj in self.annotation_directory.get_annotation_file_interval_list()
+            ]
 
-        logger.info(f"Loaded {len(self.annotation_file_interval_list)} intervals")
+        logger.info(f"Loaded {len(self.interval_obj_list)} intervals")
 
     def __show_tree_model(self):
         model = QStandardItemModel()
 
-        for index, interval in enumerate(self.annotation_file_interval_list):
+        for index, interval in enumerate(self.interval_obj_list):
             parent_item = QStandardItem(f"Interval {index + 1}")
 
             for file in interval.other_files_list:
