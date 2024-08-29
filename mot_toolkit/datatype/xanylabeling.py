@@ -210,6 +210,22 @@ class XAnyLabelingAnnotation(AnnotationFile):
     def annotation_count(self) -> int:
         return len(self.rect_annotation_list)
 
+    def check_annotation_list_is_valid_tracking(self) -> bool:
+        def get_keywords(obj: XAnyLabelingRect):
+            return obj.label
+
+        annotation_keywords = []
+
+        # Ensure all labels are unique
+        for rect_item in self.rect_annotation_list:
+            text = get_keywords(rect_item)
+            if text not in annotation_keywords:
+                annotation_keywords.append(text)
+            else:
+                return False
+
+        return True
+
     def check_annotation_list_is_same(self, other: "XAnyLabelingAnnotation"):
         if self.annotation_count != other.annotation_count:
             return False
@@ -229,6 +245,10 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 return False
 
         return True
+
+    def check_error(self):
+        if not self.check_annotation_list_is_valid_tracking():
+            self.have_error = True
 
 
 def parse_xanylabeling_json(

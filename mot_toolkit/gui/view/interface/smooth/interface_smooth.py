@@ -11,6 +11,7 @@ from mot_toolkit.gui.view.components. \
     base_interface_window import BaseWorkInterfaceWindow
 
 from mot_toolkit.utils.logs import get_logger
+from utils.qt.color import hex_to_qcolor
 
 logger = get_logger()
 
@@ -18,7 +19,7 @@ logger = get_logger()
 class InterFaceSmooth(BaseWorkInterfaceWindow):
     interval_obj_list: List[SmoothInterval]
 
-    invalid_background_color: QColor
+    color_tree_item_invalid_background: QColor
 
     def __init__(self, work_directory_path: str):
         super().__init__(work_directory_path)
@@ -39,7 +40,9 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         self.__show_tree_model()
 
     def __const_value(self):
-        self.invalid_background_color = QColor(255, 0, 0)
+        self.color_tree_item_valid_background = hex_to_qcolor("AED581")
+        self.color_tree_item_invalid_background = QColor(255, 0, 0)
+        self.color_tree_item_first_last = hex_to_qcolor("FFF9C4")
 
     def __setup_window_properties(self):
         self.basic_window_title = "Smooth Annotations"
@@ -99,16 +102,26 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
                 title = f"Interval {index + 1}"
             parent_item = QStandardItem(title)
 
-            if not interval.is_valid:
-                parent_item.setBackground(self.invalid_background_color)
+            if interval.is_valid:
+                parent_item.setBackground(self.color_tree_item_valid_background)
+            else:
+                parent_item.setBackground(self.color_tree_item_invalid_background)
+
+            tree_item_first_item = QStandardItem(interval.first_file.file_name)
+            tree_item_first_item.setBackground(self.color_tree_item_first_last)
+            parent_item.appendRow(tree_item_first_item)
 
             for file in interval.other_files_list:
                 child_item = QStandardItem(file.file_name)
 
                 if file.have_error:
-                    child_item.setBackground(self.invalid_background_color)
+                    child_item.setBackground(self.color_tree_item_invalid_background)
 
                 parent_item.appendRow(child_item)
+
+            tree_item_last_item = QStandardItem(interval.last_file.file_name)
+            tree_item_last_item.setBackground(self.color_tree_item_first_last)
+            parent_item.appendRow(tree_item_last_item)
 
             model.appendRow(parent_item)
 
@@ -127,6 +140,12 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
         for interval in self.interval_obj_list:
             interval.check()
+
+        valid_interval_list = [
+            interval
+            for interval in self.interval_obj_list
+            if not interval.have_error
+        ]
 
         self.__callback_add_log("End smoothing.")
         self.button_start.setEnabled(True)
