@@ -206,6 +206,30 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return label_list
 
+    @property
+    def annotation_count(self) -> int:
+        return len(self.rect_annotation_list)
+
+    def check_annotation_list_is_same(self, other: "XAnyLabelingAnnotation"):
+        if self.annotation_count != other.annotation_count:
+            return False
+
+        def get_keywords(obj: XAnyLabelingRect):
+            return obj.label
+
+        for self_rect_item in self.rect_annotation_list:
+            found = False
+
+            for other_rect_item in other.rect_annotation_list:
+                if get_keywords(self_rect_item) == get_keywords(other_rect_item):
+                    found = True
+                    break
+
+            if not found:
+                return False
+
+        return True
+
 
 def parse_xanylabeling_json(
         json_path: str,

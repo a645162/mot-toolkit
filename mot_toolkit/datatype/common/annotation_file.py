@@ -34,6 +34,8 @@ class AnnotationFile(QObject):
 
     other_shape_dict_list: List[dict]
 
+    have_error: bool = False
+
     def __init__(self, label: str = ""):
         super().__init__()
 

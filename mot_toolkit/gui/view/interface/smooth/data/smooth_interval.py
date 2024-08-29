@@ -26,8 +26,25 @@ class SmoothInterval(AnnotationFileInterval):
         return new_obj
 
     def check(self):
+        if self.__is_checked:
+            return
+
         self.__is_checked = True
+
+        self.__is_valid = True
+
+        if not self.first_file.check_annotation_list_is_same(self.last_file):
+            self.__is_valid = False
+            self.last_file.have_error = True
+
+        for annotation_file_obj in self.other_files_list:
+            if annotation_file_obj.check_annotation_list_is_same(self.first_file) is False:
+                self.__is_valid = False
+                annotation_file_obj.have_error = True
 
     @property
     def is_valid(self) -> bool:
-        return True
+        if not self.__is_checked:
+            self.check()
+
+        return self.__is_valid
