@@ -1,0 +1,3 @@
+# https://www.cnblogs.com/amnotgcs/p/18117492
+[lint]
+ignore = ["E402"]

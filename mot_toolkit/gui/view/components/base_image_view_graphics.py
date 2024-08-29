@@ -154,7 +154,7 @@ class ImageViewGraphics(QGraphicsView):
             return
 
         # Calculate New Size
-        ori_size = self.image.size()
+        # ori_size = self.image.size()
         new_size = self.calc_new_size(self.scale_factor)
 
         # Generate New Image

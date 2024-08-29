@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QVBoxLayout
+from PySide6.QtWidgets import QVBoxLayout
 
 from gui.view.components.base_q_widget import BaseQWidget
 
