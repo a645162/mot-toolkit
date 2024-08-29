@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
@@ -49,6 +50,8 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
         self.setWindowTitle(self.basic_window_title)
 
+        self.setMinimumWidth(400)
+
     def __init_widgets(self):
         self.h_widget = QWidget(parent=self)
         self.h_layout = QHBoxLayout()
@@ -97,9 +100,12 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         model.setHorizontalHeaderLabels(["Interval"])
 
         for index, interval in enumerate(self.interval_obj_list):
-            title = interval.group_name.strip()
+            title = interval.name.strip()
             if len(title) == 0:
                 title = f"Interval {index + 1}"
+
+            title = f"{title}({len(interval.other_files_list)})"
+
             parent_item = QStandardItem(title)
 
             if interval.is_valid:
@@ -139,16 +145,15 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         self.__callback_add_log("Start smoothing...")
 
         for interval in self.interval_obj_list:
+            self.__callback_add_log(f"Handling interval {interval.name}...")
+
             interval.check()
 
-        valid_interval_list = [
-            interval
-            for interval in self.interval_obj_list
-            if not interval.have_error
-        ]
+            interval.smooth(self.__callback_add_log)
 
         self.__callback_add_log("End smoothing.")
         self.button_start.setEnabled(True)
 
     def __callback_add_log(self, log):
-        self.multi_line_edit.appendPlainText(log)
+        time_str = time.strftime("%Y-%m-%d %H:%M:%S")
+        self.multi_line_edit.appendPlainText(f"{time_str} - {log}")

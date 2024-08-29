@@ -4,6 +4,7 @@ import os.path
 
 from PySide6.QtCore import Signal
 
+from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
 from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
 from mot_toolkit.datatype.common.rect_data_annotation import (
@@ -250,6 +251,31 @@ class XAnyLabelingAnnotation(AnnotationFile):
         if not self.check_annotation_list_is_valid_tracking():
             self.have_error = True
 
+    def get_tag_list(self) -> List[str]:
+        tag_list = []
+
+        for rect_item in self.rect_annotation_list:
+            if rect_item.label not in tag_list:
+                tag_list.append(rect_item.label)
+
+        return tag_list
+
+    def get_target_name_rect_annotation_list(self, target_name: str) -> List[RectDataAnnotation]:
+        target_name_annotation_list = []
+
+        for rect_item in self.rect_annotation_list:
+            if rect_item.label == target_name:
+                target_name_annotation_list.append(rect_item)
+
+        return target_name_annotation_list
+
+    def get_target_name_annotation_list(self, target_name: str) -> List[ObjectAnnotation]:
+        target_name_annotation_list: List[ObjectAnnotation] = []
+
+        target_name_annotation_list.extend(self.get_target_name_rect_annotation_list(target_name))
+
+        return target_name_annotation_list
+
 
 def parse_xanylabeling_json(
         json_path: str,
@@ -274,6 +300,8 @@ def parse_xanylabeling_json(
 
 
 class AnnotationFileInterval:
+    name: str = ""
+
     first_file: XAnyLabelingAnnotation = None
     last_file: XAnyLabelingAnnotation = None
 
@@ -488,6 +516,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             last_file_index = self.get_file_object_index_by_name(file_name_list[i + 1])
 
             interval = AnnotationFileInterval()
+            interval.name = str(i + 1)
             interval.first_file = self.annotation_file[first_file_index]
             interval.last_file = self.annotation_file[last_file_index]
 
