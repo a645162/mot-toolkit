@@ -27,6 +27,9 @@ class DatasetImageView(ScrollImageView):
 
     annotation_widget_rect_list: List[AnnotationWidgetRect]
 
+    __show_box: bool = True
+    __show_box_label: bool = True
+
     object_menu: QMenu = None
     __reverse_color: bool = False
     __theme_name: str = "light_default"
@@ -127,6 +130,11 @@ class DatasetImageView(ScrollImageView):
 
             # Set Label
             rect_widget.label = rect_item.label
+            rect_widget.label_text = rect_widget.label
+
+            # Set Show Status
+            rect_widget.show_box = self.show_box
+            rect_widget.show_box_label = self.show_box_label
 
             # Set Rect Scale Factor when the image is changed
             rect_widget.scale_factor = self.image_view.scale_factor
@@ -250,3 +258,25 @@ class DatasetImageView(ScrollImageView):
         for rect_widget in self.annotation_widget_rect_list:
             rect_widget.activate_theme_name = theme_name
             rect_widget.set_appearance()
+
+    @property
+    def show_box(self) -> bool:
+        return self.__show_box
+
+    @show_box.setter
+    def show_box(self, value: bool):
+        self.__show_box = value
+
+        for rect_widget in self.annotation_widget_rect_list:
+            rect_widget.show_box = value
+
+    @property
+    def show_box_label(self) -> bool:
+        return self.__show_box_label
+
+    @show_box_label.setter
+    def show_box_label(self, value: bool):
+        self.__show_box_label = value
+
+        for rect_widget in self.annotation_widget_rect_list:
+            rect_widget.show_box_label = value

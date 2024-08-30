@@ -53,10 +53,13 @@ class ResizableRect(QWidget):
 
     def paintEvent(self, event):
         qp = QPainter(self)
+
         qp.setPen(QPen(self.borderColor, self.borderWidth))
         brush = QBrush(self.fillColor)
         qp.setBrush(brush)
         qp.drawRect(self.rect())
+
+        qp.end()
 
     def setBorderColor(self, color):
         self.borderColor = color

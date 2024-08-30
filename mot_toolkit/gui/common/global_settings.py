@@ -64,6 +64,36 @@ class ProgramSettings:
             value
         )
 
+    @property
+    def frame_show_box(self) -> bool:
+        return bool(self.settings.value(
+            "frame/show_box",
+            True,
+            type=bool
+        ))
+
+    @frame_show_box.setter
+    def frame_show_box(self, value: bool):
+        self.settings.setValue(
+            "frame/show_box",
+            value
+        )
+
+    @property
+    def frame_show_box_label(self) -> bool:
+        return bool(self.settings.value(
+            "frame/show_box_label",
+            False,
+            type=bool
+        ))
+
+    @frame_show_box_label.setter
+    def frame_show_box_label(self, value: bool):
+        self.settings.setValue(
+            "frame/show_box_label",
+            value
+        )
+
 
 program_settings = ProgramSettings()
 

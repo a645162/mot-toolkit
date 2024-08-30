@@ -133,11 +133,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.main_h_layout.addWidget(self.toolkit_widget)
 
+        # Main Image View
         self.main_image_view = DatasetImageView(parent=self)
+
+        self.main_image_view.show_box = program_settings.frame_show_box
+        self.main_image_view.show_box_label = program_settings.frame_show_box_label
+
         self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
         self.main_image_view.slot_save.connect(self.save_current_opened)
         self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
+
         self.main_h_layout.addWidget(self.main_image_view)
 
         self.right_widget = QWidget(parent=self)
@@ -234,17 +240,40 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Edit Menu
         self.menu_edit = self.menu.addMenu("Edit")
 
-        # Item Menu
-        self.menu_item = self.menu.addMenu("Item")
+        # File List Menu
+        self.menu_file_list = self.menu.addMenu("File List")
 
         # Jump File Count
-        self.menu_item_jump_file_count = \
-            QAction("Jump File Count", self.menu_item)
+        self.menu_file_list_jump_file_count = \
+            QAction("Jump File Count", self.menu_file_list)
         self.__set_jump_file_count(self.jump_file_count)
-        self.menu_item_jump_file_count.triggered.connect(
+        self.menu_file_list_jump_file_count.triggered.connect(
             self.__action_item_jump_file_count
         )
-        self.menu_item.addAction(self.menu_item_jump_file_count)
+        self.menu_file_list.addAction(self.menu_file_list_jump_file_count)
+
+        # Frame Menu
+        self.menu_frame = self.menu.addMenu("Frame")
+
+        # Show Box
+        self.menu_frame_show_box = \
+            QAction("Show Box", self.menu_frame)
+        self.menu_frame_show_box.setCheckable(True)
+        self.menu_frame_show_box.setChecked(program_settings.frame_show_box)
+        self.menu_frame_show_box.triggered.connect(
+            lambda x: self.__action_frame_show_box()
+        )
+        self.menu_frame.addAction(self.menu_frame_show_box)
+
+        # Show Box Label
+        self.menu_frame_show_box_label = \
+            QAction("Show Box Label", self.menu_frame)
+        self.menu_frame_show_box_label.setCheckable(True)
+        self.menu_frame_show_box_label.setChecked(program_settings.frame_show_box_label)
+        self.menu_frame_show_box_label.triggered.connect(
+            lambda x: self.__action_frame_show_box_label()
+        )
+        self.menu_frame.addAction(self.menu_frame_show_box_label)
 
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
@@ -598,6 +627,26 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
 
+    def __action_frame_show_box(self):
+        value = self.menu_frame_show_box.isChecked()
+
+        self.main_image_view.show_box = value
+
+        setattr(
+            program_settings, "frame_show_box",
+            value
+        )
+
+    def __action_frame_show_box_label(self):
+        value = self.menu_frame_show_box_label.isChecked()
+
+        self.main_image_view.show_box_label = value
+
+        setattr(
+            program_settings, "frame_show_box_label",
+            value
+        )
+
     def check_is_have_modified(self) -> bool:
         found = False
 
@@ -620,7 +669,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __set_jump_file_count(self, jump_file_count: int = 1):
         self.jump_file_count = jump_file_count
-        self.menu_item_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
+        self.menu_file_list_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
 
     def __successful_saved(self, annotation_obj: XAnyLabelingAnnotation):
         # print("Save Successful!")

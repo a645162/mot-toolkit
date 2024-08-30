@@ -1,5 +1,6 @@
-from PySide6.QtCore import Signal, Qt
-from PySide6.QtWidgets import QWidget
+from PySide6.QtCore import Signal, Qt, QRect
+from PySide6.QtGui import QPainter, QColor
+from PySide6.QtWidgets import QWidget, QLabel
 
 from mot_toolkit.datatype.common. \
     rect_data_annotation import RectDataAnnotation
@@ -15,6 +16,9 @@ class AnnotationWidgetRect(ResizableRect):
 
     selecting: bool
     __selecting: bool = False
+
+    __show_box_label: bool = False
+    __label_text: str = ""
 
     # Theme Settings
     final_theme_color: dict = {
@@ -119,6 +123,41 @@ class AnnotationWidgetRect(ResizableRect):
 
         super().mouseReleaseEvent(event)
 
+    def paintEvent(self, event):
+        super().paintEvent(event)
+
+        if self.show_box_label:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+            painter.setPen(QColor(255, 0, 0))
+
+            # Calc font size by self.width()
+            base_width = 100
+            base_font_size = 12
+            font_size = int(base_font_size * self.width() / base_width)
+
+            label = self.label_text
+            if label:
+                font = painter.font()
+                font.setPointSize(font_size)
+                painter.setFont(font)
+
+                rect = QRect(4, 0, self.width(), self.height())
+                painter.drawText(
+                    rect,
+                    (
+                            Qt.AlignmentFlag.AlignTop |
+                            Qt.AlignmentFlag.AlignLeft
+                    ),
+                    label
+                )
+
+            painter.end()
+
+    def update(self):
+        super().update()
+
     @property
     def selecting(self) -> bool:
         return self.__selecting
@@ -161,3 +200,36 @@ class AnnotationWidgetRect(ResizableRect):
                 pass
 
         super().keyPressEvent(event)
+
+    @property
+    def label_text(self) -> str:
+        label = self.__label_text.strip()
+
+        if label == "":
+            label = self.label
+
+        return label.strip()
+
+    @label_text.setter
+    def label_text(self, value: str):
+        self.__label_text = value
+        self.update()
+
+    @property
+    def show_box(self) -> bool:
+        # Visible Status
+        return self.isVisible()
+
+    @show_box.setter
+    def show_box(self, value: bool):
+        self.setVisible(value)
+
+    @property
+    def show_box_label(self) -> bool:
+        return self.__show_box_label
+
+    @show_box_label.setter
+    def show_box_label(self, value: bool):
+        self.__show_box_label = value
+
+        self.update()

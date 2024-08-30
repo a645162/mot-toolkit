@@ -14,8 +14,8 @@ class ObjectAnnotation:
     def __eq__(self, other):
         return (
                 len(self.text) > 0 and
-                self.label == other.label
+                self.label == other.label_text
         )
 
     def __ne__(self, other):
-        return self.label != other.label
+        return self.label != other.label_text
