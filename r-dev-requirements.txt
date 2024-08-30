@@ -1,6 +1,0 @@
-ruff
-pytest
-
-pyinstaller
-
-cairosvg

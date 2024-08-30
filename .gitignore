@@ -1,5 +1,7 @@
 /Test/
 
+/.venv/
+
 /.idea/GitLink.xml
 
 !/Build/
