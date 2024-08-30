@@ -2,6 +2,7 @@
 
 /.venv/
 
+/.idea/csv-editor.xml
 /.idea/GitLink.xml
 
 !/Build/

@@ -5,7 +5,7 @@ import os
 command = """
 pyside6-rcc \
     resources.qrc \
-    -o ../../mot_toolkit/gui/resources/resources.py
+    -o ../../src/mot_toolkit/gui/resources/resources.py
 """
 
 ret = os.system(command.strip())
