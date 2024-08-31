@@ -1,11 +1,17 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+
 import loguru
 
 logger = loguru.logger
 
-log_directory_path = "./logs"
+process_run_dir = os.getcwd()
+
+if process_run_dir.endswith("src"):
+    process_run_dir = os.path.dirname(process_run_dir)
+
+log_directory_path = os.path.join(process_run_dir, "logs")
 
 # Convert to an absolute path
 log_directory_path = os.path.abspath(log_directory_path)

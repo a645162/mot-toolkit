@@ -6,6 +6,8 @@ from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
 
+logger.info("mot-toolkit")
+
 logger.info("Start To Load MainWindow Package")
 
 logger.info("Start To Load PySide6")

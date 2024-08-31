@@ -10,6 +10,11 @@ logger.info("Start Load Init MainWindow Package")
 
 from mot_toolkit.gui.view.main_window import init_main_window
 
-if __name__ == "__main__":
+
+def main():
     logger.info("Start to initialize the Main Window")
     init_main_window()
+
+
+if __name__ == "__main__":
+    main()

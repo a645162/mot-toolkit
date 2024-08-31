@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="start_gui_x11_forward" type="PythonConfigurationType" factoryName="Python" folderName="GUI">
+  <configuration default="false" name="GUI_Main_x11_forward" type="PythonConfigurationType" factoryName="Python" folderName="GUI">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -24,7 +24,7 @@
         <ENTRY IS_ENABLED="true" PARSER="runconfig" IS_EXECUTABLE="false" />
       </ENTRIES>
     </EXTENSION>
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/start_gui.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/main.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />

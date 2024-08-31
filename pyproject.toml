@@ -6,13 +6,13 @@ authors = [
     { name = "Haomin Kong", email = "a645162@qq.com" }
 ]
 dependencies = [
-    "loguru>=0.7.2",
-    "pyside6>=6.0.0",
-    "opencv-python>=4.10.0.84",
-    "chardet>=5.2.0",
+    "loguru",
+    "pyside6",
+    "opencv-python",
+    "chardet",
 ]
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.6"
 
 [build-system]
 requires = ["hatchling"]
@@ -21,19 +21,21 @@ build-backend = "hatchling.build"
 [tool.rye]
 managed = true
 dev-dependencies = [
-    "ruff>=0.6.3",
-    "cairosvg>=2.7.1",
-    "pytest>=8.3.2",
-    "pyinstaller>=6.10.0",
+    "hatchling",
+    "ruff",
+    "cairosvg",
+    "pytest",
+    "pyinstaller",
     # "nuitka>=2.4.8",
 ]
 
 [tool.uv]
 dev-dependencies = [
-    "ruff>=0.6.3",
-    "cairosvg>=2.7.1",
-    "pytest>=8.3.2",
-    "pyinstaller>=6.10.0",
+    "hatchling",
+    "ruff",
+    "cairosvg",
+    "pytest",
+    "pyinstaller",
 ]
 
 [tool.hatch.metadata]
