@@ -74,6 +74,13 @@ class DatasetImageView(ScrollImageView):
                         self.slot_save.emit()
                         return
 
+            case Qt.KeyboardModifier.AltModifier:
+                # Alt
+                match key:
+                    case Qt.Key.Key_C:
+                        self.__move_annotation_to_center()
+                        return
+
         super().keyPressEvent(event)
 
     def update_dataset_annotation_path(
@@ -280,3 +287,22 @@ class DatasetImageView(ScrollImageView):
 
         for rect_widget in self.annotation_widget_rect_list:
             rect_widget.show_box_label = value
+
+    def __move_annotation_to_center(self):
+        # Get Mouse Position
+        mouse_pos = self.image_view.mapFromGlobal(QCursor.pos())
+
+        # print(mouse_pos.x(), mouse_pos.y())
+
+        # Set Activated Annotation Center Position
+        for rect_widget in self.annotation_widget_rect_list:
+            if (
+                    rect_widget is not None and
+                    rect_widget.selecting
+            ):
+                # print("Found Selection Rect")
+
+                rect_widget.center_x = mouse_pos.x()
+                rect_widget.center_y = mouse_pos.y()
+
+                rect_widget.modify()

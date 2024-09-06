@@ -116,11 +116,54 @@ class ResizableRect(QWidget):
             self.ori_w = int(self.width() / self.scale_factor)
             self.ori_h = int(self.height() / self.scale_factor)
 
-            self.slot_resized.emit(self)
+            self.modify()
 
-            # print("Modified!")
-            self.__modified = True
-            self.slot_modified.emit(self)
+    @property
+    def now_x(self):
+        return self.x()
+
+    @now_x.setter
+    def now_x(self, value):
+        self.ori_x = int(value / self.scale_factor)
+
+        self.update()
+
+    @property
+    def now_y(self):
+        return self.y()
+
+    @now_y.setter
+    def now_y(self, value):
+        self.ori_y = int(value / self.scale_factor)
+
+        self.update()
+
+    @property
+    def now_width(self):
+        return self.width()
+
+    @now_width.setter
+    def now_width(self, value):
+        self.ori_w = int(value / self.scale_factor)
+
+        self.update()
+
+    @property
+    def now_height(self):
+        return self.height()
+
+    @now_height.setter
+    def now_height(self, value):
+        self.ori_h = int(value / self.scale_factor)
+
+        self.update()
+
+    def modify(self):
+        self.slot_resized.emit(self)
+
+        # print("Modified!")
+        self.__modified = True
+        self.slot_modified.emit(self)
 
     def is_modified(self) -> bool:
         return self.__modified
@@ -145,6 +188,7 @@ class ResizableRect(QWidget):
     @x1_original.setter
     def x1_original(self, value: int):
         self.ori_x = value
+
         self.update()
 
     @property
@@ -154,6 +198,7 @@ class ResizableRect(QWidget):
     @y1_original.setter
     def y1_original(self, value: int):
         self.ori_y = value
+
         self.update()
 
     @property
@@ -163,6 +208,7 @@ class ResizableRect(QWidget):
     @width_original.setter
     def width_original(self, value: int):
         self.ori_w = value
+
         self.update()
 
     @property
@@ -172,6 +218,7 @@ class ResizableRect(QWidget):
     @height_original.setter
     def height_original(self, value: int):
         self.ori_h = value
+
         self.update()
 
     @property
@@ -181,6 +228,42 @@ class ResizableRect(QWidget):
     @property
     def y2_original(self):
         return self.ori_y + self.ori_h
+
+    @property
+    def center_x(self):
+        return self.now_x + self.now_width // 2
+
+    @center_x.setter
+    def center_x(self, value: int):
+        self.now_x = value - self.now_width // 2
+
+    @property
+    def center_y(self):
+        return self.now_y + self.now_height // 2
+
+    @center_y.setter
+    def center_y(self, value: int):
+        self.now_y = value - self.now_height // 2
+
+    @property
+    def center_x_original(self):
+        return self.ori_x + self.ori_w // 2
+
+    @center_x_original.setter
+    def center_x_original(self, value: int):
+        self.ori_x = value - self.ori_w // 2
+
+        self.update()
+
+    @property
+    def center_y_original(self):
+        return self.ori_y + self.ori_h // 2
+
+    @center_y_original.setter
+    def center_y_original(self, value: int):
+        self.ori_y = value - self.ori_h // 2
+
+        self.update()
 
     def get_rect_two_point_2dim_array(self):
         return [
