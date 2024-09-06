@@ -22,7 +22,7 @@ from PySide6.QtWidgets import (
 logger.info(f"PySide6({PySide6Version}) Load Success")
 
 from mot_toolkit.gui.common.system_wide_menu import (
-    init_system_menu
+    init_system_menu, get_system_menu
 )
 
 from mot_toolkit.gui.view.components.select_directory_path import (
@@ -121,6 +121,13 @@ class MainWindow(QMainWindow):
         author_label = QLabel(parent=self)
         author_label.setText("Author:Haomin Kong")
         self.v_layout.addWidget(author_label)
+
+        # MenuBar
+        system_menu = get_system_menu()
+        if system_menu is not None:
+            system_menu.file_menu_open_dir.triggered.connect(
+                lambda _: self.__select_directory_path_widget.open_dir_select_dialog()
+            )
 
     def __button_interface_multi_level_clicked(self):
         path = self.__select_directory_path_widget.get_absolute_path()

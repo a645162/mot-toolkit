@@ -19,8 +19,8 @@ class SelectDirectoryPathWidget(QGroupBox):
 
     def __init_widgets(self):
         size_policy = QSizePolicy(
-            QSizePolicy.Preferred,
-            QSizePolicy.Fixed
+            QSizePolicy.Policy.Preferred,
+            QSizePolicy.Policy.Fixed
         )
         self.setSizePolicy(size_policy)
 
@@ -76,6 +76,9 @@ class SelectDirectoryPathWidget(QGroupBox):
         self.dragEnterEvent = drag_enter_event
         self.dragMoveEvent = drag_move_event
         self.dropEvent = drop_event
+
+    def open_dir_select_dialog(self):
+        self.__button_select_path_clicked()
 
     def __button_select_path_clicked(self):
         current_dir = self.get_path()

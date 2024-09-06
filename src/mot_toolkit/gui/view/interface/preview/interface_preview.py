@@ -587,19 +587,38 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.__successful_saved(self.current_annotation_object)
 
     def __action_window_restore_all(self):
-        for annotation in self.annotation_directory.annotation_file:
-            annotation.reload()
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to restore all?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
 
-        self.__update_object_list_widget()
+        if reply == QMessageBox.StandardButton.Yes:
+            for annotation in self.annotation_directory.annotation_file:
+                annotation.reload()
+
+            self.__update_object_list_widget()
 
     def __action_window_save_all(self):
-        for annotation in self.annotation_directory.annotation_file:
-            if annotation.save():
-                self.__successful_saved(annotation)
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to save all?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            for annotation in self.annotation_directory.annotation_file:
+                if annotation.save():
+                    self.__successful_saved(annotation)
 
     def __try_to_exit(self):
         # self.save_current_opened()
-        self.__action_window_save_all()
+        if self.check_is_have_modified():
+            self.__action_window_save_all()
 
         self.close()
 
@@ -743,20 +762,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         with open(record_path, "w", encoding="utf-8") as f:
             f.write(json_str)
 
-    def check_is_have_not_save_file(self) -> bool:
-        found = False
-
-        for annotation_obj in self.annotation_directory.annotation_file:
-            if annotation_obj.is_modified:
-                found = True
-                print(f"{annotation_obj.file_path} is modified but not save.")
-
-        return found
-
     def closeEvent(self, event):
         super().closeEvent(event)
 
-        if not self.check_is_have_not_save_file():
+        if not self.check_is_have_modified():
             event.accept()
             return
 
