@@ -19,9 +19,6 @@ cffi==1.17.0
     # via cairocffi
 chardet==5.2.0
     # via mot-toolkit
-colorama==0.4.6
-    # via loguru
-    # via pytest
 cssselect2==0.7.0
     # via cairosvg
 defusedxml==0.7.1
@@ -42,8 +39,6 @@ packaging==24.1
     # via pytest
 pathspec==0.12.1
     # via hatchling
-pefile==2024.8.26
-    # via pyinstaller
 pillow==10.4.0
     # via cairosvg
 pluggy==1.5.0
@@ -54,6 +49,8 @@ pycparser==2.22
 pyinstaller==6.10.0
 pyinstaller-hooks-contrib==2024.8
     # via pyinstaller
+pyperclip==1.9.0
+    # via mot-toolkit
 pyside6==6.7.2
     # via mot-toolkit
 pyside6-addons==6.7.2
@@ -62,8 +59,6 @@ pyside6-essentials==6.7.2
     # via pyside6
     # via pyside6-addons
 pytest==8.3.2
-pywin32-ctypes==0.2.3
-    # via pyinstaller
 ruff==0.6.3
 setuptools==74.0.0
     # via pyinstaller
@@ -80,5 +75,3 @@ trove-classifiers==2024.7.2
 webencodings==0.5.1
     # via cssselect2
     # via tinycss2
-win32-setctime==1.1.0
-    # via loguru

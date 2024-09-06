@@ -2,6 +2,8 @@ import json
 import os.path
 from typing import List
 
+import pyperclip
+
 from PySide6.QtCore import QSize, QUrl
 from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
 from PySide6.QtWidgets import (
@@ -31,6 +33,7 @@ from mot_toolkit.gui.view.interface.preview. \
 from mot_toolkit.gui.view.interface.preview. \
     components.toolbox_widget import ToolboxWidget
 from mot_toolkit.utils.logs import get_logger
+from mot_toolkit.utils.system.file_explorer import show_in_explorer
 
 logger = get_logger()
 
@@ -345,6 +348,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_file_list_widget.menu_reload_file.triggered.connect(
             self.__action_file_reload
         )
+        self.r_file_list_widget.menu_copy_path_image.triggered.connect(
+            self.__action_file_list_copy_path_image
+        )
+        self.r_file_list_widget.menu_copy_path_json.triggered.connect(
+            self.__action_file_list_copy_path_json
+        )
+        self.r_file_list_widget.menu_show_in_explorer.triggered.connect(
+            self.__action_file_list_show_in_explorer
+        )
 
         # Obj List
         self.r_object_list_widget.menu_operate_del \
@@ -596,6 +608,35 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.annotation_directory.annotation_file[file_index].reload()
 
         self.__update_object_list_widget()
+
+    def __get_selection_image_path(self):
+        file_index = self.r_file_list_widget.selection_index
+
+        file_path = self.annotation_directory.annotation_file[file_index].pic_path
+
+        return file_path
+
+    def __get_selection_json_path(self):
+        file_index = self.r_file_list_widget.selection_index
+
+        return self.annotation_directory.annotation_file[file_index].file_path
+
+    def __action_file_list_copy_path_image(self):
+        file_path = self.__get_selection_image_path()
+
+        # Copy Path
+        pyperclip.copy(file_path)
+
+    def __action_file_list_copy_path_json(self):
+        file_path = self.__get_selection_json_path()
+
+        # Copy Path
+        pyperclip.copy(file_path)
+
+    def __action_file_list_show_in_explorer(self):
+        file_path = self.__get_selection_image_path()
+
+        show_in_explorer(file_path)
 
     def __action_obj_del_target(self):
         index = self.r_object_list_widget.selection_index

@@ -12,13 +12,13 @@
 -e file:.
 chardet==5.2.0
     # via mot-toolkit
-colorama==0.4.6
-    # via loguru
 loguru==0.7.2
     # via mot-toolkit
 numpy==2.1.0
     # via opencv-python
 opencv-python==4.10.0.84
+    # via mot-toolkit
+pyperclip==1.9.0
     # via mot-toolkit
 pyside6==6.7.2
     # via mot-toolkit
@@ -31,5 +31,3 @@ shiboken6==6.7.2
     # via pyside6
     # via pyside6-addons
     # via pyside6-essentials
-win32-setctime==1.1.0
-    # via loguru

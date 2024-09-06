@@ -35,6 +35,19 @@ class FileListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_reload_file)
         select_enable_list.append(self.menu_reload_file)
 
+        q_menu.addSeparator()
+
+        self.menu_copy_path_image = \
+            QAction("Copy Image File Path", self)
+        q_menu.addAction(self.menu_copy_path_image)
+        select_enable_list.append(self.menu_copy_path_image)
+        self.menu_copy_path_json = \
+            QAction("Copy Json File Path", self)
+        q_menu.addAction(self.menu_copy_path_json)
+        select_enable_list.append(self.menu_copy_path_json)
+
+        q_menu.addSeparator()
+
         self.menu_show_in_explorer = \
             QAction("Show in Explorer", self)
         q_menu.addAction(self.menu_show_in_explorer)
