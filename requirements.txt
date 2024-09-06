@@ -4,5 +4,3 @@ pyside6
 opencv-python
 
 chardet
-
-pyperclip

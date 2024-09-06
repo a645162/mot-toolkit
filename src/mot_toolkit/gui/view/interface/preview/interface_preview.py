@@ -2,24 +2,22 @@ import json
 import os.path
 from typing import List
 
-import pyperclip
-
 from PySide6.QtCore import QSize, QUrl
 from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
-    QMenuBar, QInputDialog,
+    QMenuBar, QInputDialog, QApplication,
 )
 
+# Load Settings
+from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
     XAnyLabelingAnnotationDirectory,
     XAnyLabelingAnnotation
 )
-# Load Settings
-from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view. \
     components.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.gui.view.interface.preview. \
@@ -625,13 +623,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         file_path = self.__get_selection_image_path()
 
         # Copy Path
-        pyperclip.copy(file_path)
+        clipboard = QApplication.clipboard()
+        clipboard.setText(file_path)
 
     def __action_file_list_copy_path_json(self):
         file_path = self.__get_selection_json_path()
 
         # Copy Path
-        pyperclip.copy(file_path)
+        clipboard = QApplication.clipboard()
+        clipboard.setText(file_path)
 
     def __action_file_list_show_in_explorer(self):
         file_path = self.__get_selection_image_path()

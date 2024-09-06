@@ -61,6 +61,11 @@ class FileListWidget(BaseListWidgetWithMenu):
 
         self.menu.addSeparator()
 
+        self.menu_copy_name = QAction("Copy File Name", self.menu)
+        self.menu_copy_name.triggered.connect(self.__copy_name)
+        self.menu.addAction(self.menu_copy_name)
+        self.select_enable_list.append(self.menu_copy_name)
+
         self.menu_copy_path = QAction("Copy Path", self.menu)
         self.menu_copy_path.triggered.connect(self.__copy_path)
         self.menu.addAction(self.menu_copy_path)
@@ -138,6 +143,19 @@ class FileListWidget(BaseListWidgetWithMenu):
         self.update_list_content()
 
         self.slot_refreshed.emit(self.current_depth)
+
+    def __copy_name(self):
+        self.update_path()
+
+        file_name = (
+            self.selection_text
+            .replace("/", "")
+            .replace("\\", "")
+        )
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(file_name)
 
     def __copy_path(self):
         self.update_path()
