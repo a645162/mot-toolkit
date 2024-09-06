@@ -7,7 +7,7 @@ from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
-    QMenuBar, QInputDialog, QApplication,
+    QMenuBar, QInputDialog, QApplication, QMessageBox,
 )
 
 # Load Settings
@@ -739,3 +739,34 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         with open(record_path, "w", encoding="utf-8") as f:
             f.write(json_str)
+
+    def check_is_have_not_save_file(self) -> bool:
+        found = False
+
+        for annotation_obj in self.annotation_directory.annotation_file:
+            if annotation_obj.is_modified:
+                found = True
+                print(f"{annotation_obj.file_path} is modified but not save.")
+
+        return found
+
+    def closeEvent(self, event):
+        super().closeEvent(event)
+
+        if not self.check_is_have_not_save_file():
+            event.accept()
+            return
+
+        reply = QMessageBox.question(
+            self,
+            "File not save",
+            "You have not saved some files.\n"
+            "Are you sure you want to quit?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            event.accept()
+        else:
+            event.ignore()

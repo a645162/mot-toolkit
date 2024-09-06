@@ -123,6 +123,10 @@ class AnnotationWidgetRect(ResizableRect):
 
         super().mouseReleaseEvent(event)
 
+    def keyPressEvent(self, event):
+        if self.parent() is not None:
+            self.parent().keyPressEvent(event)
+
     def paintEvent(self, event):
         super().paintEvent(event)
 
