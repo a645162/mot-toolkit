@@ -127,7 +127,8 @@ class MainWindow(QMainWindow):
         program_settings.last_work_directory = path
 
         self.interface_multi_level = WorkInterfaceMultiLevel(
-            work_directory_path=path
+            work_directory_path=path,
+            parent=self
         )
         self.interface_multi_level.show()
 
@@ -145,7 +146,8 @@ class MainWindow(QMainWindow):
         program_settings.last_work_directory = path
 
         self.interface_preview = InterFacePreview(
-            work_directory_path=path
+            work_directory_path=path,
+            parent=self
         )
         self.interface_preview.show()
 

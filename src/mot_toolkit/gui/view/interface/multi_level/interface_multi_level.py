@@ -22,8 +22,11 @@ from mot_toolkit.gui.view.interface. \
 class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
     base_title = "Multi Level Finder"
 
-    def __init__(self, work_directory_path: str):
-        super().__init__(work_directory_path=work_directory_path)
+    def __init__(self, work_directory_path: str, parent=None):
+        super().__init__(
+            work_directory_path=work_directory_path,
+            parent=parent
+        )
 
         self.__setup_window_properties()
 
@@ -108,7 +111,8 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
         path = os.path.abspath(path)
 
         interface_preview = InterFacePreview(
-            work_directory_path=path
+            work_directory_path=path,
+            parent=self
         )
         interface_preview.show()
 
@@ -128,6 +132,7 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
         path = os.path.abspath(path)
 
         interface_smooth = InterFaceSmooth(
-            work_directory_path=path
+            work_directory_path=path,
+            parent=self
         )
         interface_smooth.show()

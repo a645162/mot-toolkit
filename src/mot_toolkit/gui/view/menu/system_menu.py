@@ -1,7 +1,7 @@
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenuBar
 
-from mot_toolkit.gui.view.interface.\
+from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.utils.system_info import is_macos
 
@@ -14,6 +14,8 @@ class MenuAction(QAction):
 
 class SystemMenu:
     def __init__(self, parent=None, current_menubar: QMenuBar = None):
+        self.menu_parent = parent
+
         if current_menubar is not None:
             self.menu_bar = current_menubar
         else:
@@ -45,6 +47,6 @@ class SystemMenu:
         self.help_menu_about = MenuAction("About", self.help_menu)
         self.help_menu_about.setMenuRole(QAction.MenuRole.AboutRole)
         self.help_menu_about.triggered.connect(
-            lambda _: InterFaceAbout().show()
+            lambda _: InterFaceAbout(parent=self.menu_parent).show()
         )
         self.help_menu.addAction(self.help_menu_about)

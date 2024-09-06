@@ -469,7 +469,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             return interval_list
 
         with open(self.save_record_path, "r", encoding="utf-8") as f:
-            json_data: dict = json.load(f)
+            json_str = f.read().strip()
+            if len(json_str) == 0:
+                return interval_list
+            json_data: dict = json.loads(json_str)
 
         file_name_list = json_data.keys()
 

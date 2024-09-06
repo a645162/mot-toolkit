@@ -9,8 +9,8 @@ from mot_toolkit.gui.view. \
 
 class BaseWorkInterfaceWindow(BaseQMainWindow):
 
-    def __init__(self, work_directory_path: str):
-        super().__init__()
+    def __init__(self, work_directory_path: str, parent=None):
+        super().__init__(parent=parent)
 
         self.work_directory_path = work_directory_path
 

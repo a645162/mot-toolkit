@@ -51,8 +51,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     menu: QMenuBar = None
 
-    def __init__(self, work_directory_path: str):
-        super().__init__(work_directory_path)
+    def __init__(self, work_directory_path: str, parent=None):
+        super().__init__(
+            work_directory_path=work_directory_path,
+            parent=parent
+        )
         logger.info(f"Preview Work Directory: {work_directory_path}")
 
         self.current_file_list = []
