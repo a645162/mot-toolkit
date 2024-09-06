@@ -78,7 +78,7 @@ class DatasetImageView(ScrollImageView):
                 # Alt
                 match key:
                     case Qt.Key.Key_C:
-                        self.__move_annotation_to_center()
+                        self.__move_annotation_to_mouse_position()
                         return
 
         super().keyPressEvent(event)
@@ -288,7 +288,7 @@ class DatasetImageView(ScrollImageView):
         for rect_widget in self.annotation_widget_rect_list:
             rect_widget.show_box_label = value
 
-    def __move_annotation_to_center(self):
+    def __move_annotation_to_mouse_position(self):
         # Get Mouse Position
         mouse_pos = self.image_view.mapFromGlobal(QCursor.pos())
 

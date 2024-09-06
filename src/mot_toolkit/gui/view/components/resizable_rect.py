@@ -119,7 +119,7 @@ class ResizableRect(QWidget):
             self.modify()
 
     @property
-    def now_x(self):
+    def now_x(self) -> int:
         return self.x()
 
     @now_x.setter
@@ -129,7 +129,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def now_y(self):
+    def now_y(self) -> int:
         return self.y()
 
     @now_y.setter
@@ -139,7 +139,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def now_width(self):
+    def now_width(self) -> int:
         return self.width()
 
     @now_width.setter
@@ -149,7 +149,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def now_height(self):
+    def now_height(self) -> int:
         return self.height()
 
     @now_height.setter
@@ -158,7 +158,7 @@ class ResizableRect(QWidget):
 
         self.update()
 
-    def modify(self):
+    def modify(self) -> None:
         self.slot_resized.emit(self)
 
         # print("Modified!")
@@ -172,7 +172,7 @@ class ResizableRect(QWidget):
         return f"{self.label} {self.ori_x}, {self.ori_y}, {self.ori_w}, {self.ori_h}"
 
     @property
-    def scale_factor(self):
+    def scale_factor(self) -> float:
         return self.__scale_factor
 
     @scale_factor.setter
@@ -182,7 +182,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def x1_original(self):
+    def x1_original(self) -> int:
         return self.ori_x
 
     @x1_original.setter
@@ -192,7 +192,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def y1_original(self):
+    def y1_original(self) -> int:
         return self.ori_y
 
     @y1_original.setter
@@ -202,7 +202,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def width_original(self):
+    def width_original(self) -> int:
         return self.ori_w
 
     @width_original.setter
@@ -212,7 +212,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def height_original(self):
+    def height_original(self) -> int:
         return self.ori_h
 
     @height_original.setter
@@ -222,15 +222,15 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def x2_original(self):
+    def x2_original(self) -> int:
         return self.ori_x + self.ori_w
 
     @property
-    def y2_original(self):
+    def y2_original(self) -> int:
         return self.ori_y + self.ori_h
 
     @property
-    def center_x(self):
+    def center_x(self) -> int:
         return self.now_x + self.now_width // 2
 
     @center_x.setter
@@ -238,7 +238,7 @@ class ResizableRect(QWidget):
         self.now_x = value - self.now_width // 2
 
     @property
-    def center_y(self):
+    def center_y(self) -> int:
         return self.now_y + self.now_height // 2
 
     @center_y.setter
@@ -246,7 +246,7 @@ class ResizableRect(QWidget):
         self.now_y = value - self.now_height // 2
 
     @property
-    def center_x_original(self):
+    def center_x_original(self) -> int:
         return self.ori_x + self.ori_w // 2
 
     @center_x_original.setter
@@ -256,7 +256,7 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def center_y_original(self):
+    def center_y_original(self) -> int:
         return self.ori_y + self.ori_h // 2
 
     @center_y_original.setter

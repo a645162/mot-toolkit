@@ -547,17 +547,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.__update_object_list_widget()
 
     def __slot_previous_image(self):
-        self.next_previous_image(next=False)
+        self.next_previous_image(is_next=False)
 
     def __slot_next_image(self):
-        self.next_previous_image(next=True)
+        self.next_previous_image(is_next=True)
 
-    def next_previous_image(self, next: bool = True):
+    def next_previous_image(self, is_next: bool = True):
         selection_index = self.r_file_list_widget.selection_index
         file_count = self.r_file_list_widget.count
         jump_file_count = self.jump_file_count
 
-        if next:
+        if is_next:
             selection_index += jump_file_count
         else:
             selection_index -= jump_file_count

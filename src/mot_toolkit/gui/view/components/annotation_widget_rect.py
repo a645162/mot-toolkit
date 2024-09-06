@@ -123,10 +123,6 @@ class AnnotationWidgetRect(ResizableRect):
 
         super().mouseReleaseEvent(event)
 
-    def keyPressEvent(self, event):
-        if self.parent() is not None:
-            self.parent().keyPressEvent(event)
-
     def paintEvent(self, event):
         super().paintEvent(event)
 
@@ -191,11 +187,17 @@ class AnnotationWidgetRect(ResizableRect):
             self.setFillOpacity(theme["opacity_selected"])
 
     def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+
         modifiers = event.modifiers()
         key = event.key()
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
                 match key:
+                    case Qt.Key.Key_Up:
+                        return
+                    case Qt.Key.Key_Down:
+                        return
                     case Qt.Key.Key_Left:
                         return
                     case Qt.Key.Key_Right:
@@ -203,7 +205,8 @@ class AnnotationWidgetRect(ResizableRect):
             case Qt.KeyboardModifier.ControlModifier:
                 pass
 
-        super().keyPressEvent(event)
+        if self.parent() is not None:
+            self.parent().keyPressEvent(event)
 
     @property
     def label_text(self) -> str:
