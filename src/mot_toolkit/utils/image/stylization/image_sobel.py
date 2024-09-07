@@ -38,7 +38,24 @@ def sobel_edge_detection_q_image(image: QImage) -> QImage:
     # Apply Sobel edge detection
     edges_np = sobel_edge_detection(image_np)
 
-    # _, binary_image = cv2.threshold(edges_np, 127, 255, cv2.THRESH_BINARY)
+    # Convert NumPy array to QImage
+    result_q_image = opencv_to_q_image(edges_np)
+
+    return result_q_image
+
+
+def sobel_edge_detection_binary_q_image(
+        image: QImage,
+        binary_threshold: int = 127
+) -> QImage:
+    # Convert QImage to NumPy array
+    image_np = q_image_to_opencv(image)
+
+    # Apply Sobel edge detection
+    edges_np = sobel_edge_detection(image_np)
+
+    # Convert to binary image
+    _, binary_image = cv2.threshold(edges_np, binary_threshold, 255, cv2.THRESH_BINARY)
 
     # Convert NumPy array to QImage
     result_q_image = opencv_to_q_image(edges_np)
@@ -52,5 +69,21 @@ def sobel_edge_detection_q_pixmap(image: QPixmap) -> QPixmap:
 
     # Apply Sobel edge detection
     edges_q_image = sobel_edge_detection_q_image(image_q_image)
+
+    return QPixmap.fromImage(edges_q_image)
+
+
+def sobel_edge_detection_binary_q_pixmap(
+        image: QPixmap,
+        binary_threshold: int = 127
+) -> QPixmap:
+    # Convert QPixmap to QImage
+    image_q_image = image.toImage()
+
+    # Apply Sobel edge detection
+    edges_q_image = sobel_edge_detection_binary_q_image(
+        image=image_q_image,
+        binary_threshold=binary_threshold
+    )
 
     return QPixmap.fromImage(edges_q_image)

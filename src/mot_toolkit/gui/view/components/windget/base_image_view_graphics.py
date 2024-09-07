@@ -10,13 +10,17 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.utils. \
-    image.stylization.image_sobel import sobel_edge_detection_q_pixmap
+    image.stylization.image_sobel import (
+    sobel_edge_detection_q_pixmap,
+    sobel_edge_detection_binary_q_pixmap
+)
 
 
 class ImageDisplayType(EnumType):
     Original = 0
     Outline = 1
-    Adjustment = 2
+    OutlineBinary = 2
+    Adjustment = 3
 
 
 class ImageViewGraphics(QGraphicsView):
@@ -34,6 +38,7 @@ class ImageViewGraphics(QGraphicsView):
     rotate_triggered: Signal = Signal(float)
 
     __image_display_type: ImageDisplayType = 0
+    __outline_binary_threshold: int = 127
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -170,6 +175,22 @@ class ImageViewGraphics(QGraphicsView):
         self.__image_display_type = value
         self.update()
 
+    @property
+    def outline_binary_threshold(self) -> int:
+        return self.__outline_binary_threshold
+
+    @outline_binary_threshold.setter
+    def outline_binary_threshold(self, value: int):
+        if value < 0:
+            value = 0
+
+        if value > 255:
+            value = 255
+
+        self.__outline_binary_threshold = value
+
+        self.update()
+
     def update(self):
         if self.image is None:
             return
@@ -184,7 +205,11 @@ class ImageViewGraphics(QGraphicsView):
         if self.image_display_type != ImageDisplayType.Original:
             match self.image_display_type:
                 case ImageDisplayType.Outline:
-                    self.image_display = sobel_edge_detection_q_pixmap(self.image_display)
+                    self.image_display = \
+                        sobel_edge_detection_q_pixmap(self.image_display)
+                case ImageDisplayType.OutlineBinary:
+                    self.image_display = \
+                        sobel_edge_detection_binary_q_pixmap(self.image_display)
 
         # Clear Old Scene
         self.scene.clear()

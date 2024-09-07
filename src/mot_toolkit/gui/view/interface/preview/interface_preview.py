@@ -283,6 +283,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
+        self.action_group_frame_display_type_radio_outline_binary = \
+            MenuItemRadio(
+                "Outline(Binary)",
+                parent=action_group_frame_display_type,
+                action_group=action_group_frame_display_type,
+                menu=self.menu_frame
+            )
         self.action_group_frame_display_type_radio_adjustment = \
             MenuItemRadio(
                 "Contrast and Brightness Adjustment",
@@ -296,6 +303,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.action_group_frame_display_type_radio_original \
             .triggered.connect(self.__action_frame_display_type_changed)
         self.action_group_frame_display_type_radio_outline \
+            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_outline_binary \
             .triggered.connect(self.__action_frame_display_type_changed)
         self.action_group_frame_display_type_radio_adjustment \
             .triggered.connect(self.__action_frame_display_type_changed)
@@ -738,25 +747,31 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_frame_display_type_changed(self):
         if self.action_group_frame_display_type_radio_original.isChecked():
-            self.__action_frame_display_type(0)
+            self.__action_frame_display_type(ImageDisplayType.Original)
         elif self.action_group_frame_display_type_radio_outline.isChecked():
-            self.__action_frame_display_type(1)
+            self.__action_frame_display_type(ImageDisplayType.Outline)
+        elif self.action_group_frame_display_type_radio_outline_binary.isChecked():
+            self.__action_frame_display_type(ImageDisplayType.OutlineBinary)
         elif self.action_group_frame_display_type_radio_adjustment.isChecked():
-            self.__action_frame_display_type(2)
+            self.__action_frame_display_type(ImageDisplayType.Adjustment)
         else:
-            self.__action_frame_display_type(0)
+            self.__action_frame_display_type(ImageDisplayType.Original)
 
-    def __action_frame_display_type(self, mode: int):
-        match mode:
-            case 0:
+    def __action_frame_display_type(self, type: ImageDisplayType):
+        match type:
+            case ImageDisplayType.Original:
                 # Original Image
                 logger.info("Original Image")
                 self.main_image_view.image_view.image_display_type = ImageDisplayType.Original
-            case 1:
+            case ImageDisplayType.Outline:
                 # Outline Image
                 logger.info("Outline Image")
                 self.main_image_view.image_view.image_display_type = ImageDisplayType.Outline
-            case 2:
+            case ImageDisplayType.OutlineBinary:
+                # Outline Binary Image
+                logger.info("Outline Binary Image")
+                self.main_image_view.image_view.image_display_type = ImageDisplayType.OutlineBinary
+            case ImageDisplayType.Adjustment:
                 # Adjustment Image
                 logger.info("Adjust Image Contrast and Brightness")
                 self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
