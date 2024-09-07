@@ -209,7 +209,10 @@ class ImageViewGraphics(QGraphicsView):
                         sobel_edge_detection_q_pixmap(self.image_display)
                 case ImageDisplayType.OutlineBinary:
                     self.image_display = \
-                        sobel_edge_detection_binary_q_pixmap(self.image_display)
+                        sobel_edge_detection_binary_q_pixmap(
+                            image=self.image_display,
+                            binary_threshold=self.outline_binary_threshold
+                        )
 
         # Clear Old Scene
         self.scene.clear()

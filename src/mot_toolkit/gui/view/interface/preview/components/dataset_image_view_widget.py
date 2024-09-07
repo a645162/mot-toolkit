@@ -51,6 +51,10 @@ class DatasetImageView(ScrollImageView):
     def __init_widgets(self):
         self.slot_try_to_zoom.connect(self.__zoom_triggered)
 
+        self.image_view.slot_image_scale_factor_changed.connect(
+            self.__image_scale_factor_changed
+        )
+
     def __init_shortcut(self):
         pass
 
@@ -80,22 +84,27 @@ class DatasetImageView(ScrollImageView):
                     case Qt.Key.Key_C:
                         self.__move_annotation_to_mouse_position()
                         return
+                    case Qt.Key.Key_R:
+                        self.__resize_annotation_by_previous()
+                        return
 
         super().keyPressEvent(event)
 
     def update_dataset_annotation_path(
             self,
-            annotation_obj: XAnyLabelingAnnotation
+            annotation_obj: XAnyLabelingAnnotation,
+            previous_annotation_obj: XAnyLabelingAnnotation = None
     ):
         self.__annotation_obj = annotation_obj
+        self.__previous_annotation_obj = previous_annotation_obj
 
         # print(annotation_obj.file_path)
         # print(annotation_obj.pic_path)
 
         try:
             self.current_q_pixmap = QPixmap(annotation_obj.pic_path)
-            self.init_annotation_widget()
             self.image_view.set_image(self.current_q_pixmap)
+            self.init_annotation_widget()
         except Exception as e:
             print(e)
             self.image_view.set_image(None)
@@ -149,7 +158,7 @@ class DatasetImageView(ScrollImageView):
             rect_widget.set_rect_data_annotation(rect_item)
 
             # Set the boundary for the rectangle
-            rect_widget.setBoundary(self.current_q_pixmap.rect())
+            rect_widget.setBoundaryWithDpi(self.image_view.image_display.rect())
 
             rect_widget.show()
             self.annotation_widget_rect_list.append(rect_widget)
@@ -207,6 +216,28 @@ class DatasetImageView(ScrollImageView):
 
         # Set Annotation Scale Factor
         self.set_annotation_scale_factor(float_value)
+
+    def __image_scale_factor_changed(self):
+        self.update_all_rect_widget_boundary()
+
+    def update_all_rect_widget_boundary(self):
+        boundary = None
+
+        # if self.current_q_pixmap is not None:
+        #     boundary = self.current_q_pixmap.rect()
+
+        if self.image_view.image_display is not None:
+            boundary = self.image_view.image_display.rect()
+
+        if boundary is None:
+            return
+
+        for rect_widget in self.annotation_widget_rect_list:
+            if (
+                    rect_widget is not None and
+                    rect_widget.parent() is not None
+            ):
+                rect_widget.setBoundaryWithDpi(boundary)
 
     def __rect_widget_try_to_show_menu(self, widget_obj: AnnotationWidgetRect):
         if self.object_menu is None:
@@ -306,3 +337,35 @@ class DatasetImageView(ScrollImageView):
                 rect_widget.center_y = mouse_pos.y()
 
                 rect_widget.modify()
+
+    def __resize_annotation_by_previous(self):
+        selected_rect_widget = None
+        for rect_widget in self.annotation_widget_rect_list:
+            if (
+                    rect_widget is not None and
+                    rect_widget.selecting
+            ):
+                selected_rect_widget = rect_widget
+                break
+        if selected_rect_widget is None:
+            return
+
+        previous_rect_obj = None
+        for pre_annotation in self.__previous_annotation_obj.rect_annotation_list:
+            if selected_rect_widget.label == pre_annotation.label:
+                previous_rect_obj = pre_annotation
+                break
+
+        if previous_rect_obj is None:
+            return
+
+        selected_rect_widget.width_original = previous_rect_obj.width
+        selected_rect_widget.height_original = previous_rect_obj.height
+
+        selected_rect_widget.center_x_original = previous_rect_obj.center_x
+        selected_rect_widget.center_y_original = previous_rect_obj.center_y
+
+    def update(self):
+        super().update()
+
+        self.image_view.update()

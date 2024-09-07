@@ -55,10 +55,15 @@ def sobel_edge_detection_binary_q_image(
     edges_np = sobel_edge_detection(image_np)
 
     # Convert to binary image
-    _, binary_image = cv2.threshold(edges_np, binary_threshold, 255, cv2.THRESH_BINARY)
+    _, binary_image = cv2.threshold(
+        src=edges_np,
+        thresh=binary_threshold,
+        maxval=255,
+        type=cv2.THRESH_BINARY
+    )
 
     # Convert NumPy array to QImage
-    result_q_image = opencv_to_q_image(edges_np)
+    result_q_image = opencv_to_q_image(binary_image)
 
     return result_q_image
 

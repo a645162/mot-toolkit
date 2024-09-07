@@ -269,6 +269,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         action_group_frame_display_type = QActionGroup(self.menu_frame)
 
+        # Original
         self.action_group_frame_display_type_radio_original = \
             MenuItemRadio(
                 "Original Image",
@@ -276,6 +277,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
+        self.action_group_frame_display_type_radio_original \
+            .triggered.connect(self.__action_frame_display_type_changed)
+
+        # Outline
         self.action_group_frame_display_type_radio_outline = \
             MenuItemRadio(
                 "Outline",
@@ -283,6 +288,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
+        self.action_group_frame_display_type_radio_outline \
+            .triggered.connect(self.__action_frame_display_type_changed)
+
+        # Outline + Binary
         self.action_group_frame_display_type_radio_outline_binary = \
             MenuItemRadio(
                 "Outline(Binary)",
@@ -290,6 +299,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
+        self.action_group_frame_display_type_radio_outline_binary \
+            .triggered.connect(self.__action_frame_display_type_changed)
+
+        self.menu_frame_outline_binary_threshold = \
+            QAction("set Binary Threshold Value", parent=self.menu_frame)
+        self.menu_frame_outline_binary_threshold.triggered.connect(
+            self.__action_set_frame_outline_binary_threshold
+        )
+        self.menu_frame.addAction(self.menu_frame_outline_binary_threshold)
+
+        # Adjustment
         self.action_group_frame_display_type_radio_adjustment = \
             MenuItemRadio(
                 "Contrast and Brightness Adjustment",
@@ -297,17 +317,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
-
-        self.action_group_frame_display_type_radio_original.setChecked(True)
-
-        self.action_group_frame_display_type_radio_original \
-            .triggered.connect(self.__action_frame_display_type_changed)
-        self.action_group_frame_display_type_radio_outline \
-            .triggered.connect(self.__action_frame_display_type_changed)
-        self.action_group_frame_display_type_radio_outline_binary \
-            .triggered.connect(self.__action_frame_display_type_changed)
         self.action_group_frame_display_type_radio_adjustment \
             .triggered.connect(self.__action_frame_display_type_changed)
+
+        self.action_group_frame_display_type_radio_original.setChecked(True)
 
         self.menu_frame.addSeparator()
 
@@ -521,8 +534,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.annotation_directory.annotation_file[index]
         self.current_file_path = self.current_annotation_object.file_path
 
+        self.previous_annotation_object = None
+        if index != 0:
+            self.previous_annotation_object = self.annotation_directory.annotation_file[index - 1]
+
         self.main_image_view.update_dataset_annotation_path(
-            self.current_annotation_object
+            annotation_obj=self.current_annotation_object,
+            previous_annotation_obj=self.previous_annotation_object
         )
 
         self.r_object_list_widget.list_widget.clear()
@@ -777,6 +795,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
             case _:
                 logger.error("Unknown mode")
+
+    def __action_set_frame_outline_binary_threshold(self):
+        number, ok = QInputDialog.getInt(
+            self,
+            "Input Dialog",
+            "Enter the threshold value:",
+            value=self.main_image_view.image_view.outline_binary_threshold
+        )
+        if ok:
+            self.main_image_view.image_view.outline_binary_threshold = number
+            self.main_image_view.image_view.update()
 
     def __action_frame_show_box(self):
         value = self.menu_frame_show_box.isChecked()
