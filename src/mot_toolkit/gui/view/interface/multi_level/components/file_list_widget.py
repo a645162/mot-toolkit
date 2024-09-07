@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QSizePolicy, QApplication
 
 from mot_toolkit.datatype.directory.dir_file import DirectoryAndFile
 
-from mot_toolkit.gui.view. \
-    components.base_list_widget_with_menu import BaseListWidgetWithMenu
+from mot_toolkit.gui.view.components. \
+    windget.base_list_widget_with_menu import BaseListWidgetWithMenu
 
 
 class FileListWidget(BaseListWidgetWithMenu):
@@ -65,6 +65,11 @@ class FileListWidget(BaseListWidgetWithMenu):
         self.menu_copy_name.triggered.connect(self.__copy_name)
         self.menu.addAction(self.menu_copy_name)
         self.select_enable_list.append(self.menu_copy_name)
+
+        self.menu_copy_all_name = QAction("Copy All File Name", self.menu)
+        self.menu_copy_all_name.triggered.connect(self.__copy_all_name)
+        self.menu.addAction(self.menu_copy_all_name)
+        self.select_enable_list.append(self.menu_copy_all_name)
 
         self.menu_copy_path = QAction("Copy Path", self.menu)
         self.menu_copy_path.triggered.connect(self.__copy_path)
@@ -156,6 +161,23 @@ class FileListWidget(BaseListWidgetWithMenu):
         # Copy to clipboard
         clipboard = QApplication.clipboard()
         clipboard.setText(file_name)
+
+    def __copy_all_name(self):
+        self.update_path()
+
+        final_text = ""
+
+        for i in range(self.count()):
+            file_name = (
+                self.item(i).text()
+                .replace("/", "")
+                .replace("\\", "")
+            )
+            final_text += file_name + "\n"
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(final_text)
 
     def __copy_path(self):
         self.update_path()

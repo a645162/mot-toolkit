@@ -3,8 +3,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
-from mot_toolkit.gui.view. \
-    components.base_q_main_window import BaseQMainWindow
+from mot_toolkit.gui.view.components. \
+    window.base_q_main_window import BaseQMainWindow
 
 
 class BaseWorkInterfaceWindow(BaseQMainWindow):

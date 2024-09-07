@@ -3,8 +3,8 @@ from typing import List
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu
 
-from mot_toolkit.gui.view. \
-    components.list_with_title_widget import ListWithTitleWidget
+from mot_toolkit.gui.view.components. \
+    windget.list_with_title_widget import ListWithTitleWidget
 
 
 class ObjectListWidget(ListWithTitleWidget):

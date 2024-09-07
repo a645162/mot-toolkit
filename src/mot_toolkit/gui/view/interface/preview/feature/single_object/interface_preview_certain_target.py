@@ -1,4 +1,5 @@
-from mot_toolkit.gui.view.components.base_interface import BaseInterface
+from mot_toolkit.gui.view.components. \
+    window.base_interface import BaseInterface
 
 
 class InterfacePreviewTarget(BaseInterface):

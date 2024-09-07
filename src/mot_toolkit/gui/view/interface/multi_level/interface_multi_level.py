@@ -7,7 +7,7 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.gui.view.components. \
-    base_interface_window import BaseWorkInterfaceWindow
+    window.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.gui.view.interface.multi_level. \
     components.multi_level_finder_widget import MultiLevelFinderWidget
 

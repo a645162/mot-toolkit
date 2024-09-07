@@ -1,5 +1,5 @@
-from mot_toolkit.gui.view. \
-    components.list_with_title_widget import ListWithTitleWidget
+from mot_toolkit.gui.view.components. \
+    windget.list_with_title_widget import ListWithTitleWidget
 
 
 class LabelClassListWidget(ListWithTitleWidget):

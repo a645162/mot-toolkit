@@ -3,7 +3,9 @@ import os.path
 from typing import List
 
 from PySide6.QtCore import QSize, QUrl
-from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices
+from PySide6.QtGui import (
+    QColor, QAction, QIcon, QDesktopServices, QActionGroup
+)
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout, QVBoxLayout,
@@ -12,14 +14,16 @@ from PySide6.QtWidgets import (
 
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
+from mot_toolkit.gui.view.components. \
+    menu.menu_item_radio import MenuItemRadio
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
     XAnyLabelingAnnotationDirectory,
     XAnyLabelingAnnotation
 )
-from mot_toolkit.gui.view. \
-    components.base_interface_window import BaseWorkInterfaceWindow
+from mot_toolkit.gui.view.components. \
+    window.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.gui.view.interface.preview. \
     components.dataset_image_view_widget import DatasetImageView
 from mot_toolkit.gui.view.interface.preview. \
@@ -260,6 +264,38 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         # Frame Menu
         self.menu_frame = self.menu.addMenu("Frame")
+
+        action_group_frame_mode = QActionGroup(self.menu_frame)
+
+        self.action_group_frame_mode_radio_original = \
+            MenuItemRadio(
+                "Original Image",
+                parent=action_group_frame_mode,
+                action_group=action_group_frame_mode,
+                menu=self.menu_frame
+            )
+        self.action_group_frame_mode_radio_outline = \
+            MenuItemRadio(
+                "Outline",
+                parent=action_group_frame_mode,
+                action_group=action_group_frame_mode,
+                menu=self.menu_frame
+            )
+        self.action_group_frame_mode_radio_adjustment = \
+            MenuItemRadio(
+                "Contrast and Brightness Adjustment",
+                parent=action_group_frame_mode,
+                action_group=action_group_frame_mode,
+                menu=self.menu_frame
+            )
+
+        self.action_group_frame_mode_radio_original.setChecked(True)
+
+        self.action_group_frame_mode_radio_original.triggered.connect(self.__action_frame_mode_changed)
+        self.action_group_frame_mode_radio_outline.triggered.connect(self.__action_frame_mode_changed)
+        self.action_group_frame_mode_radio_adjustment.triggered.connect(self.__action_frame_mode_changed)
+
+        self.menu_frame.addSeparator()
 
         # Show Box
         self.menu_frame_show_box = \
@@ -694,6 +730,30 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
+
+    def __action_frame_mode_changed(self):
+        if self.action_group_frame_mode_radio_original.isChecked():
+            self.__action_frame_mode(0)
+        elif self.action_group_frame_mode_radio_outline.isChecked():
+            self.__action_frame_mode(1)
+        elif self.action_group_frame_mode_radio_adjustment.isChecked():
+            self.__action_frame_mode(2)
+        else:
+            self.__action_frame_mode(0)
+
+    def __action_frame_mode(self, mode: int):
+        match mode:
+            case 0:
+                # Original Image
+                print("Original Image")
+            case 1:
+                # Outline Image
+                print("Outline Image")
+            case 2:
+                # Adjustment Image
+                print("Adjust Image Contrast and Brightness")
+            case _:
+                print("Unknown mode")
 
     def __action_frame_show_box(self):
         value = self.menu_frame_show_box.isChecked()

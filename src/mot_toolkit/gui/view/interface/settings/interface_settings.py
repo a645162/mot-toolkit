@@ -1,5 +1,5 @@
 from mot_toolkit.gui.view.components. \
-    base_q_main_window import BaseQMainWindow
+    window.base_q_main_window import BaseQMainWindow
 
 
 class PreferenceWindow(BaseQMainWindow):

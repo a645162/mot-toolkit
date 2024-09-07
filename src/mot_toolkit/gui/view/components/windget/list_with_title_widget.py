@@ -6,8 +6,8 @@ from PySide6.QtWidgets import (
     QLabel
 )
 
-from mot_toolkit.gui.view. \
-    components.base_list_widget_with_menu import BaseListWidgetWithMenu
+from mot_toolkit.gui.view.components. \
+    windget.base_list_widget_with_menu import BaseListWidgetWithMenu
 
 
 class ListWithTitleWidget(QWidget):

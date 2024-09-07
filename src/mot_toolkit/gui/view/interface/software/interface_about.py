@@ -4,9 +4,9 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.gui.view.components. \
-    base_q_main_window import BaseQMainWindow
+    window.base_q_main_window import BaseQMainWindow
 from mot_toolkit.gui.view.components. \
-    link_label import LinkLabel
+    windget.link_label import LinkLabel
 
 
 class InterFaceAbout(BaseQMainWindow):

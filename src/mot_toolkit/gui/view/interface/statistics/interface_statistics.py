@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.gui.view.components. \
-    base_interface_window import BaseWorkInterfaceWindow
+    window.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.utils.statistics.stats_file import stats_file_count
 
 

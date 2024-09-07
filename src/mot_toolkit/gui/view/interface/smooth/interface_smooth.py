@@ -2,14 +2,18 @@ import time
 from typing import List
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QColor
-from PySide6.QtWidgets import QTreeView, QWidget, QHBoxLayout, QAbstractItemView, QPushButton, QPlainTextEdit
+from PySide6.QtWidgets import (
+    QWidget,
+    QHBoxLayout,
+    QTreeView, QAbstractItemView, QPushButton, QPlainTextEdit
+)
 
 from mot_toolkit.datatype.xanylabeling \
     import XAnyLabelingAnnotationDirectory
 from mot_toolkit.gui.view.interface.smooth. \
     data.smooth_interval import SmoothInterval
 from mot_toolkit.gui.view.components. \
-    base_interface_window import BaseWorkInterfaceWindow
+    window.base_interface_window import BaseWorkInterfaceWindow
 
 from mot_toolkit.utils.logs import get_logger
 from mot_toolkit.utils.qt.color import hex_to_qcolor

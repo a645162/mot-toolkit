@@ -25,7 +25,8 @@ from mot_toolkit.gui.common.system_wide_menu import (
     init_system_menu, get_system_menu
 )
 
-from mot_toolkit.gui.view.components.select_directory_path import (
+from mot_toolkit.gui.view.components. \
+    windget.select_directory_path import (
     SelectDirectoryPathWidget
 )
 

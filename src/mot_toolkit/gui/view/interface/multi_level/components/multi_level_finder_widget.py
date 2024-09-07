@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
 
 from mot_toolkit.datatype.directory.dir_file import DirectoryAndFile
 from mot_toolkit.gui.view.components. \
-    base_q_widget_with_layout import BaseQWidgetWithLayout
+    window.base_q_widget_with_layout import BaseQWidgetWithLayout
 from mot_toolkit.gui.view.interface.multi_level. \
     components.file_list_widget import FileListWidget
 
