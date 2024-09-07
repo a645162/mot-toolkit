@@ -1,4 +1,5 @@
 import sys
+from enum import EnumType
 
 from PySide6.QtCore import Qt, QEvent, Signal, QSize
 from PySide6.QtGui import QPixmap
@@ -7,6 +8,15 @@ from PySide6.QtWidgets import (
     QGraphicsView,
     QGraphicsScene, QPinchGesture
 )
+
+from mot_toolkit.utils. \
+    image.stylization.image_sobel import sobel_edge_detection_q_pixmap
+
+
+class ImageDisplayType(EnumType):
+    Original = 0
+    Outline = 1
+    Adjustment = 2
 
 
 class ImageViewGraphics(QGraphicsView):
@@ -23,6 +33,8 @@ class ImageViewGraphics(QGraphicsView):
     # counterclockwise is positive(+)
     rotate_triggered: Signal = Signal(float)
 
+    __image_display_type: ImageDisplayType = 0
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
@@ -36,8 +48,8 @@ class ImageViewGraphics(QGraphicsView):
 
         self.__scale_factor = 1.0
 
-        self.image = None
-        self.image_display = None
+        self.image: QPixmap | None = None
+        self.image_display: QPixmap | None = None
 
         self.__setup_widget_properties()
 
@@ -149,6 +161,15 @@ class ImageViewGraphics(QGraphicsView):
             int(self.image.height() * scale_factor)
         )
 
+    @property
+    def image_display_type(self) -> ImageDisplayType:
+        return self.__image_display_type
+
+    @image_display_type.setter
+    def image_display_type(self, value: ImageDisplayType):
+        self.__image_display_type = value
+        self.update()
+
     def update(self):
         if self.image is None:
             return
@@ -159,6 +180,11 @@ class ImageViewGraphics(QGraphicsView):
 
         # Generate New Image
         self.image_display = self.image.scaled(new_size)
+
+        if self.image_display_type != ImageDisplayType.Original:
+            match self.image_display_type:
+                case ImageDisplayType.Outline:
+                    self.image_display = sobel_edge_detection_q_pixmap(self.image_display)
 
         # Clear Old Scene
         self.scene.clear()

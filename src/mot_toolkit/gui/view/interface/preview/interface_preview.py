@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
 from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
+from mot_toolkit.gui.view.components. \
+    windget.base_image_view_graphics import ImageDisplayType
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -265,35 +267,38 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Frame Menu
         self.menu_frame = self.menu.addMenu("Frame")
 
-        action_group_frame_mode = QActionGroup(self.menu_frame)
+        action_group_frame_display_type = QActionGroup(self.menu_frame)
 
-        self.action_group_frame_mode_radio_original = \
+        self.action_group_frame_display_type_radio_original = \
             MenuItemRadio(
                 "Original Image",
-                parent=action_group_frame_mode,
-                action_group=action_group_frame_mode,
+                parent=action_group_frame_display_type,
+                action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
-        self.action_group_frame_mode_radio_outline = \
+        self.action_group_frame_display_type_radio_outline = \
             MenuItemRadio(
                 "Outline",
-                parent=action_group_frame_mode,
-                action_group=action_group_frame_mode,
+                parent=action_group_frame_display_type,
+                action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
-        self.action_group_frame_mode_radio_adjustment = \
+        self.action_group_frame_display_type_radio_adjustment = \
             MenuItemRadio(
                 "Contrast and Brightness Adjustment",
-                parent=action_group_frame_mode,
-                action_group=action_group_frame_mode,
+                parent=action_group_frame_display_type,
+                action_group=action_group_frame_display_type,
                 menu=self.menu_frame
             )
 
-        self.action_group_frame_mode_radio_original.setChecked(True)
+        self.action_group_frame_display_type_radio_original.setChecked(True)
 
-        self.action_group_frame_mode_radio_original.triggered.connect(self.__action_frame_mode_changed)
-        self.action_group_frame_mode_radio_outline.triggered.connect(self.__action_frame_mode_changed)
-        self.action_group_frame_mode_radio_adjustment.triggered.connect(self.__action_frame_mode_changed)
+        self.action_group_frame_display_type_radio_original \
+            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_outline \
+            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_adjustment \
+            .triggered.connect(self.__action_frame_display_type_changed)
 
         self.menu_frame.addSeparator()
 
@@ -731,29 +736,32 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
 
-    def __action_frame_mode_changed(self):
-        if self.action_group_frame_mode_radio_original.isChecked():
-            self.__action_frame_mode(0)
-        elif self.action_group_frame_mode_radio_outline.isChecked():
-            self.__action_frame_mode(1)
-        elif self.action_group_frame_mode_radio_adjustment.isChecked():
-            self.__action_frame_mode(2)
+    def __action_frame_display_type_changed(self):
+        if self.action_group_frame_display_type_radio_original.isChecked():
+            self.__action_frame_display_type(0)
+        elif self.action_group_frame_display_type_radio_outline.isChecked():
+            self.__action_frame_display_type(1)
+        elif self.action_group_frame_display_type_radio_adjustment.isChecked():
+            self.__action_frame_display_type(2)
         else:
-            self.__action_frame_mode(0)
+            self.__action_frame_display_type(0)
 
-    def __action_frame_mode(self, mode: int):
+    def __action_frame_display_type(self, mode: int):
         match mode:
             case 0:
                 # Original Image
-                print("Original Image")
+                logger.info("Original Image")
+                self.main_image_view.image_view.image_display_type = ImageDisplayType.Original
             case 1:
                 # Outline Image
-                print("Outline Image")
+                logger.info("Outline Image")
+                self.main_image_view.image_view.image_display_type = ImageDisplayType.Outline
             case 2:
                 # Adjustment Image
-                print("Adjust Image Contrast and Brightness")
+                logger.info("Adjust Image Contrast and Brightness")
+                self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
             case _:
-                print("Unknown mode")
+                logger.error("Unknown mode")
 
     def __action_frame_show_box(self):
         value = self.menu_frame_show_box.isChecked()

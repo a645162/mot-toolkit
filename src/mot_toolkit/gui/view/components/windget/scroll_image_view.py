@@ -45,7 +45,7 @@ class ScrollImageView(QWidget):
         # self.image_view = ImageViewGraphics(parent=self)
         # self.v_layout.addWidget(self.image_view)
 
-    def set_prevent_scoll(self):
+    def set_prevent_scroll(self):
         # Disable wheel event
         def __disable_wheel_event(event):
             # Block wheel event
