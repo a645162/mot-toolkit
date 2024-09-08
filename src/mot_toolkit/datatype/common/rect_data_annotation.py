@@ -149,3 +149,10 @@ class RectDataAnnotation(ObjectAnnotation):
             f"height={self.height}"
             f")"
         )
+
+    def update_by(self, rect_data_annotation: "RectDataAnnotation"):
+        self.x1 = rect_data_annotation.x1
+        self.y1 = rect_data_annotation.y1
+
+        self.x2 = rect_data_annotation.x2
+        self.y2 = rect_data_annotation.y2

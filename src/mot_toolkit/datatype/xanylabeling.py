@@ -276,6 +276,16 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return target_name_annotation_list
 
+    def add_or_update_rect(self, rect_item: XAnyLabelingRect):
+        self.modifying()
+
+        for i, current_rect_item in enumerate(self.rect_annotation_list):
+            if current_rect_item.label == rect_item.label:
+                self.rect_annotation_list[i].update_by(rect_item)
+                return
+
+        self.rect_annotation_list.append(rect_item)
+
     def add_rect(
             self,
             label_name: str,

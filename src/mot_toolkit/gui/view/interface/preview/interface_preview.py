@@ -455,6 +455,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         # Obj List
+        self.r_object_list_widget.menu_copy_subsequent \
+            .triggered.connect(self.__action_obj_copy_subsequent_target)
+
         self.r_object_list_widget.menu_operate_del \
             .triggered.connect(self.__action_obj_del_target)
         self.r_object_list_widget.menu_operate_del_subsequent \
@@ -805,6 +808,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         show_in_explorer(file_path)
 
+    def __action_obj_copy_subsequent_target(self):
+        if self.r_object_list_widget.selection_index == -1:
+            return
+
+        selected_rect_obj = self.current_annotation_object.rect_annotation_list[
+            self.r_object_list_widget.selection_index
+        ]
+
+        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+            if i < self.r_file_list_widget.selection_index:
+                continue
+
+            annotation_obj.add_or_update_rect(selected_rect_obj)
+
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
             self,
@@ -927,11 +944,29 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
     def __action_rect_add_rect(self):
-        # Show Input
+        default_label_name: str = ""
+
+        is_digit_label = True
+        for exist_label_name in self.annotation_directory.label_list:
+            # Check is Digit
+            if not exist_label_name.isdigit():
+                is_digit_label = False
+                break
+        if is_digit_label:
+            digit_list = [
+                int(exist_label_name)
+                for exist_label_name in self.annotation_directory.label_list
+            ]
+            # Max Value
+            max_value = max(digit_list)
+            default_label_name = str(max_value + 1)
+
         label_name, ok = QInputDialog.getText(
             self,
             "Input Dialog",
             "Enter the label name:"
+            f" (Suggest: {default_label_name})",
+            text=default_label_name
         )
 
         if not ok:

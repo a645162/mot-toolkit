@@ -30,6 +30,18 @@ class ObjectListWidget(ListWithTitleWidget):
         select_enable_list: List[QAction] = \
             self.list_widget.select_enable_list
 
+        q_menu.addSeparator()
+
+        self.menu_copy_subsequent = \
+            QAction(
+                "Copy the target in subsequent frames(Label)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_copy_subsequent)
+        select_enable_list.append(self.menu_copy_subsequent)
+
+        q_menu.addSeparator()
+
         self.menu_operate_del = \
             QAction(
                 "Delete the target",
