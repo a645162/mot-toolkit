@@ -28,9 +28,17 @@ class RectDataAnnotation(ObjectAnnotation):
     def x(self):
         return self.x1
 
+    @x.setter
+    def x(self, value):
+        self.x1 = value
+
     @property
     def y(self):
         return self.y1
+
+    @y.setter
+    def y(self, value):
+        self.y1 = value
 
     @property
     def center_x(self):

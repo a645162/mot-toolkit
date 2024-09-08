@@ -276,6 +276,33 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return target_name_annotation_list
 
+    def add_rect(
+            self,
+            label_name: str,
+            x: int = 0, y: int = 0,
+            width: int = 50, height: int = 50,
+    ) -> bool:
+        label_name = label_name.strip()
+
+        new_rect_item = XAnyLabelingRect()
+
+        new_rect_item.label = label_name
+        new_rect_item.group_id = label_name
+
+        if x < 0 or y < 0 or width <= 0 or height <= 0:
+            return False
+
+        new_rect_item.x = x
+        new_rect_item.y = y
+        new_rect_item.width = width
+        new_rect_item.height = height
+
+        self.rect_annotation_list.append(new_rect_item)
+
+        self.modifying()
+
+        return True
+
 
 def parse_xanylabeling_json(
         json_path: str,
@@ -327,6 +354,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     file_name_list: List[str]
     __can_only_file_name: bool = False
 
+    __loaded: bool = False
+
     def __init__(self):
         super().__init__()
 
@@ -336,10 +365,16 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         self.file_name_black_list.append(modify_store_file_name)
 
+    @property
+    def loaded(self) -> bool:
+        return self.__loaded
+
     def load_json_files(self):
         # Check File Path List
         if self.is_empty():
             return
+
+        __loaded = True
 
         # Clear
         self.annotation_file.clear()

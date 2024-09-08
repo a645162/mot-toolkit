@@ -366,6 +366,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_rect.addAction(self.menu_rect_show_box_label)
 
+        self.menu_rect.addSeparator()
+
+        self.menu_rect_add_rect = \
+            QAction("Add Rect", self.menu_frame)
+        self.menu_rect_add_rect.triggered.connect(self.__action_rect_add_rect)
+        self.menu_rect.addAction(self.menu_rect_add_rect)
+
     def __init_menu_settings(self):
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
@@ -499,27 +506,39 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #     "Work Directory: " + self.work_directory_path
         # )
 
-    def load_directory(self):
+    def load_directory(self, reload: bool = False):
         # Clear
         self.current_file_str_list.clear()
-        self.r_label_class_list_widget.list_widget.clear()
         self.r_object_list_widget.list_widget.clear()
-        self.r_file_list_widget.list_widget.clear()
 
         self.annotation_directory.dir_path = self.work_directory_path
-        self.annotation_directory.walk_dir()
+
+        if reload or not self.annotation_directory.walked:
+            logger.info("Annotation Directory Walk Dir")
+            self.annotation_directory.walk_dir()
+
         self.annotation_directory.sort_path(group_directory=True)
-        self.annotation_directory.load_json_files()
+
+        if reload or not self.annotation_directory.loaded:
+            logger.info("Annotation Directory Load Json Files")
+            self.annotation_directory.load_json_files()
+
         self.annotation_directory.update_label_list()
 
         self.only_file_name = self.annotation_directory.can_only_file_name
 
+        self.__update_label_list()
+        self.__update_file_list()
+
+    def __update_label_list(self):
         # Update Label List
+        self.r_label_class_list_widget.list_widget.clear()
         for label_name in self.annotation_directory.label_list:
             self.r_label_class_list_widget.list_widget.addItem(label_name)
         self.r_label_class_list_widget.list_widget.addItem("Disable Filter")
         self.r_label_class_list_widget.update()
 
+    def __update_file_list(self):
         # Update File List
         self.current_file_list = \
             self.annotation_directory.annotation_file
@@ -906,6 +925,43 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             program_settings, "frame_show_box_label",
             value
         )
+
+    def __action_rect_add_rect(self):
+        # Show Input
+        label_name, ok = QInputDialog.getText(
+            self,
+            "Input Dialog",
+            "Enter the label name:"
+        )
+
+        if not ok:
+            return
+
+        # Check Label Name is Exist?
+        if label_name in self.annotation_directory.label_list:
+            ok = QMessageBox.question(
+                self,
+                "Question",
+                "Label name already exists.\n"
+                "Do you want to continue?",
+                QMessageBox.StandardButton.Yes,
+                QMessageBox.StandardButton.No
+            )
+
+            if not ok:
+                return
+
+        # Add New Rect
+        self.current_annotation_object.add_rect(label_name)
+
+        # Update Display
+        self.update_annotation_object_display()
+
+    def update_annotation_object_display(self):
+        self.annotation_directory.update_label_list()
+        self.__update_label_list()
+        self.__update_object_list_widget()
+        self.main_image_view.init_annotation_widget()
 
     def check_is_have_modified(self) -> bool:
         found = False

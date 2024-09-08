@@ -1,7 +1,6 @@
 from PySide6.QtGui import QImage, QPixmap
 
 import cv2
-import numpy as np
 
 from mot_toolkit.utils.image.qt_opencv import q_image_to_opencv, opencv_to_q_image
 

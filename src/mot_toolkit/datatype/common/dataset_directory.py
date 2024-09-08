@@ -10,6 +10,8 @@ class AnnotationDirectory(QObject):
     file_list: List[str]
     file_name_black_list: List[str]
 
+    __walked: bool = False
+
     def __init__(self, dir_path: str = ""):
         super().__init__()
 
@@ -102,6 +104,8 @@ class AnnotationDirectory(QObject):
             recursive: bool = False,
             clear_old: bool = True
     ) -> None:
+        __loaded = True
+
         scan_dir_path = scan_dir_path.strip()
         if len(scan_dir_path) == 0:
             scan_dir_path = self.dir_path.strip()
@@ -133,6 +137,10 @@ class AnnotationDirectory(QObject):
 
                 if file.endswith(file_extension):
                     self.file_list.append(os.path.join(root, file))
+
+    @property
+    def walked(self) -> bool:
+        return self.__walked
 
     def is_empty(self) -> bool:
         return len(self.file_list) == 0
