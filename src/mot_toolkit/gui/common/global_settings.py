@@ -65,32 +65,32 @@ class ProgramSettings:
         )
 
     @property
-    def frame_show_box(self) -> bool:
+    def menu_rect_show_box(self) -> bool:
         return bool(self.settings.value(
-            "frame/show_box",
+            "rect/show_box",
             True,
             type=bool
         ))
 
-    @frame_show_box.setter
-    def frame_show_box(self, value: bool):
+    @menu_rect_show_box.setter
+    def menu_rect_show_box(self, value: bool):
         self.settings.setValue(
-            "frame/show_box",
+            "rect/show_box",
             value
         )
 
     @property
-    def frame_show_box_label(self) -> bool:
+    def menu_rect_show_box_label(self) -> bool:
         return bool(self.settings.value(
-            "frame/show_box_label",
+            "rect/show_box_label",
             False,
             type=bool
         ))
 
-    @frame_show_box_label.setter
-    def frame_show_box_label(self, value: bool):
+    @menu_rect_show_box_label.setter
+    def menu_rect_show_box_label(self, value: bool):
         self.settings.setValue(
-            "frame/show_box_label",
+            "rect/show_box_label",
             value
         )
 

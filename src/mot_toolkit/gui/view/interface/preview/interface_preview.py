@@ -148,8 +148,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Main Image View
         self.main_image_view = DatasetImageView(parent=self)
 
-        self.main_image_view.show_box = program_settings.frame_show_box
-        self.main_image_view.show_box_label = program_settings.frame_show_box_label
+        self.main_image_view.show_box = program_settings.menu_rect_show_box
+        self.main_image_view.show_box_label = program_settings.menu_rect_show_box_label
 
         self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
@@ -322,27 +322,30 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.action_group_frame_display_type_radio_original.setChecked(True)
 
-        self.menu_frame.addSeparator()
+        # self.menu_frame.addSeparator()
+
+        # Rect Menu
+        self.menu_rect = self.menu.addMenu("Rect")
 
         # Show Box
-        self.menu_frame_show_box = \
+        self.menu_rect_show_box = \
             QAction("Show Box", self.menu_frame)
-        self.menu_frame_show_box.setCheckable(True)
-        self.menu_frame_show_box.setChecked(program_settings.frame_show_box)
-        self.menu_frame_show_box.triggered.connect(
+        self.menu_rect_show_box.setCheckable(True)
+        self.menu_rect_show_box.setChecked(program_settings.menu_rect_show_box)
+        self.menu_rect_show_box.triggered.connect(
             lambda x: self.__action_frame_show_box()
         )
-        self.menu_frame.addAction(self.menu_frame_show_box)
+        self.menu_rect.addAction(self.menu_rect_show_box)
 
         # Show Box Label
-        self.menu_frame_show_box_label = \
+        self.menu_rect_show_box_label = \
             QAction("Show Box Label", self.menu_frame)
-        self.menu_frame_show_box_label.setCheckable(True)
-        self.menu_frame_show_box_label.setChecked(program_settings.frame_show_box_label)
-        self.menu_frame_show_box_label.triggered.connect(
+        self.menu_rect_show_box_label.setCheckable(True)
+        self.menu_rect_show_box_label.setChecked(program_settings.menu_rect_show_box_label)
+        self.menu_rect_show_box_label.triggered.connect(
             lambda x: self.__action_frame_show_box_label()
         )
-        self.menu_frame.addAction(self.menu_frame_show_box_label)
+        self.menu_rect.addAction(self.menu_rect_show_box_label)
 
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
@@ -808,7 +811,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.main_image_view.image_view.update()
 
     def __action_frame_show_box(self):
-        value = self.menu_frame_show_box.isChecked()
+        value = self.menu_rect_show_box.isChecked()
 
         self.main_image_view.show_box = value
 
@@ -818,7 +821,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
     def __action_frame_show_box_label(self):
-        value = self.menu_frame_show_box_label.isChecked()
+        value = self.menu_rect_show_box_label.isChecked()
 
         self.main_image_view.show_box_label = value
 

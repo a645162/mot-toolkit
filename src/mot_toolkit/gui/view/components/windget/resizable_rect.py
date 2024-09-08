@@ -72,6 +72,14 @@ class ResizableRect(QWidget):
         self.borderWidth = width
         self.update()
 
+    @property
+    def minWidth(self):
+        return self.borderWidth * 2
+
+    @property
+    def minHeight(self):
+        return self.borderWidth * 2
+
     def setFillColor(self, color):
         self.fillColor = color
         self.update()
@@ -107,17 +115,27 @@ class ResizableRect(QWidget):
 
     def mouseMoveEvent(self, event):
         if self.lastPos:
+            delta_x = event.position().x() - self.lastPos.x()
+            delta_y = event.position().y() - self.lastPos.y()
+
             if self.resizing:
                 # Resize Mode
                 # Resize the rectangle within the boundary
-                new_width = min(self.width() + event.position().x() - self.lastPos.x(), self.boundary.width())
-                new_height = min(self.height() + event.position().y() - self.lastPos.y(), self.boundary.height())
+                new_width = min(self.width() + delta_x, self.boundary.width() - self.x())
+                new_height = min(self.height() + delta_y, self.boundary.height() - self.y())
+
+                if new_width < self.minWidth:
+                    new_width = self.minWidth
+
+                if new_height < self.minHeight:
+                    new_height = self.minHeight
+
                 self.resize(new_width, new_height)
             else:
                 # Move Mode
                 # Move the rectangle within the boundary
-                new_x = self.x() + event.position().x() - self.lastPos.x()
-                new_y = self.y() + event.position().y() - self.lastPos.y()
+                new_x = self.x() + delta_x
+                new_y = self.y() + delta_y
                 new_x = max(self.boundary.left(), min(new_x, self.boundary.right() - self.width()))
                 new_y = max(self.boundary.top(), min(new_y, self.boundary.bottom() - self.height()))
                 self.move(new_x, new_y)
@@ -126,6 +144,8 @@ class ResizableRect(QWidget):
                 #     self.boundary.top(), self.boundary.bottom(),
                 #     self.boundary.left(), self.boundary.right()
                 # )
+
+            # Update the last position
             self.lastPos = event.position().toPoint()
 
     def mouseReleaseEvent(self, event):

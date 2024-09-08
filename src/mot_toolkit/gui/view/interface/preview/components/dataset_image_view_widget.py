@@ -158,7 +158,7 @@ class DatasetImageView(ScrollImageView):
             rect_widget.set_rect_data_annotation(rect_item)
 
             # Set the boundary for the rectangle
-            rect_widget.setBoundaryWithDpi(self.image_view.image_display.rect())
+            rect_widget.setBoundary(self.image_view.image_display.rect())
 
             rect_widget.show()
             self.annotation_widget_rect_list.append(rect_widget)
@@ -237,7 +237,7 @@ class DatasetImageView(ScrollImageView):
                     rect_widget is not None and
                     rect_widget.parent() is not None
             ):
-                rect_widget.setBoundaryWithDpi(boundary)
+                rect_widget.setBoundary(boundary)
 
     def __rect_widget_try_to_show_menu(self, widget_obj: AnnotationWidgetRect):
         if self.object_menu is None:

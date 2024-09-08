@@ -135,7 +135,7 @@ class AnnotationWidgetRect(ResizableRect):
             # Calc font size by self.width()
             base_width = 100
             base_font_size = 12
-            font_size = int(base_font_size * self.width() / base_width)
+            font_size = int(base_font_size * self.now_width / base_width)
 
             label = self.label_text
             if label:
