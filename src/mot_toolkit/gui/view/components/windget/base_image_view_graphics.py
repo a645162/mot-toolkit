@@ -25,7 +25,8 @@ class ImageDisplayType(EnumType):
 
 class ImageViewGraphics(QGraphicsView):
     slot_image_changed: Signal = Signal()
-    slot_image_scale_factor_changed: Signal = Signal(float)
+    slot_image_scale_factor_changing: Signal = Signal(float)
+    slot_image_scale_factor_changed_and_displayed: Signal = Signal(float)
 
     # 双指外扩(放大)为正，双指内缩(缩小)为负
     # Two-finger expansion (zoom in) is positive(+),
@@ -39,6 +40,8 @@ class ImageViewGraphics(QGraphicsView):
 
     __image_display_type: ImageDisplayType = 0
     __outline_binary_threshold: int = 127
+
+    __last_scale_factor: float = 1.0
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -138,6 +141,10 @@ class ImageViewGraphics(QGraphicsView):
     def scale_factor(self, value: float):
         self.try_to_set_scale_factor(value=value)
 
+    @property
+    def last_scale_factor(self) -> float:
+        return self.__last_scale_factor
+
     def check_new_scale_factor(self, value: float) -> bool:
         new_size = self.calc_new_size(value)
         if new_size.width() < 100 or new_size.height() < 100:
@@ -155,7 +162,7 @@ class ImageViewGraphics(QGraphicsView):
             return False
 
         self.__scale_factor = value
-        self.slot_image_scale_factor_changed.emit(value)
+        self.slot_image_scale_factor_changing.emit(value)
         self.update()
 
         return True
@@ -201,6 +208,10 @@ class ImageViewGraphics(QGraphicsView):
 
         # Generate New Image
         self.image_display = self.image.scaled(new_size)
+
+        if self.scale_factor != self.__last_scale_factor:
+            self.__last_scale_factor = self.scale_factor
+            self.slot_image_scale_factor_changed_and_displayed.emit(self.scale_factor)
 
         if self.image_display_type != ImageDisplayType.Original:
             match self.image_display_type:

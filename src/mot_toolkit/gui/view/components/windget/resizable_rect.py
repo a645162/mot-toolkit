@@ -81,16 +81,20 @@ class ResizableRect(QWidget):
         self.effect.setOpacity(opacity)
         self.update()
 
-    def setBoundary(self, rect: QRect):
-        self.boundary = rect
+    def setBoundary(self, boundary_rect: QRect):
+        self.boundary = boundary_rect
 
-    def setBoundaryWithDpi(self, rect: QRect):
+    def setBoundaryWithDpi(self, boundary_rect: QRect):
         app: QApplication = getQApplication()
         dpi_factor = app.devicePixelRatio()
 
-        rect = q_rect_by_factor(rect, dpi_factor)
+        # Windows
+        if sys.platform == "win32":
+            dpi_factor = 1.0
 
-        self.boundary = rect
+        new_rect = q_rect_by_factor(boundary_rect, dpi_factor)
+
+        self.boundary = new_rect
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

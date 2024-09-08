@@ -51,7 +51,7 @@ class DatasetImageView(ScrollImageView):
     def __init_widgets(self):
         self.slot_try_to_zoom.connect(self.__zoom_triggered)
 
-        self.image_view.slot_image_scale_factor_changed.connect(
+        self.image_view.slot_image_scale_factor_changed_and_displayed.connect(
             self.__image_scale_factor_changed
         )
 
