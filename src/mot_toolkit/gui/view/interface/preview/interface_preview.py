@@ -4,7 +4,7 @@ from typing import List
 
 from PySide6.QtCore import QSize, QUrl
 from PySide6.QtGui import (
-    QColor, QAction, QIcon, QDesktopServices, QActionGroup
+    QColor, QAction, QIcon, QDesktopServices, QActionGroup, Qt
 )
 from PySide6.QtWidgets import (
     QWidget,
@@ -173,6 +173,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.right_v_layout.addWidget(self.r_object_list_widget)
 
         self.r_file_list_widget = FileListWidget(parent=self)
+        self.r_file_list_widget.show_current_index = True
         self.r_file_list_widget. \
             list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_file_list_widget)
@@ -192,8 +193,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.main_h_layout.setStretch(2, 1)
 
     def __init_menu(self):
-        # Window Menu
+        self.__init_menu_window()
+        self.__init_menu_file()
+        self.__init_menu_edit()
+        self.__init_menu_file_list()
+        self.__init_menu_frame()
+        self.__init_menu_rect()
+        self.__init_menu_settings()
+        self.__init_menu_help()
 
+        self.__init_menu_widget()
+
+    def __init_menu_window(self):
+        # Window Menu
+        pass
+
+    def __init_menu_file(self):
         # File Menu
         self.menu_file = self.menu.addMenu("File")
 
@@ -249,9 +264,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_file_exit.triggered.connect(self.__try_to_exit)
         self.menu_file.addAction(self.menu_file_exit)
 
+    def __init_menu_edit(self):
         # Edit Menu
         self.menu_edit = self.menu.addMenu("Edit")
 
+    def __init_menu_file_list(self):
         # File List Menu
         self.menu_file_list = self.menu.addMenu("File List")
 
@@ -264,6 +281,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_file_list.addAction(self.menu_file_list_jump_file_count)
 
+    def __init_menu_frame(self):
         # Frame Menu
         self.menu_frame = self.menu.addMenu("Frame")
 
@@ -324,6 +342,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         # self.menu_frame.addSeparator()
 
+    def __init_menu_rect(self):
         # Rect Menu
         self.menu_rect = self.menu.addMenu("Rect")
 
@@ -347,6 +366,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_rect.addAction(self.menu_rect_show_box_label)
 
+    def __init_menu_settings(self):
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
 
@@ -386,6 +406,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_settings.addAction(self.menu_settings_auto_select_same_tag)
 
+    def __init_menu_help(self):
         # Help Menu
         self.menu_help = self.menu.addMenu("Help")
 
@@ -409,6 +430,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_help.addAction(self.menu_help_about)
 
+    def __init_menu_widget(self):
         # Widget Menu
 
         # File List
@@ -433,6 +455,39 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
+
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+
+        modifiers = event.modifiers()
+        key = event.key()
+
+        match modifiers:
+            case Qt.KeyboardModifier.NoModifier:
+                pass
+
+            case Qt.KeyboardModifier.ControlModifier:
+                pass
+
+            case Qt.KeyboardModifier.AltModifier:
+                # Alt
+                match key:
+                    case Qt.Key.Key_1:
+                        self.action_group_frame_display_type_radio_original.setChecked(True)
+                        self.__action_frame_display_type_changed()
+                        return
+                    case Qt.Key.Key_2:
+                        self.action_group_frame_display_type_radio_outline.setChecked(True)
+                        self.__action_frame_display_type_changed()
+                        return
+                    case Qt.Key.Key_3:
+                        self.action_group_frame_display_type_radio_outline_binary.setChecked(True)
+                        self.__action_frame_display_type_changed()
+                        return
+                    case Qt.Key.Key_4:
+                        self.action_group_frame_display_type_radio_adjustment.setChecked(True)
+                        self.__action_frame_display_type_changed()
+                        return
 
     def update(self):
         super().update()
@@ -732,6 +787,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         show_in_explorer(file_path)
 
     def __action_obj_del_target(self):
+        reply = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to del target?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
         index = self.r_object_list_widget.selection_index
 
         rect_annotation_list = self.current_annotation_object.rect_annotation_list
@@ -745,6 +811,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.__update_object_list_widget()
 
     def __action_obj_del_subsequent_target(self):
+        reply = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to del subsequent target?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
         file_index = self.r_file_list_widget.selection_index
 
         index = self.r_object_list_widget.selection_index

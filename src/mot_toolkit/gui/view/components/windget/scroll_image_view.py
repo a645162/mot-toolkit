@@ -18,6 +18,9 @@ class ScrollImageView(QWidget):
 
     __prevent_scroll: bool = False
 
+    # Developing
+    auto_prevent_scroll: bool = False
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -62,6 +65,9 @@ class ScrollImageView(QWidget):
     def prevent_scroll(self, value: bool):
         self.__prevent_scroll = value
 
+        if not self.auto_prevent_scroll:
+            return
+
         if value:
             # Disable horizontal scroll bar
             self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -104,6 +110,8 @@ class ScrollImageView(QWidget):
         self.slot_try_to_zoom.emit(1.0)
 
     def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+
         modifiers = event.modifiers()
         key = event.key()
 
@@ -128,17 +136,15 @@ class ScrollImageView(QWidget):
                         self.zoom_out()
                         return
 
-        super().keyPressEvent(event)
-
     def keyReleaseEvent(self, event):
         key = event.key()
-        print("Key Released:", key)
+        # print("Key Released:", key)
 
         match key:
             case Qt.Key.Key_Control:
                 self.ctrl_pressing = False
                 self.prevent_scroll = False
-                print("Control Released")
+                # print("Control Released")
 
         super().keyReleaseEvent(event)
 

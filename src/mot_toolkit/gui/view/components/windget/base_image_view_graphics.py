@@ -202,28 +202,32 @@ class ImageViewGraphics(QGraphicsView):
         if self.image is None:
             return
 
-        # Calculate New Size
-        # ori_size = self.image.size()
-        new_size = self.calc_new_size(self.scale_factor)
-
-        # Generate New Image
-        self.image_display = self.image.scaled(new_size)
-
-        if self.scale_factor != self.__last_scale_factor:
-            self.__last_scale_factor = self.scale_factor
-            self.slot_image_scale_factor_changed_and_displayed.emit(self.scale_factor)
+        self.image_display = self.image.copy()
 
         if self.image_display_type != ImageDisplayType.Original:
             match self.image_display_type:
                 case ImageDisplayType.Outline:
+                    # Edge Detection
                     self.image_display = \
                         sobel_edge_detection_q_pixmap(self.image_display)
                 case ImageDisplayType.OutlineBinary:
+                    # Edge Detection with Binary Threshold
                     self.image_display = \
                         sobel_edge_detection_binary_q_pixmap(
                             image=self.image_display,
                             binary_threshold=self.outline_binary_threshold
                         )
+
+        # Calculate New Size
+        # ori_size = self.image.size()
+        new_size = self.calc_new_size(self.scale_factor)
+
+        # Generate Display Image with New Size
+        self.image_display = self.image_display.scaled(new_size)
+
+        if self.scale_factor != self.__last_scale_factor:
+            self.__last_scale_factor = self.scale_factor
+            self.slot_image_scale_factor_changed_and_displayed.emit(self.scale_factor)
 
         # Clear Old Scene
         self.scene.clear()

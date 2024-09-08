@@ -8,25 +8,28 @@ from mot_toolkit.utils.image.qt_opencv import q_image_to_opencv, opencv_to_q_ima
 
 def sobel_edge_detection(image):
     """
-    使用 Sobel 算子对图像进行边缘检测，并返回边缘图。
+    Perform edge detection on an image using the Sobel operator and return the edge map.
 
-    :param image: 输入的图像像素数组（NumPy 数组）。
-    :return: 边缘检测后的图像像素数组（NumPy 数组）。
+    :param image: Input image pixel array (NumPy array).
+    :return: Image pixel array after edge detection (NumPy array).
     """
-    # 确保输入图像为灰度图像
-    if len(image.shape) == 3:  # 如果是彩色图像
+    # Ensure the input image is a grayscale image
+    if len(image.shape) == 3:  # If the image is in color
         image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # 应用 Sobel 算子
-    sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
-    sobely = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
+    # Apply Gaussian blur
+    image = cv2.GaussianBlur(image, (3, 3), 0)
 
-    # 计算梯度幅度
-    abs_sobelx = cv2.convertScaleAbs(sobelx)
-    abs_sobely = cv2.convertScaleAbs(sobely)
+    # Apply the Sobel operator
+    sobel_x = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)
+    sobel_y = cv2.Sobel(image, cv2.CV_64F, 0, 1, ksize=3)
 
-    # 合并两个方向的梯度
-    edges = cv2.addWeighted(abs_sobelx, 0.5, abs_sobely, 0.5, 0)
+    # Calculate the magnitude of the gradients
+    abs_sobel_x = cv2.convertScaleAbs(sobel_x)
+    abs_sobely = cv2.convertScaleAbs(sobel_y)
+
+    # Combine gradients from both directions
+    edges = cv2.addWeighted(abs_sobel_x, 0.5, abs_sobely, 0.5, 0)
 
     return edges
 

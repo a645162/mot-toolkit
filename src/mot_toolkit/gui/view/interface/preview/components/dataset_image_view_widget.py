@@ -59,6 +59,8 @@ class DatasetImageView(ScrollImageView):
         pass
 
     def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+
         modifiers = event.modifiers()
         key = event.key()
 
@@ -87,8 +89,13 @@ class DatasetImageView(ScrollImageView):
                     case Qt.Key.Key_R:
                         self.__resize_annotation_by_previous()
                         return
+                    case Qt.Key.Key_V:
+                        self.__resize_annotation_by_previous()
+                        self.__move_annotation_to_mouse_position()
+                        return
 
-        super().keyPressEvent(event)
+        if self.parent() is not None:
+            self.parent().keyPressEvent(event)
 
     def update_dataset_annotation_path(
             self,
@@ -148,10 +155,6 @@ class DatasetImageView(ScrollImageView):
             rect_widget.label = rect_item.label
             rect_widget.label_text = rect_widget.label
 
-            # Set Show Status
-            rect_widget.show_box = self.show_box
-            rect_widget.show_box_label = self.show_box_label
-
             # Set Rect Scale Factor when the image is changed
             rect_widget.scale_factor = self.image_view.scale_factor
 
@@ -161,6 +164,11 @@ class DatasetImageView(ScrollImageView):
             rect_widget.setBoundary(self.image_view.image_display.rect())
 
             rect_widget.show()
+
+            # Set Show Status
+            rect_widget.show_box = self.show_box
+            rect_widget.show_box_label = self.show_box_label
+
             self.annotation_widget_rect_list.append(rect_widget)
 
     def __rect_widget_resized(self, obj: AnnotationWidgetRect):

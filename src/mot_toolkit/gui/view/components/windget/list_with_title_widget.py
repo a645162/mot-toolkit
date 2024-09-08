@@ -17,6 +17,8 @@ class ListWithTitleWidget(QWidget):
 
     __count_offset: int = 0
 
+    show_current_index: bool = False
+
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -35,6 +37,9 @@ class ListWithTitleWidget(QWidget):
         self.v_layout.addWidget(self.label_title)
 
         self.list_widget = BaseListWidgetWithMenu(parent=self)
+        self.list_widget.itemSelectionChanged.connect(
+            self.__on_item_selection_changed
+        )
         self.v_layout.addWidget(self.list_widget)
 
         self.label_title.setText("Title")
@@ -80,7 +85,11 @@ class ListWithTitleWidget(QWidget):
         if count == 0:
             end_str = end_str + " [Empty]"
         else:
-            end_str = end_str + " [" + str(count) + "]"
+            current_index = self.selection_index + 1
+            if self.show_current_index and current_index > 0:
+                end_str = end_str + f" [{current_index}/{count}]"
+            else:
+                end_str = end_str + " [" + str(count) + "]"
 
         title_str = title_str + end_str
 
@@ -93,6 +102,10 @@ class ListWithTitleWidget(QWidget):
         super().update()
 
         self.label_title.setText(self.__title_show)
+
+    def __on_item_selection_changed(self):
+        if self.show_current_index:
+            self.update()
 
     @property
     def selection_index(self) -> int:
