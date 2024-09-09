@@ -498,6 +498,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         self.action_group_frame_display_type_radio_adjustment.setChecked(True)
                         self.__action_frame_display_type_changed()
                         return
+                    case Qt.Key.Key_H:
+                        self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
+                        self.__action_frame_show_box()
+                        return
 
     def update(self):
         super().update()

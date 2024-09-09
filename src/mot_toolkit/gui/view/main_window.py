@@ -2,6 +2,8 @@ import os.path
 import sys
 from typing import Optional
 
+from mot_toolkit.gui.view.components. \
+    windget.link_label import LinkLabel
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -122,6 +124,12 @@ class MainWindow(QMainWindow):
         author_label = QLabel(parent=self)
         author_label.setText("Author:Haomin Kong")
         self.v_layout.addWidget(author_label)
+
+        github_link_label = LinkLabel(
+            url="https://github.com/a645162/mot-toolkit",
+            parent=self
+        )
+        self.v_layout.addWidget(github_link_label)
 
         # MenuBar
         system_menu = get_system_menu()

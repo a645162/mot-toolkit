@@ -194,6 +194,9 @@ class AnnotationWidgetRect(ResizableRect):
 
         self.set_appearance()
 
+        if self.__selecting:
+            self.raise_()
+
     def set_appearance(self):
         theme_name = self.activate_theme_name
         if theme_name not in self.final_theme_color.keys():
@@ -237,16 +240,27 @@ class AnnotationWidgetRect(ResizableRect):
 
         modifiers = event.modifiers()
         key = event.key()
+
+        move_step_value = 5
+
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
                 match key:
                     case Qt.Key.Key_Up:
+                        self.now_y -= move_step_value
+                        self.modify()
                         return
                     case Qt.Key.Key_Down:
+                        self.now_y += move_step_value
+                        self.modify()
                         return
                     case Qt.Key.Key_Left:
+                        self.now_x -= move_step_value
+                        self.modify()
                         return
                     case Qt.Key.Key_Right:
+                        self.now_x += move_step_value
+                        self.modify()
                         return
             case Qt.KeyboardModifier.ControlModifier:
                 pass

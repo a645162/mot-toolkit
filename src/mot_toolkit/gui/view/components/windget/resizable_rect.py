@@ -210,9 +210,12 @@ class ResizableRect(QWidget):
             )
 
     def mouseMoveEvent(self, event):
-        if self.lastPos:
-            delta_x = event.position().x() - self.lastPos.x()
-            delta_y = event.position().y() - self.lastPos.y()
+        current_pos = event.position().toPoint()
+        last_pos = self.lastPos
+
+        if last_pos:
+            delta_x = current_pos.x() - last_pos.x()
+            delta_y = current_pos.y() - last_pos.y()
 
             if self.resizing:
                 # Resize Mode
@@ -250,7 +253,7 @@ class ResizableRect(QWidget):
                 # )
 
             # Update the last position
-            self.lastPos = event.position().toPoint()
+            self.lastPos = current_pos
 
     def mouseReleaseEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:

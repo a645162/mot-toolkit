@@ -69,7 +69,8 @@ class SelectDirectoryPathWidget(QGroupBox):
         def drop_event(event):
             for url in event.mimeData().urls():
                 folder_path = url.toLocalFile()
-                print(folder_path)
+                # print(folder_path)
+                self.path_line_edit.setText(folder_path)
             event.acceptProposedAction()
 
         self.setAcceptDrops(True)
