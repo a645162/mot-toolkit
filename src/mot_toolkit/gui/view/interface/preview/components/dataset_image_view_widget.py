@@ -20,6 +20,8 @@ class DatasetImageView(ScrollImageView):
     slot_selection_changed: Signal = Signal(int)
 
     __annotation_obj: XAnyLabelingAnnotation
+    __previous_annotation_obj: XAnyLabelingAnnotation
+
     __picture_file_path: str = ""
 
     current_q_pixmap: QPixmap = None
@@ -129,8 +131,8 @@ class DatasetImageView(ScrollImageView):
 
         def try_to_select(obj: AnnotationWidgetRect):
             index = -1
-            for i, rect_widget in enumerate(self.annotation_widget_rect_list):
-                if obj == rect_widget:
+            for i, rect_widget_obj in enumerate(self.annotation_widget_rect_list):
+                if obj == rect_widget_obj:
                     index = i
                     break
 
@@ -161,7 +163,7 @@ class DatasetImageView(ScrollImageView):
             rect_widget.set_rect_data_annotation(rect_item)
 
             # Set the boundary for the rectangle
-            rect_widget.setBoundary(self.image_view.image_display.rect())
+            rect_widget.boundary = self.image_view.image_display.rect()
 
             rect_widget.show()
 
@@ -245,9 +247,9 @@ class DatasetImageView(ScrollImageView):
                     rect_widget is not None and
                     rect_widget.parent() is not None
             ):
-                rect_widget.setBoundary(boundary)
+                rect_widget.boundary = boundary
 
-    def __rect_widget_try_to_show_menu(self, widget_obj: AnnotationWidgetRect):
+    def __rect_widget_try_to_show_menu(self):
         if self.object_menu is None:
             return
         # Get Mouse Position
@@ -286,9 +288,9 @@ class DatasetImageView(ScrollImageView):
     def reverse_color(self, value: bool):
         self.__reverse_color = value
 
-        theme_name = "light_default"
+        theme_name = "light"
         if value:
-            theme_name = "dark_default"
+            theme_name = "dark"
         self.__theme_name = theme_name
 
         self.update_theme()

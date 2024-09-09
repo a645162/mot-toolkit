@@ -26,74 +26,167 @@ class ResizableRect(QWidget):
 
     uuid: str = ""
 
-    def __init__(self, parent=None):
-        super().__init__(parent)
+    __effect: QGraphicsOpacityEffect
+
+    def __init__(
+            self,
+            parent=None,
+            x: int = 0,
+            y: int = 0,
+            width: int = 10,
+            height: int = 10,
+    ):
+        super().__init__(parent=parent)
 
         self.uuid = str(uuid.uuid4())
 
         self.setMouseTracking(True)
 
-        self.effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.effect)
-        self.effect.setOpacity(0.5)
+        self.__global_opacity = 1.0
+
+        self.__effect = QGraphicsOpacityEffect(self)
+        self.setGraphicsEffect(self.__effect)
+        self.__effect.setOpacity(self.__global_opacity)
 
         self.lastPos = None
         self.resizing = False
         self.resizeMargin = 5
 
-        self.borderColor = Qt.GlobalColor.red
-        self.borderWidth = 2
+        self.__border_color = Qt.GlobalColor.red
+        self.__border_width = 2
+        # Define the opacity for the border
+        # 100% opaque border
+        self.__border_opacity = 1.0
 
-        self.fillColor = Qt.GlobalColor.transparent
-        self.fillOpacity = 0.5
+        self.__fill_color = Qt.GlobalColor.transparent
+        # Define the opacity for the fill area
+        # 50% opaque fill
+        self.__fill_opacity = 0.5
 
-        self.boundary = QRect()  # Initialize with an empty rectangle
+        # Initialize with an empty rectangle
+        self.__boundary = QRect()
 
         self.__scale_factor: float = 1.0
+
+        # Default Size
+        self.now_x = x
+        self.now_y = y
+        self.now_width = width
+        self.now_height = height
 
     def __eq__(self, other):
         return len(self.uuid.strip()) > 0 and self.uuid == other.uuid
 
+    @property
+    def border_color(self):
+        return self.__border_color
+
+    @border_color.setter
+    def border_color(self, color):
+        self.__border_color = color
+
+        self.update()
+
+    @property
+    def border_width(self):
+        return self.__border_width
+
+    @border_width.setter
+    def border_width(self, width):
+        self.__border_width = width
+
+        self.update()
+
+    @property
+    def border_opacity(self):
+        return self.__border_opacity
+
+    @border_opacity.setter
+    def border_opacity(self, opacity):
+        self.__border_opacity = opacity
+
+        self.update()
+
+    @property
+    def fill_color(self):
+        return self.__fill_color
+
+    @fill_color.setter
+    def fill_color(self, color):
+        self.__fill_color = color
+
+        self.update()
+
+    @property
+    def fill_opacity(self):
+        return self.__fill_opacity
+
+    @fill_opacity.setter
+    def fill_opacity(self, opacity):
+        self.__fill_opacity = opacity
+
+        self.update()
+
     def paintEvent(self, event):
+        area = self.rect()
+
         qp = QPainter(self)
 
-        qp.setPen(QPen(self.borderColor, self.borderWidth))
-        brush = QBrush(self.fillColor)
-        qp.setBrush(brush)
-        qp.drawRect(self.rect())
+        # Filling
+        pen = QPen(self.border_color, self.border_width)
+        brush = QBrush(self.fill_color)
 
+        qp.setPen(pen)
+        qp.setBrush(brush)
+        qp.setOpacity(self.fill_opacity)
+        qp.drawRect(area)
+
+        # Border
+        pen = QPen(self.border_color, self.border_width)
+        brush = QBrush(Qt.GlobalColor.transparent)
+
+        qp.setPen(pen)
+        qp.setBrush(brush)
+        qp.setOpacity(self.border_opacity)
+
+        # Draw the border rectangle
+        qp.drawRect(area)
+
+        # End the QPainter object, committing all the drawing operations
         qp.end()
 
-    def setBorderColor(self, color):
-        self.borderColor = color
-        self.update()
+    @property
+    def min_width(self):
+        return self.border_width * 2
 
-    def setBorderWidth(self, width):
-        self.borderWidth = width
+    @property
+    def min_height(self):
+        return self.border_width * 2
+
+    @property
+    def global_opacity(self):
+        return self.__global_opacity
+
+    @global_opacity.setter
+    def global_opacity(self, opacity):
+        self.__global_opacity = opacity
+
+        if hasattr(self, "__effect") and self.__effect is not None:
+            self.__effect.setOpacity(opacity)
+
         self.update()
 
     @property
-    def minWidth(self):
-        return self.borderWidth * 2
+    def boundary(self):
+        return self.__boundary
 
-    @property
-    def minHeight(self):
-        return self.borderWidth * 2
+    @boundary.setter
+    def boundary(self, boundary_rect: QRect):
+        self.__boundary = boundary_rect
 
-    def setFillColor(self, color):
-        self.fillColor = color
-        self.update()
-
-    def setFillOpacity(self, opacity):
-        self.fillOpacity = opacity
-        self.effect.setOpacity(opacity)
-        self.update()
-
-    def setBoundary(self, boundary_rect: QRect):
-        self.boundary = boundary_rect
-
-    def setBoundaryWithDpi(self, boundary_rect: QRect):
+    def set_boundary_with_dpi(self, boundary_rect: QRect):
         app: QApplication = getQApplication()
+
         dpi_factor = app.devicePixelRatio()
 
         # Windows
@@ -103,6 +196,9 @@ class ResizableRect(QWidget):
         new_rect = q_rect_by_factor(boundary_rect, dpi_factor)
 
         self.boundary = new_rect
+
+    def check_boundary_is_available(self):
+        return self.__boundary.width() > 0 and self.__boundary.height() > 0
 
     def mousePressEvent(self, event):
         if event.button() == Qt.MouseButton.LeftButton:
@@ -121,14 +217,19 @@ class ResizableRect(QWidget):
             if self.resizing:
                 # Resize Mode
                 # Resize the rectangle within the boundary
-                new_width = min(self.width() + delta_x, self.boundary.width() - self.x())
-                new_height = min(self.height() + delta_y, self.boundary.height() - self.y())
 
-                if new_width < self.minWidth:
-                    new_width = self.minWidth
+                if self.check_boundary_is_available():
+                    new_width = min(self.width() + delta_x, self.__boundary.width() - self.x())
+                    new_height = min(self.height() + delta_y, self.__boundary.height() - self.y())
+                else:
+                    new_width = self.width() + delta_x
+                    new_height = self.height() + delta_y
 
-                if new_height < self.minHeight:
-                    new_height = self.minHeight
+                if new_width < self.min_width:
+                    new_width = self.min_width
+
+                if new_height < self.min_height:
+                    new_height = self.min_height
 
                 self.resize(new_width, new_height)
             else:
@@ -136,8 +237,11 @@ class ResizableRect(QWidget):
                 # Move the rectangle within the boundary
                 new_x = self.x() + delta_x
                 new_y = self.y() + delta_y
-                new_x = max(self.boundary.left(), min(new_x, self.boundary.right() - self.width()))
-                new_y = max(self.boundary.top(), min(new_y, self.boundary.bottom() - self.height()))
+
+                if self.check_boundary_is_available():
+                    new_x = max(self.__boundary.left(), min(new_x, self.__boundary.right() - self.width()))
+                    new_y = max(self.__boundary.top(), min(new_y, self.__boundary.bottom() - self.height()))
+
                 self.move(new_x, new_y)
                 # print(
                 #     "Boundary:",
@@ -336,20 +440,25 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     window = QWidget()
-    label = QLabel(window)
+    label = QLabel(parent=window)
     label.setPixmap(QPixmap('../../../../../../Test/00000000.jpg'))
 
-    rect = ResizableRect(window)
-    rect.setGeometry(50, 50, 100, 100)
+    rect = ResizableRect(parent=label)
 
-    rect.setBorderColor(Qt.GlobalColor.blue)
-    rect.setBorderWidth(8)
-    rect.setFillColor(Qt.GlobalColor.green)
-    rect.setFillOpacity(0.3)
+    rect.now_x = 4
+    rect.now_y = 4
+    rect.now_width = 100
+    rect.now_height = 100
+
+    rect.border_color = Qt.GlobalColor.blue
+    rect.border_width = 8
+    rect.fill_color = Qt.GlobalColor.green
+    rect.fill_opacity = 0.3
 
     # Set the boundary for the rectangle
-    rect.setBoundary(QRect(0, 0, 600, 800))
+    rect.boundary = QRect(0, 0, 600, 800)
 
     window.setGeometry(100, 100, 400, 300)
     window.show()
+
     sys.exit(app.exec())

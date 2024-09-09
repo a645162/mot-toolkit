@@ -22,28 +22,54 @@ class AnnotationWidgetRect(ResizableRect):
 
     # Theme Settings
     final_theme_color: dict = {
-        "light_default": {
-            "border": Qt.GlobalColor.blue,
-            "fill": Qt.GlobalColor.transparent,
-            "opacity": 0.2,
+        "light": {
+            "normal": {
+                "border_color": Qt.GlobalColor.blue,
+                "fill_color": Qt.GlobalColor.transparent,
 
-            "border_selected": Qt.GlobalColor.red,
-            "fill_selected": Qt.GlobalColor.green,
-            "opacity_selected": 0.2,
+                "opacity": 1.0,
+                "opacity_border": 0.7,
+                "opacity_fill": 0.1,
+
+                "border_width": 4,
+            },
+            "selected": {
+                "border_color": Qt.GlobalColor.red,
+                "fill_color": Qt.GlobalColor.green,
+
+                "opacity": 1.0,
+                "opacity_border": 0.5,
+                "opacity_fill": 0.2,
+
+                "border_width": 12,
+            },
         },
-        "dark_default": {
-            "border": Qt.GlobalColor.green,
-            "fill": Qt.GlobalColor.transparent,
-            "opacity": 0.3,
+        "dark": {
+            "normal": {
+                "border_color": Qt.GlobalColor.green,
+                "fill_color": Qt.GlobalColor.transparent,
 
-            "border_selected": Qt.GlobalColor.white,
-            "fill_selected": Qt.GlobalColor.transparent,
-            "opacity_selected": 0.3,
+                "opacity": 1.0,
+                "opacity_border": 0.7,
+                "opacity_fill": 0.1,
+
+                "border_width": 4,
+            },
+            "selected": {
+                "border_color": Qt.GlobalColor.white,
+                "fill_color": Qt.GlobalColor.transparent,
+
+                "opacity": 1.0,
+                "opacity_border": 0.5,
+                "opacity_fill": 0.2,
+
+                "border_width": 12,
+            },
         }
     }
     theme_color: dict = {}
 
-    activate_theme_name: str = "light_default"
+    activate_theme_name: str = "light"
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -53,7 +79,7 @@ class AnnotationWidgetRect(ResizableRect):
         self.set_appearance()
 
     def __init_widget_props(self):
-        self.setBorderWidth(8)
+        self.border_width = 8
 
     def set_rect_data_annotation(self, rect_data: RectDataAnnotation):
         x1, y1 = int(rect_data.x1), int(rect_data.y1)
@@ -171,20 +197,40 @@ class AnnotationWidgetRect(ResizableRect):
     def set_appearance(self):
         theme_name = self.activate_theme_name
         if theme_name not in self.final_theme_color.keys():
-            theme_name = "light_default"
+            theme_name = "light"
 
-        theme: dict = self.final_theme_color[theme_name]
+        theme_group: dict = self.final_theme_color[theme_name]
 
-        if not self.selecting:
-            # Not Select
-            self.setBorderColor(theme["border"])
-            self.setFillColor(theme["fill"])
-            self.setFillOpacity(theme["opacity"])
-        else:
-            # Selecting
-            self.setBorderColor(theme["border_selected"])
-            self.setFillColor(theme["fill_selected"])
-            self.setFillOpacity(theme["opacity_selected"])
+        selecting_key_str = "selected" if self.selecting else "normal"
+
+        theme: dict = theme_group[selecting_key_str]
+
+        if "border_color" in theme_group.keys():
+            self.border_color = theme_group["border_color"]
+        elif "border_color" in theme.keys():
+            self.border_color = theme["border_color"]
+        if "fill_color" in theme_group.keys():
+            self.fill_color = theme_group["fill_color"]
+        elif "fill_color" in theme.keys():
+            self.fill_color = theme["fill_color"]
+
+        if "opacity" in theme_group.keys():
+            self.global_opacity = theme_group["opacity"]
+        elif "opacity" in theme.keys():
+            self.global_opacity = theme["opacity"]
+        if "opacity_fill" in theme_group.keys():
+            self.fill_opacity = theme_group["opacity_fill"]
+        elif "opacity_fill" in theme.keys():
+            self.fill_opacity = theme["opacity_fill"]
+        if "opacity_border" in theme_group.keys():
+            self.border_opacity = theme_group["opacity_border"]
+        elif "opacity_border" in theme.keys():
+            self.border_opacity = theme["opacity_border"]
+
+        if "border_width" in theme_group.keys():
+            self.border_width = theme_group["border_width"]
+        elif "border_width" in theme.keys():
+            self.border_width = theme["border_width"]
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
