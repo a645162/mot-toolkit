@@ -53,7 +53,7 @@ class ResizableRect(QWidget):
 
         self.lastPos = None
         self.resizing = False
-        self.resizeMargin = 5
+        self.resizing_direction_right_bottom = False
 
         self.__border_color = Qt.GlobalColor.red
         self.__border_width = 2
@@ -203,6 +203,14 @@ class ResizableRect(QWidget):
     def check_boundary_is_available(self):
         return self.__boundary.width() > 0 and self.__boundary.height() > 0
 
+    def is_on_border(self, x: int, y: int):
+        return (
+                0 <= x <= self.border_width or
+                0 <= y <= self.border_width or
+                self.now_width - self.border_width <= x <= self.now_width or
+                self.now_height - self.border_width <= y <= self.now_height
+        )
+
     def mousePressEvent(self, event):
         current_pos = event.position().toPoint()
 
@@ -210,9 +218,15 @@ class ResizableRect(QWidget):
             self.lastPos = current_pos
 
             # Check if the click is within the resize margin
-            self.resizing = (
-                    event.position().x() > self.width() - self.resizeMargin or
-                    event.position().y() > self.height() - self.resizeMargin
+            self.resizing = self.is_on_border(current_pos.x(), current_pos.y())
+            # self.resizing = (
+            #         event.position().x() > self.width() - self.border_width or
+            #         event.position().y() > self.height() - self.border_width
+            # )
+
+            self.resizing_direction_right_bottom = (
+                    event.position().x() > self.width() - self.border_width or
+                    event.position().y() > self.height() - self.border_width
             )
 
             # Mouse convert to parent widget coordinate
@@ -232,27 +246,34 @@ class ResizableRect(QWidget):
         last_pos = self.lastPos
 
         if last_pos:
-            delta_x = current_pos.x() - last_pos.x()
-            delta_y = current_pos.y() - last_pos.y()
+            mouse_delta_x = current_pos.x() - last_pos.x()
+            mouse_delta_y = current_pos.y() - last_pos.y()
 
             if self.resizing:
                 # Resize Mode
                 # Resize the rectangle within the boundary
 
-                if self.check_boundary_is_available():
-                    new_width = min(self.width() + delta_x, self.__boundary.width() - self.x())
-                    new_height = min(self.height() + delta_y, self.__boundary.height() - self.y())
-                else:
-                    new_width = self.width() + delta_x
-                    new_height = self.height() + delta_y
+                if self.resizing_direction_right_bottom:
+                    # Right + Bottom
+                    if self.check_boundary_is_available():
+                        new_width = min(self.width() + mouse_delta_x, self.__boundary.width() - self.x())
+                        new_height = min(self.height() + mouse_delta_y, self.__boundary.height() - self.y())
+                    else:
+                        new_width = self.width() + mouse_delta_x
+                        new_height = self.height() + mouse_delta_y
 
-                if new_width < self.min_width:
-                    new_width = self.min_width
+                    if new_width < 0:
+                        new_width = 0
+                    if new_height < 0:
+                        new_height = 0
 
-                if new_height < self.min_height:
-                    new_height = self.min_height
+                    if new_width < self.min_width:
+                        new_width = self.min_width
+                    if new_height < self.min_height:
+                        new_height = self.min_height
 
-                self.resize(new_width, new_height)
+                    self.resize(new_width, new_height)
+
             else:
                 # Move Mode
                 # Move the rectangle within the boundary
@@ -287,7 +308,27 @@ class ResizableRect(QWidget):
             self.lastPos = current_pos
 
     def mouseReleaseEvent(self, event):
+        current_pos = event.position().toPoint()
+        parent_mouse_pos = self.mapToParent(current_pos)
+
         if event.button() == Qt.MouseButton.LeftButton:
+
+            if self.resizing and not self.resizing_direction_right_bottom:
+                # Left + Top
+                new_x = parent_mouse_pos.x()
+                new_y = parent_mouse_pos.y()
+
+                delta_x = self.now_x - new_x
+                delta_y = self.now_y - new_y
+
+                new_width = self.ori_w + delta_x
+                new_height = self.ori_h + delta_y
+
+                self.setGeometry(
+                    new_x, new_y,
+                    new_width, new_height
+                )
+
             self.lastPos = None
             self.resizing = False
 

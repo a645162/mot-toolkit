@@ -41,7 +41,7 @@ class AnnotationWidgetRect(ResizableRect):
                 "opacity_border": 0.45,
                 "opacity_fill": 0.2,
 
-                "border_width": 8,
+                "border_width": 12,
             },
         },
         "dark": {
