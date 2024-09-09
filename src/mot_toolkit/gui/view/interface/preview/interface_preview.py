@@ -889,10 +889,18 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        file_index = self.r_file_list_widget.selection_index
+        file_name = self.r_file_list_widget.selection_text
+
+        file_index = -1
+        for i, file_name_str in enumerate(self.annotation_directory.file_name_list):
+            if file_name_str == file_name:
+                file_index = i
+                break
+        if file_index == -1:
+            return
 
         index = self.r_object_list_widget.selection_index
-        logger.info(f"[{index}]Delete the target in subsequent frames")
+        logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
         label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
