@@ -268,6 +268,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Edit Menu
         self.menu_edit = self.menu.addMenu("Edit")
 
+        self.menu_edit_unselect_all = \
+            QAction(
+                "Unselect All", self.menu_edit
+            )
+        self.menu_edit_unselect_all \
+            .triggered.connect(self.__action_obj_unselect_all)
+        self.menu_edit.addAction(self.menu_edit_unselect_all)
+
     def __init_menu_file_list(self):
         # File List Menu
         self.menu_file_list = self.menu.addMenu("File List")
@@ -564,6 +572,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         annotation_obj_list: List[XAnyLabelingAnnotation] = \
             self.current_file_list
 
+        current_selected_text = self.r_file_list_widget.selection_text
+
         if len(annotation_obj_list) != self.r_file_list_widget.count:
             # Clear
             self.r_file_list_widget.list_widget.clear()
@@ -586,6 +596,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             current_item.setText(base_text)
 
         self.r_file_list_widget.update()
+
+        # Restore Selection
+        index = -1
+        for i, file_name in enumerate(self.current_file_str_list):
+            if file_name == current_selected_text:
+                index = i
+                break
+        if index != -1:
+            self.r_file_list_widget.selection_index = index
 
     def __auto_load_directory(self):
         if not os.path.isdir(self.work_directory_path):
@@ -753,7 +772,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.__update_object_list_widget()
 
-    def __action_window_save_all(self):
+    def __action_window_save_all(self) -> bool:
         reply = QMessageBox.question(
             self,
             "Question",
@@ -766,6 +785,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             for annotation in self.annotation_directory.annotation_file:
                 if annotation.save():
                     self.__successful_saved(annotation)
+            return True
+
+        return False
 
     def __try_to_exit(self):
         # self.save_current_opened()
@@ -865,9 +887,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         file_index = self.r_file_list_widget.selection_index
 
         index = self.r_object_list_widget.selection_index
-        print(f"[{index}]Delete the target in subsequent frames")
+        logger.info(f"[{index}]Delete the target in subsequent frames")
         label = self.current_annotation_object.rect_annotation_list[index].label
-        print(f"Delete Label:{label}")
+        logger.info(f"Delete Label:{label}")
 
         # self.current_annotation_object.del_by_label(label)
         for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
@@ -1008,7 +1030,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         for annotation_obj in self.annotation_directory.annotation_file:
             if annotation_obj.is_modified:
                 found = True
-                print(f"{annotation_obj.file_path} is modified but not save.")
+                logger.info(f"{annotation_obj.file_path} is modified but not save.")
 
         return found
 
@@ -1060,7 +1082,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self,
             "File not save",
             "You have not saved some files.\n"
-            "Are you sure you want to quit?",
+            "Are you sure you want to quit without save?",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
@@ -1068,4 +1090,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if reply == QMessageBox.StandardButton.Yes:
             event.accept()
         else:
-            event.ignore()
+            if self.__action_window_save_all():
+                event.accept()
+            else:
+                event.ignore()

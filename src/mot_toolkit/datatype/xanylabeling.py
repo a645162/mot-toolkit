@@ -298,6 +298,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         new_rect_item.label = label_name
         new_rect_item.group_id = label_name
+        new_rect_item.shape_type = "rectangle"
 
         if x < 0 or y < 0 or width <= 0 or height <= 0:
             return False

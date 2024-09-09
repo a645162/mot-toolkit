@@ -107,7 +107,8 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
 
     def __btn_toolbox_preview_clicked(self):
         path = self.multi_level_finder.get_dir()
-
+        if len(path) == 0:
+            path = self.work_directory_path
         path = os.path.abspath(path)
 
         interface_preview = InterFacePreview(
