@@ -28,6 +28,9 @@ class ResizableRect(QWidget):
 
     __effect: QGraphicsOpacityEffect
 
+    __relative_x: int = 0
+    __relative_y: int = 0
+
     def __init__(
             self,
             parent=None,
@@ -157,11 +160,11 @@ class ResizableRect(QWidget):
 
     @property
     def min_width(self):
-        return self.border_width * 2
+        return self.border_width
 
     @property
     def min_height(self):
-        return self.border_width * 2
+        return self.border_width
 
     @property
     def global_opacity(self):
@@ -201,16 +204,31 @@ class ResizableRect(QWidget):
         return self.__boundary.width() > 0 and self.__boundary.height() > 0
 
     def mousePressEvent(self, event):
+        current_pos = event.position().toPoint()
+
         if event.button() == Qt.MouseButton.LeftButton:
-            self.lastPos = event.position().toPoint()
+            self.lastPos = current_pos
+
             # Check if the click is within the resize margin
             self.resizing = (
                     event.position().x() > self.width() - self.resizeMargin or
                     event.position().y() > self.height() - self.resizeMargin
             )
 
+            # Mouse convert to parent widget coordinate
+            parent_mouse_pos = self.mapToParent(current_pos)
+            # print("Parent Mouse position:", parent_mouse_pos.x(), parent_mouse_pos.y())
+
+            # Calc mouse and rect relative position
+            self.__relative_x = parent_mouse_pos.x() - self.x()
+            self.__relative_y = parent_mouse_pos.y() - self.y()
+            # print("Save relative position:", self.__relative_x, self.__relative_y)
+
     def mouseMoveEvent(self, event):
         current_pos = event.position().toPoint()
+        parent_mouse_pos = self.mapToParent(current_pos)
+        # print("Parent Mouse position:", parent_mouse_pos.x(), parent_mouse_pos.y())
+        # print("Relative position:", self.__relative_x, self.__relative_y)
         last_pos = self.lastPos
 
         if last_pos:
@@ -238,12 +256,25 @@ class ResizableRect(QWidget):
             else:
                 # Move Mode
                 # Move the rectangle within the boundary
-                new_x = self.x() + delta_x
-                new_y = self.y() + delta_y
+
+                # new_x = self.x() + delta_x
+                # new_y = self.y() + delta_y
+
+                new_x = parent_mouse_pos.x() - self.__relative_x
+                new_y = parent_mouse_pos.y() - self.__relative_y
+
+                # print("New position:", new_x, new_y)
 
                 if self.check_boundary_is_available():
-                    new_x = max(self.__boundary.left(), min(new_x, self.__boundary.right() - self.width()))
-                    new_y = max(self.__boundary.top(), min(new_y, self.__boundary.bottom() - self.height()))
+                    if new_x < self.__boundary.left():
+                        new_x = self.__boundary.left()
+                    if new_y < self.__boundary.top():
+                        new_y = self.__boundary.top()
+
+                    if new_x + self.width() > self.__boundary.right():
+                        new_x = self.__boundary.right() - self.width()
+                    if new_y + self.height() > self.__boundary.bottom():
+                        new_y = self.__boundary.bottom() - self.height()
 
                 self.move(new_x, new_y)
                 # print(
@@ -459,7 +490,7 @@ if __name__ == '__main__':
     rect.fill_opacity = 0.3
 
     # Set the boundary for the rectangle
-    rect.boundary = QRect(0, 0, 600, 800)
+    rect.boundary = QRect(0, 0, 800, 1000)
 
     window.setGeometry(100, 100, 400, 300)
     window.show()
