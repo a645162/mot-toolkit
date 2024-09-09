@@ -348,7 +348,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.action_group_frame_display_type_radio_original.setChecked(True)
 
-        # self.menu_frame.addSeparator()
+        self.menu_frame.addSeparator()
+
+        self.action_frame_fix_all = \
+            QAction("Fix All", self.menu_frame)
+        self.action_frame_fix_all.triggered.connect(self.__action_frame_fix_all)
+        self.menu_frame.addAction(self.action_frame_fix_all)
 
     def __init_menu_rect(self):
         # Rect Menu
@@ -937,6 +942,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
             case _:
                 logger.error("Unknown mode")
+
+    def __action_frame_fix_all(self):
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to fix all?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
+        logger.info("Start to Fix All")
+        if self.annotation_directory.fix_bugs():
+            logger.info("Fix All have modified")
+            self.update_annotation_object_display()
 
     def __action_set_frame_outline_binary_threshold(self):
         number, ok = QInputDialog.getInt(

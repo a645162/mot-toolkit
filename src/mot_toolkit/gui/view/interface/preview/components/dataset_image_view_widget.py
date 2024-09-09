@@ -34,7 +34,7 @@ class DatasetImageView(ScrollImageView):
 
     object_menu: QMenu = None
     __reverse_color: bool = False
-    __theme_name: str = "light_default"
+    __theme_name: str = "light"
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)

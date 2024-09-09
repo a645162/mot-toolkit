@@ -39,7 +39,7 @@ class ImageViewGraphics(QGraphicsView):
     rotate_triggered: Signal = Signal(float)
 
     __image_display_type: ImageDisplayType = 0
-    __outline_binary_threshold: int = 127
+    __outline_binary_threshold: int = 10
 
     __last_scale_factor: float = 1.0
 

@@ -126,16 +126,36 @@ class RectDataAnnotation(ObjectAnnotation):
 
         self.set_by_center_and_size(center_x, center_y, width, height)
 
-    def fix_bugs(self):
+    def fix_bugs(
+            self,
+            image_width: int = 0,
+            image_height: int = 0
+    ) -> bool:
+        modified = False
+
         if self.x1 > self.x2:
             self.x1, self.x2 = self.x2, self.x1
+            modified = True
         if self.y1 > self.y2:
             self.y1, self.y2 = self.y2, self.y1
+            modified = True
 
         if self.x1 < 0:
             self.x1 = 0
+            modified = True
         if self.y1 < 0:
             self.y1 = 0
+            modified = True
+
+        if image_width > 0 and image_height > 0:
+            if self.x2 > image_width:
+                self.x2 = image_width
+                modified = True
+            if self.y2 > image_height:
+                self.y2 = image_height
+                modified = True
+
+        return modified
 
     def __str__(self):
         return (

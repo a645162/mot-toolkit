@@ -38,10 +38,10 @@ class AnnotationWidgetRect(ResizableRect):
                 "fill_color": Qt.GlobalColor.green,
 
                 "opacity": 1.0,
-                "opacity_border": 0.5,
+                "opacity_border": 0.45,
                 "opacity_fill": 0.2,
 
-                "border_width": 12,
+                "border_width": 8,
             },
         },
         "dark": {

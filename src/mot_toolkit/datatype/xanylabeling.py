@@ -172,10 +172,18 @@ class XAnyLabelingAnnotation(AnnotationFile):
         return True
 
     def fix_bugs(self) -> bool:
-        for rect_item in self.rect_annotation_list:
-            rect_item.fix_bugs()
+        modified = False
 
-        return True
+        for rect_item in self.rect_annotation_list:
+            if (
+                    rect_item.fix_bugs(
+                        image_width=self.image_width,
+                        image_height=self.image_height
+                    )
+            ):
+                modified = True
+
+        return modified
 
     def del_by_label(self, label: str) -> bool:
         for rect_item in self.rect_annotation_list:
@@ -575,6 +583,14 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             interval_list.append(interval)
 
         return interval_list
+
+    def fix_bugs(self) -> bool:
+        modified = False
+        for annotation_obj in self.annotation_file:
+            if annotation_obj.fix_bugs():
+                modified = True
+
+        return modified
 
 
 if __name__ == '__main__':
