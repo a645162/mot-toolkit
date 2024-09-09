@@ -155,6 +155,18 @@ class ResizableRect(QWidget):
         # Draw the border rectangle
         qp.drawRect(area)
 
+        # Left Top Dot
+        pen = QPen(Qt.GlobalColor.black, self.border_width)
+        brush = QBrush(Qt.GlobalColor.black)
+        qp.setPen(pen)
+        qp.setBrush(brush)
+        qp.setOpacity(self.border_opacity)
+        qp.drawRect(
+            0, 0,
+            int(self.border_width / 2),
+            int(self.border_width / 2)
+        )
+
         # End the QPainter object, committing all the drawing operations
         qp.end()
 
@@ -218,15 +230,15 @@ class ResizableRect(QWidget):
             self.lastPos = current_pos
 
             # Check if the click is within the resize margin
-            self.resizing = self.is_on_border(current_pos.x(), current_pos.y())
-            # self.resizing = (
-            #         event.position().x() > self.width() - self.border_width or
-            #         event.position().y() > self.height() - self.border_width
-            # )
+            # self.resizing = self.is_on_border(current_pos.x(), current_pos.y())
+            self.resizing = (
+                    event.position().x() > self.now_width - self.border_width or
+                    event.position().y() > self.now_height - self.border_width
+            )
 
-            self.resizing_direction_right_bottom = (
-                    event.position().x() > self.width() - self.border_width or
-                    event.position().y() > self.height() - self.border_width
+            self.resizing_direction_right_bottom = not (
+                    event.position().x() < self.border_width and
+                    event.position().y() < self.border_width
             )
 
             # Mouse convert to parent widget coordinate
@@ -246,8 +258,8 @@ class ResizableRect(QWidget):
         last_pos = self.lastPos
 
         if last_pos:
-            mouse_delta_x = current_pos.x() - last_pos.x()
-            mouse_delta_y = current_pos.y() - last_pos.y()
+            # mouse_delta_x = current_pos.x() - last_pos.x()
+            # mouse_delta_y = current_pos.y() - last_pos.y()
 
             if self.resizing:
                 # Resize Mode
@@ -255,24 +267,30 @@ class ResizableRect(QWidget):
 
                 if self.resizing_direction_right_bottom:
                     # Right + Bottom
-                    if self.check_boundary_is_available():
-                        new_width = min(self.width() + mouse_delta_x, self.__boundary.width() - self.x())
-                        new_height = min(self.height() + mouse_delta_y, self.__boundary.height() - self.y())
-                    else:
-                        new_width = self.width() + mouse_delta_x
-                        new_height = self.height() + mouse_delta_y
+                    # if self.check_boundary_is_available():
+                    #     new_width = min(self.width() + mouse_delta_x, self.__boundary.width() - self.x())
+                    #     new_height = min(self.height() + mouse_delta_y, self.__boundary.height() - self.y())
+                    # else:
+                    #     new_width = self.width() + mouse_delta_x
+                    #     new_height = self.height() + mouse_delta_y
 
-                    if new_width < 0:
-                        new_width = 0
-                    if new_height < 0:
-                        new_height = 0
+                    new_width = parent_mouse_pos.x() - self.now_x
+                    new_height = parent_mouse_pos.y() - self.now_y
+
+                    if self.check_boundary_is_available():
+                        if new_width + self.now_x > self.__boundary.right():
+                            new_width = self.__boundary.right() - self.now_x
+                        if new_height + self.now_y > self.__boundary.bottom():
+                            new_height = self.__boundary.bottom() - self.now_y
 
                     if new_width < self.min_width:
                         new_width = self.min_width
                     if new_height < self.min_height:
                         new_height = self.min_height
 
-                    self.resize(new_width, new_height)
+                    self.now_width = new_width
+                    self.now_height = new_height
+                    # self.resize(new_width, new_height)
 
             else:
                 # Move Mode
@@ -297,7 +315,9 @@ class ResizableRect(QWidget):
                     if new_y + self.height() > self.__boundary.bottom():
                         new_y = self.__boundary.bottom() - self.height()
 
-                self.move(new_x, new_y)
+                # self.move(new_x, new_y)
+                self.now_x = new_x
+                self.now_y = new_y
                 # print(
                 #     "Boundary:",
                 #     self.boundary.top(), self.boundary.bottom(),
@@ -324,10 +344,10 @@ class ResizableRect(QWidget):
                 new_width = self.ori_w + delta_x
                 new_height = self.ori_h + delta_y
 
-                self.setGeometry(
-                    new_x, new_y,
-                    new_width, new_height
-                )
+                self.now_x = new_x
+                self.now_y = new_y
+                self.now_width = new_width
+                self.now_height = new_height
 
             self.lastPos = None
             self.resizing = False
