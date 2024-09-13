@@ -16,8 +16,8 @@ from PySide6.QtWidgets import (
 from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
-from mot_toolkit.gui.view.components. \
-    windget.base_image_view_graphics import ImageDisplayType
+from mot_toolkit.gui.view.components.widget. \
+    basic.base_image_view_graphics import ImageDisplayType
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (

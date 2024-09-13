@@ -5,10 +5,10 @@ from PySide6.QtGui import QPixmap, QCursor
 from PySide6.QtWidgets import QMenu
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
-from mot_toolkit.gui.view.components. \
-    windget.annotation_widget_rect import AnnotationWidgetRect
-from mot_toolkit.gui.view.components. \
-    windget.scroll_image_view import ScrollImageView
+from mot_toolkit.gui.view.components.widget. \
+    rect.annotation_widget_rect import AnnotationWidgetRect
+from mot_toolkit.gui.view.components.widget. \
+    combination.scroll_image_view import ScrollImageView
 
 
 class DatasetImageView(ScrollImageView):

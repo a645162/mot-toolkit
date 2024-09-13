@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QWidget
 
 from mot_toolkit.datatype.common. \
     rect_data_annotation import RectDataAnnotation
-from mot_toolkit.gui.view.components. \
-    windget.resizable_rect import ResizableRect
+from mot_toolkit.gui.view.components.widget. \
+    rect.resizable_rect import ResizableRect
 
 
 class AnnotationWidgetRect(ResizableRect):

@@ -536,7 +536,7 @@ if __name__ == '__main__':
 
     window = QWidget()
     label = QLabel(parent=window)
-    label.setPixmap(QPixmap('../../../../../../Test/00000000.jpg'))
+    label.setPixmap(QPixmap('../../../../../../../Test/00000000.jpg'))
 
     rect = ResizableRect(parent=label)
 

@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (
 
 from mot_toolkit.gui.view.components. \
     window.base_q_main_window import BaseQMainWindow
-from mot_toolkit.gui.view.components. \
-    windget.link_label import LinkLabel
+from mot_toolkit.gui.view.components.widget. \
+    basic.link_label import LinkLabel
 from mot_toolkit.utils.system.linux.system import is_linux
 from mot_toolkit.utils.system.system import SystemType
 

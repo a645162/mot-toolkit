@@ -2,8 +2,8 @@ import os.path
 import sys
 from typing import Optional
 
-from mot_toolkit.gui.view.components. \
-    windget.link_label import LinkLabel
+from mot_toolkit.gui.view.components.widget. \
+    basic.link_label import LinkLabel
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -37,8 +37,7 @@ from mot_toolkit.gui.common.system_wide_menu import (
     init_system_menu, get_system_menu
 )
 
-from mot_toolkit.gui.view.components. \
-    windget.select_directory_path import (
+from mot_toolkit.gui.view.components.widget.combination.select_directory_path import (
     SelectDirectoryPathWidget
 )
 

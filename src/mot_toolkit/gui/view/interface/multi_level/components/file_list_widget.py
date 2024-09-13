@@ -7,8 +7,8 @@ from PySide6.QtWidgets import QSizePolicy, QApplication
 
 from mot_toolkit.datatype.directory.dir_file import DirectoryAndFile
 
-from mot_toolkit.gui.view.components. \
-    windget.base_list_widget_with_menu import BaseListWidgetWithMenu
+from mot_toolkit.gui.view.components.widget. \
+    list.base_list_widget_with_menu import BaseListWidgetWithMenu
 
 
 class FileListWidget(BaseListWidgetWithMenu):

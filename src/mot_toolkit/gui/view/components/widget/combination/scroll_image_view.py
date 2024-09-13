@@ -5,8 +5,8 @@ from PySide6.QtWidgets import (
     QScrollArea,
 )
 
-from mot_toolkit.gui.view.components. \
-    windget.base_image_view_graphics import ImageViewGraphics
+from mot_toolkit.gui.view.components.widget. \
+    basic.base_image_view_graphics import ImageViewGraphics
 
 
 class ScrollImageView(QWidget):
