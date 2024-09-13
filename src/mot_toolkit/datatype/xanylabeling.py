@@ -12,6 +12,10 @@ from mot_toolkit.datatype.common.rect_data_annotation import (
 )
 from mot_toolkit.parser.json_parser import parse_json_to_dict
 
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
+
 
 class XAnyLabelingRect(RectDataAnnotation):
     group_id: str = ""
@@ -124,13 +128,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
         if check and not super().reload():
             return False
 
-        data = self.ori_dict
+        data = {}
+        data.update(self.ori_dict)
 
         self.version = data.get("version", "")
         self.flags = data.get("flags", {})
 
         shapes_list: List[dict] = data.get("shapes", [])
+
+        # Clear Old Data
         self.rect_annotation_list.clear()
+
         for shape_item in shapes_list:
             item_label = shape_item.get("label", "")
             item_text = shape_item.get("text", "")
@@ -142,7 +150,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
             if item_shape_type == "rectangle":
                 current_rect_annotation = XAnyLabelingRect(item_label)
 
-                self.ori_dict.update(shape_item)
+                data.update(shape_item)
 
                 current_rect_annotation.text = item_text
 
@@ -160,13 +168,14 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 )
             else:
                 self.other_shape_dict_list.append(shape_item)
-                print(f"Unknown shape type: {item_shape_type} in {self.file_path}")
+                logger.info(f"Unknown shape type: {item_label}({item_shape_type}) in {self.file_path}")
 
         self.image_path = data.get("imagePath", "")
         self.image_data = data.get("imageData", None)
         self.image_height = data.get("imageHeight", 0)
         self.image_width = data.get("imageWidth", 0)
 
+        self.is_modified = False
         self.slot_modified.emit(self.index)
 
         return True

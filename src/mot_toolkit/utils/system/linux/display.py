@@ -1,14 +1,21 @@
 import os
-from enum import EnumType
+from enum import Enum
 
 
-class LinuxWindowSystem(EnumType):
+class LinuxWindowSystem(Enum):
     X11 = "X11"
     Wayland = "Wayland"
     Unknown = "Unknown"
 
     @staticmethod
-    def detect():
+    def detect() -> "LinuxWindowSystem":
+        # Check $XDG_SESSION_TYPE
+        if 'XDG_SESSION_TYPE' in os.environ:
+            if os.environ['XDG_SESSION_TYPE'] == 'x11':
+                return LinuxWindowSystem.X11
+            elif os.environ['XDG_SESSION_TYPE'] == 'wayland':
+                return LinuxWindowSystem.Wayland
+
         if 'WAYLAND_DISPLAY' in os.environ:
             return LinuxWindowSystem.Wayland
         elif 'DISPLAY' in os.environ:

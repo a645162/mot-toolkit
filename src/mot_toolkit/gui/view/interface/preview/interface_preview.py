@@ -382,7 +382,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         # Only Show Selected
         self.menu_rect_only_show_selected = \
-            QAction("Only Show Selected", self.menu_frame)
+            QAction("Only Show Selected (Zen Mode)", self.menu_frame)
         self.menu_rect_only_show_selected.setCheckable(True)
         self.menu_rect_only_show_selected.setChecked(program_settings.menu_rect_only_show_selected)
         self.menu_rect_only_show_selected.triggered.connect(
@@ -813,9 +813,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.close()
 
     def __action_file_reload(self):
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to reload?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
         file_index = self.r_file_list_widget.selection_index
 
-        self.annotation_directory.annotation_file[file_index].reload()
+        self.annotation_directory.annotation_file[file_index] \
+            .reload(check=False)
 
         self.__update_object_list_widget()
 

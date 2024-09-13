@@ -10,6 +10,16 @@ logger = get_logger()
 
 logger.info("mot-toolkit")
 
+from mot_toolkit.utils.system.system import SystemType
+from mot_toolkit.utils.system.linux.system import is_linux
+from mot_toolkit.utils.system.linux.display import LinuxWindowSystem
+
+system_type = SystemType.get_system_type()
+logger.info(f"System Platform: {system_type.value}")
+if is_linux():
+    window_system = LinuxWindowSystem.detect()
+    logger.info(f"Linux Graphic System: {window_system.value}")
+
 logger.info("Start To Load MainWindow Package")
 
 logger.info("Start To Load PySide6")

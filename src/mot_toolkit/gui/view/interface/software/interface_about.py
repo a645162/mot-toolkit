@@ -7,6 +7,8 @@ from mot_toolkit.gui.view.components. \
     window.base_q_main_window import BaseQMainWindow
 from mot_toolkit.gui.view.components. \
     windget.link_label import LinkLabel
+from mot_toolkit.utils.system.linux.system import is_linux
+from mot_toolkit.utils.system.system import SystemType
 
 
 class InterFaceAbout(BaseQMainWindow):
@@ -41,6 +43,18 @@ class InterFaceAbout(BaseQMainWindow):
         self.add_label("MOT-Toolkit")
         self.add_label("Multiple Object Tracking Toolkit")
 
+        self.add_label("")
+
+        system_type = SystemType.get_system_type()
+        self.add_label(f"System Platform: {system_type.value}")
+
+        if is_linux():
+            from mot_toolkit.utils.system.linux.display import LinuxWindowSystem
+            window_system = LinuxWindowSystem.detect()
+            self.add_label(f"Graphic System: {window_system.value}")
+
+        self.add_label("")
+
         qt_version = PySide6.__version__
         self.add_label(f"Qt Version: PySide6({qt_version})")
 
@@ -53,3 +67,13 @@ class InterFaceAbout(BaseQMainWindow):
             url="https://github.com/a645162/mot-toolkit",
         )
         self.v_layout.addWidget(github_link)
+
+
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    import sys
+
+    app = QApplication(sys.argv)
+    main_window = InterFaceAbout()
+    main_window.show()
+    sys.exit(app.exec())

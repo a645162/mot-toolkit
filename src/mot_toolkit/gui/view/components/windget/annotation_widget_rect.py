@@ -249,33 +249,33 @@ class AnnotationWidgetRect(ResizableRect):
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
 
-        modifiers = event.modifiers()
-        key = event.key()
-
-        move_step_value = 5
-
-        match modifiers:
-            case Qt.KeyboardModifier.NoModifier:
-                pass
-                # match key:
-                #     case Qt.Key.Key_Up:
-                #         self.now_y -= move_step_value
-                #         self.modify()
-                #         return
-                #     case Qt.Key.Key_Down:
-                #         self.now_y += move_step_value
-                #         self.modify()
-                #         return
-                #     case Qt.Key.Key_Left:
-                #         self.now_x -= move_step_value
-                #         self.modify()
-                #         return
-                #     case Qt.Key.Key_Right:
-                #         self.now_x += move_step_value
-                #         self.modify()
-                #         return
-            case Qt.KeyboardModifier.ControlModifier:
-                pass
+        # modifiers = event.modifiers()
+        # key = event.key()
+        #
+        # move_step_value = 5
+        #
+        # match modifiers:
+        #     case Qt.KeyboardModifier.NoModifier:
+        #         pass
+        #         # match key:
+        #         #     case Qt.Key.Key_Up:
+        #         #         self.now_y -= move_step_value
+        #         #         self.modify()
+        #         #         return
+        #         #     case Qt.Key.Key_Down:
+        #         #         self.now_y += move_step_value
+        #         #         self.modify()
+        #         #         return
+        #         #     case Qt.Key.Key_Left:
+        #         #         self.now_x -= move_step_value
+        #         #         self.modify()
+        #         #         return
+        #         #     case Qt.Key.Key_Right:
+        #         #         self.now_x += move_step_value
+        #         #         self.modify()
+        #         #         return
+        #     case Qt.KeyboardModifier.ControlModifier:
+        #         pass
 
         if self.parent() is not None:
             self.parent().keyPressEvent(event)
