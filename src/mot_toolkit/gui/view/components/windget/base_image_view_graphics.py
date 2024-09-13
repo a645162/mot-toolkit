@@ -62,6 +62,8 @@ class ImageViewGraphics(QGraphicsView):
         self.__setup_widget_properties()
 
     def __setup_widget_properties(self):
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+
         # Disable horizontal scroll bar
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
 
@@ -243,6 +245,10 @@ class ImageViewGraphics(QGraphicsView):
         self.setFixedSize(new_size)
 
         super().update()
+
+    def keyPressEvent(self, event):
+        if self.parent() is not None:
+            self.parent().keyPressEvent(event)
 
 
 if __name__ == "__main__":

@@ -148,6 +148,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Main Image View
         self.main_image_view = DatasetImageView(parent=self)
 
+        self.main_image_view.only_show_selected = program_settings.menu_rect_only_show_selected
         self.main_image_view.show_box = program_settings.menu_rect_show_box
         self.main_image_view.show_box_label = program_settings.menu_rect_show_box_label
 
@@ -378,6 +379,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             lambda x: self.__action_frame_show_box_label()
         )
         self.menu_rect.addAction(self.menu_rect_show_box_label)
+
+        # Only Show Selected
+        self.menu_rect_only_show_selected = \
+            QAction("Only Show Selected", self.menu_frame)
+        self.menu_rect_only_show_selected.setCheckable(True)
+        self.menu_rect_only_show_selected.setChecked(program_settings.menu_rect_only_show_selected)
+        self.menu_rect_only_show_selected.triggered.connect(
+            lambda x: self.__action_frame_set_only_show_selected()
+        )
+        self.menu_rect.addAction(self.menu_rect_only_show_selected)
 
         self.menu_rect.addSeparator()
 
@@ -995,6 +1006,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         setattr(
             program_settings, "frame_show_box_label",
+            value
+        )
+
+    def __action_frame_set_only_show_selected(self):
+        value = self.menu_rect_only_show_selected.isChecked()
+
+        self.main_image_view.only_show_selected = value
+
+        setattr(
+            program_settings, "menu_rect_only_show_selected",
             value
         )
 

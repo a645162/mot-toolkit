@@ -94,6 +94,21 @@ class ProgramSettings:
             value
         )
 
+    @property
+    def menu_rect_only_show_selected(self) -> bool:
+        return bool(self.settings.value(
+            "rect/only_show_selected",
+            False,
+            type=bool
+        ))
+
+    @menu_rect_only_show_selected.setter
+    def menu_rect_only_show_selected(self, value: bool):
+        self.settings.setValue(
+            "rect/only_show_selected",
+            value
+        )
+
 
 program_settings = ProgramSettings()
 

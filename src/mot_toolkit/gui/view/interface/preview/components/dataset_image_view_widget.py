@@ -31,6 +31,7 @@ class DatasetImageView(ScrollImageView):
 
     __show_box: bool = True
     __show_box_label: bool = True
+    __only_show_selected: bool = False
 
     object_menu: QMenu = None
     __reverse_color: bool = False
@@ -48,7 +49,7 @@ class DatasetImageView(ScrollImageView):
         self.__init_shortcut()
 
     def __setup_widget_properties(self):
-        pass
+        self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
 
     def __init_widgets(self):
         self.slot_try_to_zoom.connect(self.__zoom_triggered)
@@ -61,8 +62,6 @@ class DatasetImageView(ScrollImageView):
         pass
 
     def keyPressEvent(self, event):
-        super().keyPressEvent(event)
-
         modifiers = event.modifiers()
         key = event.key()
 
@@ -74,6 +73,9 @@ class DatasetImageView(ScrollImageView):
                         return
                     case Qt.Key.Key_D:
                         self.slot_next_image.emit()
+                        return
+                    case Qt.Key.Key_Up:
+                        print("Up")
                         return
 
             case Qt.KeyboardModifier.ControlModifier:
@@ -95,6 +97,8 @@ class DatasetImageView(ScrollImageView):
                         self.__resize_annotation_by_previous()
                         self.__move_annotation_to_mouse_position()
                         return
+
+        super().keyPressEvent(event)
 
         if self.parent() is not None:
             self.parent().keyPressEvent(event)
@@ -165,9 +169,10 @@ class DatasetImageView(ScrollImageView):
             # Set the boundary for the rectangle
             rect_widget.boundary = self.image_view.image_display.rect()
 
-            rect_widget.show()
+            # rect_widget.show()
 
             # Set Show Status
+            rect_widget.only_show_selected = self.only_show_selected
             rect_widget.show_box = self.show_box
             rect_widget.show_box_label = self.show_box_label
 
@@ -329,6 +334,17 @@ class DatasetImageView(ScrollImageView):
         for rect_widget in self.annotation_widget_rect_list:
             rect_widget.show_box_label = value
 
+    @property
+    def only_show_selected(self) -> bool:
+        return self.__only_show_selected
+
+    @only_show_selected.setter
+    def only_show_selected(self, value: bool):
+        self.__only_show_selected = value
+
+        for rect_widget in self.annotation_widget_rect_list:
+            rect_widget.only_show_selected = value
+
     def __move_annotation_to_mouse_position(self):
         # Get Mouse Position
         mouse_pos = self.image_view.mapFromGlobal(QCursor.pos())
@@ -374,6 +390,8 @@ class DatasetImageView(ScrollImageView):
 
         selected_rect_widget.center_x_original = previous_rect_obj.center_x
         selected_rect_widget.center_y_original = previous_rect_obj.center_y
+
+        selected_rect_widget.modify()
 
     def update(self):
         super().update()

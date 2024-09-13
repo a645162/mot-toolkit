@@ -17,7 +17,9 @@ class AnnotationWidgetRect(ResizableRect):
     selecting: bool
     __selecting: bool = False
 
+    __show_box: bool = False
     __show_box_label: bool = False
+    __only_show_selected: bool = False
     __label_text: str = ""
 
     # Theme Settings
@@ -80,6 +82,7 @@ class AnnotationWidgetRect(ResizableRect):
 
     def __init_widget_props(self):
         self.border_width = 8
+        self.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
     def set_rect_data_annotation(self, rect_data: RectDataAnnotation):
         x1, y1 = int(rect_data.x1), int(rect_data.y1)
@@ -125,6 +128,9 @@ class AnnotationWidgetRect(ResizableRect):
                 if not self.is_responsible():
                     return
             case Qt.MouseButton.RightButton:
+                if self.resizing:
+                    event.ignore()
+                    return
                 if self.is_responsible():
                     self.slot_try_to_show_menu.emit(self)
                     return
@@ -184,6 +190,8 @@ class AnnotationWidgetRect(ResizableRect):
     def update(self):
         super().update()
 
+        self.__update_visibility()
+
     @property
     def selecting(self) -> bool:
         return self.__selecting
@@ -196,6 +204,7 @@ class AnnotationWidgetRect(ResizableRect):
 
         if self.__selecting:
             self.raise_()
+            # self.focusWidget()
 
     def set_appearance(self):
         theme_name = self.activate_theme_name
@@ -235,6 +244,8 @@ class AnnotationWidgetRect(ResizableRect):
         elif "border_width" in theme.keys():
             self.border_width = theme["border_width"]
 
+        self.update()
+
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
 
@@ -245,23 +256,24 @@ class AnnotationWidgetRect(ResizableRect):
 
         match modifiers:
             case Qt.KeyboardModifier.NoModifier:
-                match key:
-                    case Qt.Key.Key_Up:
-                        self.now_y -= move_step_value
-                        self.modify()
-                        return
-                    case Qt.Key.Key_Down:
-                        self.now_y += move_step_value
-                        self.modify()
-                        return
-                    case Qt.Key.Key_Left:
-                        self.now_x -= move_step_value
-                        self.modify()
-                        return
-                    case Qt.Key.Key_Right:
-                        self.now_x += move_step_value
-                        self.modify()
-                        return
+                pass
+                # match key:
+                #     case Qt.Key.Key_Up:
+                #         self.now_y -= move_step_value
+                #         self.modify()
+                #         return
+                #     case Qt.Key.Key_Down:
+                #         self.now_y += move_step_value
+                #         self.modify()
+                #         return
+                #     case Qt.Key.Key_Left:
+                #         self.now_x -= move_step_value
+                #         self.modify()
+                #         return
+                #     case Qt.Key.Key_Right:
+                #         self.now_x += move_step_value
+                #         self.modify()
+                #         return
             case Qt.KeyboardModifier.ControlModifier:
                 pass
 
@@ -284,12 +296,13 @@ class AnnotationWidgetRect(ResizableRect):
 
     @property
     def show_box(self) -> bool:
-        # Visible Status
-        return self.isVisible()
+        return self.__show_box
 
     @show_box.setter
     def show_box(self, value: bool):
-        self.setVisible(value)
+        self.__show_box = value
+
+        self.__update_visibility()
 
     @property
     def show_box_label(self) -> bool:
@@ -300,3 +313,25 @@ class AnnotationWidgetRect(ResizableRect):
         self.__show_box_label = value
 
         self.update()
+
+    @property
+    def only_show_selected(self) -> bool:
+        return self.__only_show_selected
+
+    @only_show_selected.setter
+    def only_show_selected(self, value: bool):
+        self.__only_show_selected = value
+
+        self.__update_visibility()
+
+    def check_is_should_show(self) -> bool:
+        is_should_show = self.show_box
+        if self.only_show_selected and not self.selecting:
+            is_should_show = False
+        return is_should_show
+
+    def __update_visibility(self):
+        if self.check_is_should_show():
+            self.show()
+        else:
+            self.hide()

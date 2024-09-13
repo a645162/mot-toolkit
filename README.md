@@ -18,7 +18,8 @@ Aim to compatible with `X-AnyLabeling` and these following tools:
 
 - Microsoft Windows
 - Apple macOS
-- Linux Desktop
+- Linux Desktop (X.Org)
+- Linux Desktop (Wayland)
 - Linux Server (X11 Forwarding)
 
 ### Python
@@ -91,6 +92,10 @@ sudo dnf install xcb-util-cursor
 # or
 # sudo yum install xcb-util-cursor
 ```
+
+## Wayland
+
+You can't use `Global Menu` on `Wayland`.
 
 ## Thanks
 
