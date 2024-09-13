@@ -18,6 +18,10 @@ from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
 from mot_toolkit.gui.view.components.widget. \
     basic.base_image_view_graphics import ImageDisplayType
+from mot_toolkit.gui.view.components. \
+    widget.rect.image_rect import ImageRect
+from mot_toolkit.gui.view.interface. \
+    preview.components.detail.detail_widget import DetailWidget
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -179,9 +183,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_file_list_widget)
 
+        self.r_file_detail_widget_container=QWidget(parent=self)
+        self.r_file_detail_widget_container_layout=QVBoxLayout()
+        self.r_file_detail_widget_container.setLayout(
+            self.r_file_detail_widget_container_layout
+        )
+        self.right_v_layout.addWidget(self.r_file_detail_widget_container)
+
+        self.r_file_detail_widget = DetailWidget(parent=self)
+        self.r_file_detail_widget_container_layout.addWidget(
+            self.r_file_detail_widget
+        )
+
         self.right_v_layout.setStretch(0, 1)
         self.right_v_layout.setStretch(1, 1)
         self.right_v_layout.setStretch(2, 2)
+        self.right_v_layout.setStretch(3, 1)
 
         # self.right_widget.setFixedWidth(200)
         self.main_h_layout.addWidget(self.right_widget)
@@ -735,6 +752,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.save_current_opened()
 
         self.__update_object_list_widget()
+        self.on_selection_changed_or_modified()
 
     def __slot_previous_image(self):
         self.next_previous_image(is_next=False)
@@ -767,6 +785,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __slot_selection_changed(self, index):
         self.r_object_list_widget.selection_index = index
+
+        self.on_selection_changed_or_modified()
 
     def save_current_opened(self):
         if self.current_annotation_object is not None:
@@ -1131,6 +1151,37 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         with open(record_path, "w", encoding="utf-8") as f:
             f.write(json_str)
+
+    def on_selection_changed_or_modified(self):
+        if self.current_annotation_object is None:
+            return
+
+        image_rect: ImageRect = self.r_file_detail_widget.image_rect
+
+        image_rect.img_width = \
+            self.current_annotation_object.image_width
+        image_rect.img_height = \
+            self.current_annotation_object.image_height
+
+        index = -1
+        selected_rect_widget = None
+        for i, rect_widget in enumerate(self.main_image_view.annotation_widget_rect_list):
+            if rect_widget.selecting:
+                index = i
+                selected_rect_widget = rect_widget
+        if index == -1:
+            return
+
+        image_rect.rect_x = \
+            selected_rect_widget.ori_x
+        image_rect.rect_y = \
+            selected_rect_widget.ori_y
+        image_rect.rect_width = \
+            selected_rect_widget.ori_w
+        image_rect.rect_height = \
+            selected_rect_widget.ori_h
+
+        self.toolkit_widget.update()
 
     def closeEvent(self, event):
         super().closeEvent(event)

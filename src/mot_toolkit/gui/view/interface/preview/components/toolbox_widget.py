@@ -22,7 +22,6 @@ class ToolboxButton(QPushButton):
 
 
 class ToolboxWidget(QWidget):
-
     def __init__(self, parent=None):
         super().__init__(parent=parent)
 
@@ -116,3 +115,28 @@ class ToolboxWidget(QWidget):
         self.v_layout.addWidget(self.btn_reverse_color)
 
         self.v_layout.addStretch()
+
+
+if __name__ == "__main__":
+    from PySide6.QtWidgets import QApplication
+    from mot_toolkit.gui.resources.resources import qInitResources
+
+    qInitResources()
+
+    app = QApplication([])
+
+    window = QWidget()
+    window.setWindowTitle("ToolboxWidget")
+    v_layout = QVBoxLayout()
+    window.setLayout(v_layout)
+
+    widget = ToolboxWidget(parent=window)
+    widget.setSizePolicy(
+        QSizePolicy.Policy.Minimum,
+        QSizePolicy.Policy.Expanding
+    )
+    v_layout.addWidget(widget)
+
+    window.show()
+
+    app.exec()
