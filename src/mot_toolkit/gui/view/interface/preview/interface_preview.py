@@ -183,8 +183,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
         self.right_v_layout.addWidget(self.r_file_list_widget)
 
-        self.r_file_detail_widget_container=QWidget(parent=self)
-        self.r_file_detail_widget_container_layout=QVBoxLayout()
+        self.r_file_detail_widget_container = QWidget(parent=self)
+        self.r_file_detail_widget_container_layout = QVBoxLayout()
         self.r_file_detail_widget_container.setLayout(
             self.r_file_detail_widget_container_layout
         )
@@ -1153,15 +1153,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             f.write(json_str)
 
     def on_selection_changed_or_modified(self):
-        if self.current_annotation_object is None:
-            return
-
         image_rect: ImageRect = self.r_file_detail_widget.image_rect
 
-        image_rect.img_width = \
-            self.current_annotation_object.image_width
-        image_rect.img_height = \
-            self.current_annotation_object.image_height
+        img_width = 0
+        img_height = 0
+
+        if self.current_annotation_object is not None:
+            img_width = \
+                self.current_annotation_object.image_width
+            img_height = \
+                self.current_annotation_object.image_height
+
+        image_rect.img_width = img_width
+        image_rect.img_height = img_height
 
         index = -1
         selected_rect_widget = None
@@ -1169,17 +1173,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             if rect_widget.selecting:
                 index = i
                 selected_rect_widget = rect_widget
-        if index == -1:
-            return
 
-        image_rect.rect_x = \
-            selected_rect_widget.ori_x
-        image_rect.rect_y = \
-            selected_rect_widget.ori_y
-        image_rect.rect_width = \
-            selected_rect_widget.ori_w
-        image_rect.rect_height = \
-            selected_rect_widget.ori_h
+        ori_x = 0
+        ori_y = 0
+        ori_w = 0
+        ori_h = 0
+
+        if index != -1:
+            ori_x = selected_rect_widget.ori_x
+            ori_y = selected_rect_widget.ori_y
+            ori_w = selected_rect_widget.ori_w
+            ori_h = selected_rect_widget.ori_h
+
+        image_rect.rect_x = ori_x
+        image_rect.rect_y = ori_y
+        image_rect.rect_width = ori_w
+        image_rect.rect_height = ori_h
 
         self.toolkit_widget.update()
 
