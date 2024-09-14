@@ -1,5 +1,5 @@
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QLabel, QSizePolicy, QVBoxLayout
+from PySide6.QtWidgets import QLabel, QSizePolicy, QVBoxLayout
 
 from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect

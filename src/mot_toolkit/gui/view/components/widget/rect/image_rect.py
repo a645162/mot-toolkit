@@ -77,8 +77,69 @@ class ImageRect(QObject):
         self.__rect_height = value
         self.update()
 
-    rect_w = rect_width
-    rect_h = rect_height
+    @property
+    def rect_x1(self) -> int:
+        return self.rect_x
+
+    @rect_x1.setter
+    def rect_x1(self, value: int):
+        self.rect_x = value
+
+    @property
+    def rect_y1(self) -> int:
+        return self.rect_y
+
+    @rect_y1.setter
+    def rect_y1(self, value: int):
+        self.rect_y = value
+
+    @property
+    def rect_x2(self) -> int:
+        return self.rect_x + self.rect_width
+
+    @rect_x2.setter
+    def rect_x2(self, value: int):
+        self.rect_x = value - self.rect_width
+
+    @property
+    def rect_y2(self) -> int:
+        return self.rect_y + self.rect_height
+
+    @rect_y2.setter
+    def rect_y2(self, value: int):
+        self.rect_y = value - self.rect_height
+
+    @property
+    def rect_top(self) -> int:
+        return self.rect_y1
+
+    @rect_top.setter
+    def rect_top(self, value: int):
+        self.rect_y1 = value
+
+    @property
+    def rect_bottom(self) -> int:
+        return self.rect_y2
+
+    @rect_bottom.setter
+    def rect_bottom(self, value: int):
+        self.rect_y2 = value
+
+    @property
+    def rect_left(self) -> int:
+        return self.rect_x1
+
+    @rect_left.setter
+    def rect_left(self, value: int):
+        self.rect_x1 = value
+
+    @property
+    def rect_right(self) -> int:
+        return self.rect_x2
+
+    @rect_right.setter
+    def rect_right(self, value: int):
+        self.rect_x2 = value
 
     def set_rect(
             self,

@@ -1,6 +1,6 @@
 from typing import List
 
-from PySide6.QtCore import Signal, Qt
+from PySide6.QtCore import Signal, Qt, QPoint
 from PySide6.QtGui import QPixmap, QCursor
 from PySide6.QtWidgets import QMenu
 
@@ -61,6 +61,15 @@ class DatasetImageView(ScrollImageView):
     def __init_shortcut(self):
         pass
 
+    def get_mouse_image_position(self) -> QPoint:
+        # Get Mouse
+        mouse_pos = QCursor.pos()
+
+        # Get relative position of self.image_view
+        mouse_pos = mouse_pos - self.image_view.mapToGlobal(QPoint(0, 0))
+
+        return mouse_pos
+
     def keyPressEvent(self, event):
         modifiers = event.modifiers()
         key = event.key()
@@ -87,17 +96,70 @@ class DatasetImageView(ScrollImageView):
             case Qt.KeyboardModifier.AltModifier:
                 # Alt
                 match key:
+                    case Qt.Key.Key_R:
+                        self.__resize_annotation_by_previous(move=True)
+                        return
                     case Qt.Key.Key_C:
                         self.__move_annotation_to_mouse_position()
                         return
-                    case Qt.Key.Key_R:
-                        self.__resize_annotation_by_previous()
-                        return
                     case Qt.Key.Key_V:
-                        self.__resize_annotation_by_previous()
+                        self.__resize_annotation_by_previous(move=False)
                         self.__move_annotation_to_mouse_position()
                         return
 
+        if (
+                modifiers & Qt.KeyboardModifier.AltModifier and
+                modifiers & Qt.KeyboardModifier.ShiftModifier
+        ):
+            target_pos: QPoint = self.get_mouse_image_position()
+            selected_obj: AnnotationWidgetRect | None = None
+
+            for rect_widget_obj in self.annotation_widget_rect_list:
+                if rect_widget_obj.selecting:
+                    selected_obj = rect_widget_obj
+                    break
+
+            if selected_obj is not None:
+                match key:
+                    case Qt.Key.Key_W:
+                        # Top
+                        selected_obj.rect_top = target_pos.y()
+                        return
+                    case Qt.Key.Key_A:
+                        # Left
+                        selected_obj.rect_left = target_pos.x()
+                        return
+                    case Qt.Key.Key_S:
+                        # Bottom
+                        selected_obj.rect_bottom = target_pos.y()
+                        return
+                    case Qt.Key.Key_D:
+                        # Right
+                        selected_obj.rect_right = target_pos.x()
+                        return
+
+                    case Qt.Key.Key_Q:
+                        # Top + Left
+                        selected_obj.rect_left = target_pos.x()
+                        selected_obj.rect_top = target_pos.y()
+                        return
+                    case Qt.Key.Key_E:
+                        # Top + Right
+                        selected_obj.rect_right = target_pos.x()
+                        selected_obj.rect_top = target_pos.y()
+                        return
+                    case Qt.Key.Key_Z:
+                        # Bottom + Left
+                        selected_obj.rect_left = target_pos.x()
+                        selected_obj.rect_bottom = target_pos.y()
+                        return
+                    case Qt.Key.Key_C:
+                        # Bottom + Right
+                        selected_obj.rect_right = target_pos.x()
+                        selected_obj.rect_bottom = target_pos.y()
+                        return
+
+                return
         super().keyPressEvent(event)
 
         if self.parent() is not None:
@@ -364,7 +426,7 @@ class DatasetImageView(ScrollImageView):
 
                 rect_widget.modify()
 
-    def __resize_annotation_by_previous(self):
+    def __resize_annotation_by_previous(self, move: bool = True):
         selected_rect_widget = None
         for rect_widget in self.annotation_widget_rect_list:
             if (
@@ -373,7 +435,12 @@ class DatasetImageView(ScrollImageView):
             ):
                 selected_rect_widget = rect_widget
                 break
-        if selected_rect_widget is None:
+        if (
+                selected_rect_widget is None or
+                self.__previous_annotation_obj is None or
+                self.__previous_annotation_obj.rect_annotation_list is None or
+                len(self.__previous_annotation_obj.rect_annotation_list) == 0
+        ):
             return
 
         previous_rect_obj = None
@@ -388,8 +455,9 @@ class DatasetImageView(ScrollImageView):
         selected_rect_widget.width_original = previous_rect_obj.width
         selected_rect_widget.height_original = previous_rect_obj.height
 
-        selected_rect_widget.center_x_original = previous_rect_obj.center_x
-        selected_rect_widget.center_y_original = previous_rect_obj.center_y
+        if move:
+            selected_rect_widget.center_x_original = previous_rect_obj.center_x
+            selected_rect_widget.center_y_original = previous_rect_obj.center_y
 
         selected_rect_widget.modify()
 

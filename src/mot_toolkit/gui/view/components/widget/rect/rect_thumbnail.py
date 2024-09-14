@@ -1,5 +1,3 @@
-from multiprocessing.dummy import current_process
-
 from PySide6.QtCore import Qt, QRect
 from PySide6.QtGui import QPainter, QPen, QColor
 from PySide6.QtWidgets import QWidget
