@@ -601,6 +601,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __slot_annotation_directory_modified(self):
         self.update_file_list_widget()
 
+        self.update_detail_info()
+
     def update_file_list_widget(self):
         annotation_obj_list: List[XAnyLabelingAnnotation] = \
             self.current_file_list
@@ -752,7 +754,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.save_current_opened()
 
         self.__update_object_list_widget()
-        self.on_selection_changed_or_modified()
+        self.update_detail_info()
 
     def __slot_previous_image(self):
         self.next_previous_image(is_next=False)
@@ -786,7 +788,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __slot_selection_changed(self, index):
         self.r_object_list_widget.selection_index = index
 
-        self.on_selection_changed_or_modified()
+        self.update_detail_info()
 
     def save_current_opened(self):
         if self.current_annotation_object is not None:
@@ -832,6 +834,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.close()
 
+    def get_current_file_truly_index(self) -> int:
+        current_list_index = self.r_file_list_widget.selection_index
+        file_name = self.current_file_str_list[current_list_index]
+
+        all_file_name_list = self.annotation_directory.file_name_list
+
+        file_index = -1
+        for i, file_name_str in enumerate(all_file_name_list):
+            if file_name_str == file_name:
+                file_index = i
+                break
+
+        return file_index
+
     def __action_file_reload(self):
         ok = QMessageBox.question(
             self,
@@ -843,22 +859,31 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if ok != QMessageBox.StandardButton.Yes:
             return
 
-        file_index = self.r_file_list_widget.selection_index
+        file_index = self.get_current_file_truly_index()
+        if file_index != -1:
+            file_obj = self.annotation_directory.annotation_file[file_index]
 
-        self.annotation_directory.annotation_file[file_index] \
-            .reload(check=False)
+            file_name = file_obj.file_name_no_extension
+            logger.info(f"Reload File: {file_name}")
+            file_obj.reload(check=False)
 
         self.__update_object_list_widget()
 
-    def __get_selection_image_path(self):
-        file_index = self.r_file_list_widget.selection_index
+    def __get_selection_image_path(self) -> str:
+        file_index = self.get_current_file_truly_index()
+
+        if file_index == -1:
+            return ""
 
         file_path = self.annotation_directory.annotation_file[file_index].pic_path
 
         return file_path
 
-    def __get_selection_json_path(self):
-        file_index = self.r_file_list_widget.selection_index
+    def __get_selection_json_path(self) -> str:
+        file_index = self.get_current_file_truly_index()
+
+        if file_index == -1:
+            return ""
 
         return self.annotation_directory.annotation_file[file_index].file_path
 
@@ -885,6 +910,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if self.r_object_list_widget.selection_index == -1:
             return
 
+        # Get Current Object from Current List
         selected_rect_obj = self.current_annotation_object.rect_annotation_list[
             self.r_object_list_widget.selection_index
         ]
@@ -931,13 +957,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if reply != QMessageBox.StandardButton.Yes:
             return
 
-        file_name = self.r_file_list_widget.selection_text
-
-        file_index = -1
-        for i, file_name_str in enumerate(self.annotation_directory.file_name_list):
-            if file_name_str == file_name:
-                file_index = i
-                break
+        file_index = self.get_current_file_truly_index()
         if file_index == -1:
             return
 
@@ -1152,7 +1172,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         with open(record_path, "w", encoding="utf-8") as f:
             f.write(json_str)
 
-    def on_selection_changed_or_modified(self):
+    def update_detail_info(self):
         image_rect: ImageRect = self.r_file_detail_widget.image_rect
 
         img_width = 0
