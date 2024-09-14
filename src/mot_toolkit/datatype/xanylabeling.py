@@ -448,6 +448,14 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                     self.label_obj_list_dict[label] = []
                 self.label_obj_list_dict[label].append(annotation_obj)
 
+        only_digit = len(label_list) > 0
+        for label in label_list:
+            if not label.isdigit():
+                only_digit = False
+                break
+        if only_digit:
+            label_list.sort(key=lambda x: int(x))
+
         return label_list
 
     def __check_can_only_file_name(self) -> bool:
