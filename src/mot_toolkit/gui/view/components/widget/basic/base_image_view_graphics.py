@@ -10,6 +10,10 @@ from PySide6.QtWidgets import (
 )
 
 from mot_toolkit.utils. \
+    image.adjust.image_brightness_contrast import (
+    adjust_brightness_contrast_q_pixmap
+)
+from mot_toolkit.utils. \
     image.stylization.image_sobel import (
     sobel_edge_detection_q_pixmap,
     sobel_edge_detection_binary_q_pixmap
@@ -42,6 +46,9 @@ class ImageViewGraphics(QGraphicsView):
     __outline_binary_threshold: int = 10
 
     __last_scale_factor: float = 1.0
+
+    __image_brightness: int = 50
+    __image_contrast: int = 50
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -200,6 +207,24 @@ class ImageViewGraphics(QGraphicsView):
 
         self.update()
 
+    @property
+    def image_brightness(self) -> int:
+        return self.__image_brightness
+
+    @image_brightness.setter
+    def image_brightness(self, value: int):
+        self.__image_brightness = value
+        self.update()
+
+    @property
+    def image_contrast(self) -> int:
+        return self.__image_contrast
+
+    @image_contrast.setter
+    def image_contrast(self, value: int):
+        self.__image_contrast = value
+        self.update()
+
     def update(self):
         if self.image is None:
             return
@@ -218,6 +243,13 @@ class ImageViewGraphics(QGraphicsView):
                         sobel_edge_detection_binary_q_pixmap(
                             image=self.image_display,
                             binary_threshold=self.outline_binary_threshold
+                        )
+                case ImageDisplayType.Adjustment:
+                    self.image_display = \
+                        adjust_brightness_contrast_q_pixmap(
+                            image=self.image_display,
+                            brightness=self.image_brightness,
+                            contrast=self.image_contrast
                         )
 
         # Calculate New Size

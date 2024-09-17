@@ -2,7 +2,10 @@ from PySide6.QtGui import QImage, QPixmap
 
 import cv2
 
-from mot_toolkit.utils.image.qt_opencv import q_image_to_opencv, opencv_to_q_image
+from mot_toolkit.utils.image.qt_opencv import (
+    q_image_to_opencv,
+    opencv_to_q_image
+)
 
 
 def sobel_edge_detection(image):
@@ -37,7 +40,7 @@ def sobel_edge_detection_q_image(image: QImage) -> QImage:
     # Convert QImage to NumPy array
     image_np = q_image_to_opencv(image)
 
-    # Apply Sobel edge detection
+    # Apply Sobel-edge detection
     edges_np = sobel_edge_detection(image_np)
 
     # Convert NumPy array to QImage
@@ -87,7 +90,7 @@ def sobel_edge_detection_binary_q_pixmap(
     # Convert QPixmap to QImage
     image_q_image = image.toImage()
 
-    # Apply Sobel edge detection
+    # Apply Sobel-edge detection
     edges_q_image = sobel_edge_detection_binary_q_image(
         image=image_q_image,
         binary_threshold=binary_threshold
