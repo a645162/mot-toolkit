@@ -6,8 +6,9 @@
       <excludeFolder url="file://$MODULE_DIR$/Build/Output" />
       <excludeFolder url="file://$MODULE_DIR$/src/mot_toolkit/gui/view/example" />
       <excludeFolder url="file://$MODULE_DIR$/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/main.dist" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.11 (mot-toolkit)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (mot-toolkit)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

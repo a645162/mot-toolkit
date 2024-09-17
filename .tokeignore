@@ -1,5 +1,12 @@
+# PyCharm
+*.xml
+*.txt
+
 # Github Action
 !.github
+
+# Resource
+Resources/
 
 # PySide6 Resources
 mot_toolkit/gui/resources/resources.py
@@ -9,10 +16,18 @@ mot_toolkit/gui/resources/resources.py
 
 # Configure
 
+# Log
+logs/
+**/logs/
 
 # Plain Text
 LICENSE
 
 Test/
 
+# Rye/UV/Poetry
 .venv/
+*.lock
+
+# Build Output
+Build/Output/

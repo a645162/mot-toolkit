@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="qt_compile_resource" type="PythonConfigurationType" factoryName="Python" folderName="Dev Scripts" nameIsGenerated="true">
+  <configuration default="false" name="qt_compile_resource" type="PythonConfigurationType" factoryName="Python" folderName="Build" nameIsGenerated="true">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

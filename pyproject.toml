@@ -27,7 +27,8 @@ dev-dependencies = [
     "cairosvg",
     "pytest",
     "pyinstaller",
-    # "nuitka>=2.4.8",
+    "nuitka>=2.4.8",
+    "pillow>=10.4.0",
 ]
 
 [tool.uv]
@@ -37,6 +38,7 @@ dev-dependencies = [
     "cairosvg",
     "pytest",
     "pyinstaller",
+    "nuitka>=2.4.8",
 ]
 
 [tool.hatch.metadata]

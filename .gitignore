@@ -6,6 +6,9 @@ uv.lock
 
 /.venv/
 
+# Nuitka
+/main.dist/
+
 /.idea/csv-editor.xml
 /.idea/GitLink.xml
 
