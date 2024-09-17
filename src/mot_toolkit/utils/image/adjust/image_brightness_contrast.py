@@ -49,13 +49,13 @@ def adjust_brightness_contrast_q_image(
 
 
 def adjust_brightness_contrast_q_pixmap(
-        image: QImage,
+        image: QPixmap,
         brightness: int = 0,
         contrast: int = 0
 ):
     result_q_pixmap = \
         adjust_brightness_contrast_q_image(
-            image,
+            image.toImage(),
             brightness,
             contrast
         )

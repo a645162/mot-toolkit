@@ -22,6 +22,7 @@ from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect
 from mot_toolkit.gui.view.interface. \
     preview.components.detail.detail_widget import DetailWidget
+from mot_toolkit.gui.view.interface.preview.components.option.dialog_brightness_contrast import DialogBrightnessContrast
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -363,6 +364,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
         self.action_group_frame_display_type_radio_adjustment \
             .triggered.connect(self.__action_frame_display_type_changed)
+        self.menu_frame_set_brightness_contrast = \
+            QAction("Set Brightness and Contrast", parent=self.menu_frame)
+        self.menu_frame_set_brightness_contrast.triggered.connect(
+            self.__action_set_frame_brightness_contrast
+        )
+        self.menu_frame.addAction(self.menu_frame_set_brightness_contrast)
 
         self.action_group_frame_display_type_radio_original.setChecked(True)
 
@@ -1039,6 +1046,27 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if ok:
             self.main_image_view.image_view.outline_binary_threshold = number
             self.main_image_view.image_view.update()
+
+    def __action_set_frame_brightness_contrast(self):
+        dialog_brightness_contrast = DialogBrightnessContrast(parent=self)
+
+        dialog_brightness_contrast.brightness = self.main_image_view.image_view.image_brightness
+        dialog_brightness_contrast.contrast = self.main_image_view.image_view.image_contrast
+
+        dialog_brightness_contrast.slot_brightness_changed.connect(
+            lambda x: setattr(
+                self.main_image_view.image_view, "image_brightness",
+                x
+            )
+        )
+        dialog_brightness_contrast.slot_contrast_changed.connect(
+            lambda x: setattr(
+                self.main_image_view.image_view, "image_contrast",
+                x
+            )
+        )
+
+        dialog_brightness_contrast.show()
 
     def __action_frame_show_box(self):
         value = self.menu_rect_show_box.isChecked()
