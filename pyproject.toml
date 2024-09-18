@@ -41,8 +41,60 @@ dev-dependencies = [
     "nuitka>=2.4.8",
 ]
 
+[tool.poetry]
+dev-dependencies = [
+    "hatchling",
+    "ruff",
+    "cairosvg",
+    "pytest",
+    "pyinstaller",
+    "nuitka>=2.4.8",
+]
+
 [tool.hatch.metadata]
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mot_toolkit"]
+
+# Rye Source
+[[tool.rye.source]]
+name = "HuaWei"
+url = "https://mirrors.huaweicloud.com/pypi/simple"
+priority = "primary"
+
+[[tool.rye.source]]
+name = "Tencent"
+url = "https://mirrors.cloud.tencent.com/pypi/simple"
+priority = "explicit"
+
+[[tool.rye.source]]
+name = "Tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "explicit"
+
+[[tool.rye.source]]
+name = "USTC"
+url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
+priority = "explicit"
+
+# Poetry Source
+[[tool.poetry.source]]
+name = "HuaWei"
+url = "https://mirrors.huaweicloud.com/pypi/simple"
+priority = "primary"
+
+[[tool.poetry.source]]
+name = "Tencent"
+url = "https://mirrors.cloud.tencent.com/pypi/simple"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "Tsinghua"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "USTC"
+url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
+priority = "explicit"

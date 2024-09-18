@@ -5,12 +5,17 @@ from PySide6.QtWidgets import QProgressBar
 class DraggableProgressBar(QProgressBar):
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        self.__init_properties()
+
+    def __init_properties(self):
         # self.setMouseTracking(True)
         self.setValue(0)
         self.setRange(0, 100)
+        self.setTextVisible(False)
 
     def mouseMoveEvent(self, event):
-        if event.buttons() == Qt.LeftButton:
+        if event.buttons() == Qt.MouseButton.LeftButton:
             ratio = event.position().x() / self.width()
             if ratio < 0:
                 ratio = 0

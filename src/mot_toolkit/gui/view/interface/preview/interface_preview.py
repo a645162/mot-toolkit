@@ -348,7 +348,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_frame_display_type_changed)
 
         self.menu_frame_outline_binary_threshold = \
-            QAction("set Binary Threshold Value", parent=self.menu_frame)
+            QAction("   Set 'Binary Threshold Value'", parent=self.menu_frame)
         self.menu_frame_outline_binary_threshold.triggered.connect(
             self.__action_set_frame_outline_binary_threshold
         )
@@ -365,7 +365,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.action_group_frame_display_type_radio_adjustment \
             .triggered.connect(self.__action_frame_display_type_changed)
         self.menu_frame_set_brightness_contrast = \
-            QAction("Set Brightness and Contrast", parent=self.menu_frame)
+            QAction("   Set `Brightness` and `Contrast`", parent=self.menu_frame)
         self.menu_frame_set_brightness_contrast.triggered.connect(
             self.__action_set_frame_brightness_contrast
         )
