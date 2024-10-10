@@ -251,9 +251,39 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.menu_file.addSeparator()
 
+        self.menu_file_restore_current = \
+            QAction(
+                "Restore", self.menu_file
+            )
+        self.menu_file_restore_current.setIcon(
+            QIcon(":/menu/preview/file_restore")
+        )
+        self.menu_file_restore_current.triggered.connect(self.__action_window_restore_current)
+        self.menu_file.addAction(self.menu_file_restore_current)
+
+        self.menu_file_restore_before = \
+            QAction(
+                "   Restore Before", self.menu_file
+            )
+        self.menu_file_restore_before.setIcon(
+            QIcon(":/menu/preview/file_restore")
+        )
+        self.menu_file_restore_before.triggered.connect(self.__action_window_restore_before)
+        self.menu_file.addAction(self.menu_file_restore_before)
+
+        self.menu_file_restore_after = \
+            QAction(
+                "   Restore After", self.menu_file
+            )
+        self.menu_file_restore_after.setIcon(
+            QIcon(":/menu/preview/file_restore")
+        )
+        self.menu_file_restore_after.triggered.connect(self.__action_window_restore_after)
+        self.menu_file.addAction(self.menu_file_restore_after)
+
         self.menu_file_restore_all = \
             QAction(
-                "Restore All", self.menu_file
+                "   Restore All", self.menu_file
             )
         self.menu_file_restore_all.setIcon(
             QIcon(":/menu/preview/file_restore")
@@ -261,9 +291,41 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_file_restore_all.triggered.connect(self.__action_window_restore_all)
         self.menu_file.addAction(self.menu_file_restore_all)
 
+        self.menu_file.addSeparator()
+
+        self.menu_file_save_current = \
+            QAction(
+                "Save", self.menu_file
+            )
+        self.menu_file_save_current.setIcon(
+            QIcon(":/menu/preview/file_save")
+        )
+        self.menu_file_save_current.triggered.connect(self.__action_window_save_current)
+        self.menu_file.addAction(self.menu_file_save_current)
+
+        self.menu_file_save_before = \
+            QAction(
+                "   Save Before", self.menu_file
+            )
+        self.menu_file_save_before.setIcon(
+            QIcon(":/menu/preview/file_save")
+        )
+        self.menu_file_save_before.triggered.connect(self.__action_window_save_before)
+        self.menu_file.addAction(self.menu_file_save_before)
+
+        self.menu_file_save_after = \
+            QAction(
+                "   Save After", self.menu_file
+            )
+        self.menu_file_save_after.setIcon(
+            QIcon(":/menu/preview/file_save")
+        )
+        self.menu_file_save_after.triggered.connect(self.__action_window_save_after)
+        self.menu_file.addAction(self.menu_file_save_after)
+
         self.menu_file_save_all = \
             QAction(
-                "Save All", self.menu_file
+                "   Save All", self.menu_file
             )
         self.menu_file_save_all.setIcon(
             QIcon(":/menu/preview/file_save")
@@ -802,6 +864,66 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             if self.current_annotation_object.save():
                 self.__successful_saved(self.current_annotation_object)
 
+    def __action_window_restore_current(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to restore current?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.current_annotation_object.reload()
+            self.__update_object_list_widget()
+            self.update_detail_info()
+
+    def __action_window_restore_before(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to restore before?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        have_file_reload = False
+        if reply == QMessageBox.StandardButton.Yes:
+            file_index = self.get_current_file_truly_index()
+            for i, annotation in enumerate(self.annotation_directory.annotation_file):
+                if i < file_index:
+                    if annotation.reload():
+                        have_file_reload = True
+                else:
+                    break
+
+            self.__update_object_list_widget()
+
+        return have_file_reload
+
+    def __action_window_restore_after(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to restore after?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        have_file_reload = False
+        if reply == QMessageBox.StandardButton.Yes:
+            file_index = self.get_current_file_truly_index()
+            for i, annotation in enumerate(self.annotation_directory.annotation_file):
+                if i > file_index:
+                    if annotation.reload():
+                        have_file_reload = True
+                else:
+                    continue
+
+            self.__update_object_list_widget()
+
+        return have_file_reload
+
     def __action_window_restore_all(self):
         reply = QMessageBox.question(
             self,
@@ -816,6 +938,65 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 annotation.reload()
 
             self.__update_object_list_widget()
+
+    def __action_window_save_current(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to save current file?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            self.current_annotation_object.save()
+            self.__successful_saved(self.current_annotation_object)
+
+    def __action_window_save_before(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to save before?\n"
+            "Not include current file.",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        have_saved = False
+        if reply == QMessageBox.StandardButton.Yes:
+            file_index = self.get_current_file_truly_index()
+            for i, annotation in enumerate(self.annotation_directory.annotation_file):
+                if i < file_index:
+                    if annotation.save():
+                        have_saved = True
+                        self.__successful_saved(annotation)
+                else:
+                    break
+
+        return have_saved
+
+    def __action_window_save_after(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to save after?\n"
+            "Not include current file.",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        have_saved = False
+        if reply == QMessageBox.StandardButton.Yes:
+            file_index = self.get_current_file_truly_index()
+            for i, annotation in enumerate(self.annotation_directory.annotation_file):
+                if i > file_index:
+                    if annotation.save():
+                        have_saved = True
+                        self.__successful_saved(annotation)
+                else:
+                    continue
+
+        return have_saved
 
     def __action_window_save_all(self) -> bool:
         reply = QMessageBox.question(

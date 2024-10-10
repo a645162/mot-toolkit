@@ -122,6 +122,7 @@ class MainWindow(QMainWindow):
 
         self.__button_preview = QPushButton(parent=self)
         self.__button_preview.setText("Preview")
+        self.__button_preview.setStyleSheet("color: blue;")
         self.__button_preview.clicked.connect(self.__button_preview_clicked)
         self.v_layout.addWidget(self.__button_preview)
 
@@ -131,7 +132,7 @@ class MainWindow(QMainWindow):
         self.v_layout.addWidget(self.__button_smooth)
 
         author_label = QLabel(parent=self)
-        author_label.setText("Author:Haomin Kong")
+        author_label.setText("Author: Haomin Kong")
         self.v_layout.addWidget(author_label)
 
         github_link_label = LinkLabel(

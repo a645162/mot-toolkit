@@ -14,6 +14,12 @@ class DraggableProgressBar(QProgressBar):
         self.setRange(0, 100)
         self.setTextVisible(False)
 
+    def mousePressEvent(self, event):
+        self.mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self.mouseMoveEvent(event)
+
     def mouseMoveEvent(self, event):
         if event.buttons() == Qt.MouseButton.LeftButton:
             ratio = event.position().x() / self.width()
