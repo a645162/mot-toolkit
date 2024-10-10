@@ -4,7 +4,9 @@ from PySide6.QtCore import Signal, Qt, QPoint
 from PySide6.QtGui import QPixmap, QCursor
 from PySide6.QtWidgets import QMenu
 
-from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
+from mot_toolkit.datatype.xanylabeling import (
+    XAnyLabelingAnnotation, XAnyLabelingRect
+)
 from mot_toolkit.gui.view.components.widget. \
     rect.annotation_widget_rect import AnnotationWidgetRect
 from mot_toolkit.gui.view.components.widget. \
@@ -443,7 +445,7 @@ class DatasetImageView(ScrollImageView):
         ):
             return
 
-        previous_rect_obj = None
+        previous_rect_obj: XAnyLabelingRect | None = None
         for pre_annotation in self.__previous_annotation_obj.rect_annotation_list:
             if selected_rect_widget.label == pre_annotation.label:
                 previous_rect_obj = pre_annotation

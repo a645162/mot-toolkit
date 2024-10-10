@@ -13,6 +13,9 @@ class RectDataAnnotation(ObjectAnnotation):
 
     ori_dict: dict
 
+    picture_width: float = 0.0
+    picture_height: float = 0.0
+
     def __init__(self, label: str = ""):
         super().__init__(label)
 
@@ -25,44 +28,118 @@ class RectDataAnnotation(ObjectAnnotation):
         self.ori_dict = {}
 
     @property
-    def x(self):
+    def x(self) -> float:
         return self.x1
 
     @x.setter
-    def x(self, value):
+    def x(self, value: float):
         self.x1 = value
 
     @property
-    def y(self):
+    def y(self) -> float:
         return self.y1
 
     @y.setter
-    def y(self, value):
+    def y(self, value: float):
         self.y1 = value
 
     @property
-    def center_x(self):
+    def center_x(self) -> float:
         return (self.x1 + self.x2) / 2
 
-    @property
-    def center_y(self):
-        return (self.y1 + self.y2) / 2
+    @center_x.setter
+    def center_x(self, value: float):
+        self.x1 = value - self.width / 2
+        self.x2 = value + self.width / 2
 
     @property
-    def width(self):
+    def center_y(self) -> float:
+        return (self.y1 + self.y2) / 2
+
+    @center_y.setter
+    def center_y(self, value: float):
+        self.y1 = value - self.height / 2
+        self.y2 = value + self.height / 2
+
+    @property
+    def width(self) -> float:
         return self.x2 - self.x1
 
     @width.setter
-    def width(self, value):
+    def width(self, value: float):
         self.x2 = self.x1 + value
 
     @property
-    def height(self):
+    def height(self) -> float:
         return self.y2 - self.y1
 
     @height.setter
-    def height(self, value):
+    def height(self, value: float):
         self.y2 = self.y1 + value
+
+    @property
+    def width_int(self) -> int:
+        return int(self.width)
+
+    @width_int.setter
+    def width_int(self, value: int):
+        self.width = value
+
+    @property
+    def height_int(self) -> int:
+        return int(self.height)
+
+    @height_int.setter
+    def height_int(self, value: int):
+        self.height = value
+
+    @property
+    def width_ratio(self) -> float:
+        if self.picture_width <= 0:
+            return 0
+        return self.width / self.picture_width
+
+    @width_ratio.setter
+    def width_ratio(self, value: float):
+        if self.picture_width <= 0:
+            return
+        self.width = self.picture_width * value
+
+    @property
+    def height_ratio(self) -> float:
+        if self.picture_height <= 0:
+            return 0
+        return self.height / self.picture_height
+
+    @height_ratio.setter
+    def height_ratio(self, value: float):
+        if self.picture_height <= 0:
+            return
+        self.height = self.picture_height * value
+
+    @property
+    def center_x_ratio(self) -> float:
+        if self.picture_width <= 0:
+            return 0
+        return self.center_x / self.picture_width
+
+    @center_x_ratio.setter
+    def center_x_ratio(self, value: float):
+        if self.picture_width <= 0:
+            return
+        self.center_x = self.picture_width * value
+
+    @property
+    def center_y_ratio(self) -> float:
+        if self.picture_height <= 0:
+            return 0
+        return self.center_y / self.picture_height
+
+    @center_y_ratio.setter
+    def center_y_ratio(self, value: float):
+        if self.picture_height <= 0:
+            return
+        self.center_y = self.picture_height * value
 
     def set_by_position_and_size(
             self,
