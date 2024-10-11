@@ -7,13 +7,17 @@ from PySide6.QtGui import (
     QColor, QAction, QIcon, QDesktopServices, QActionGroup, Qt
 )
 from PySide6.QtWidgets import (
+    QApplication,
     QWidget,
     QHBoxLayout, QVBoxLayout,
-    QMenuBar, QInputDialog, QApplication, QMessageBox,
+    QMenuBar,
+    QDialog, QInputDialog, QMessageBox,
 )
 
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
+from mot_toolkit.gui.view.components. \
+    dialog.dialog_input_2_int import DialogInput2Int
 from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
 from mot_toolkit.gui.view.components.widget. \
@@ -22,7 +26,8 @@ from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect
 from mot_toolkit.gui.view.interface. \
     preview.components.detail.detail_widget import DetailWidget
-from mot_toolkit.gui.view.interface.preview.components.option.dialog_brightness_contrast import DialogBrightnessContrast
+from mot_toolkit.gui.view.interface.preview.components. \
+    option.dialog_brightness_contrast import DialogBrightnessContrast
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -572,6 +577,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_del_target)
         self.r_object_list_widget.menu_operate_del_subsequent \
             .triggered.connect(self.__action_obj_del_subsequent_target)
+        self.r_object_list_widget.menu_operate_del_between \
+            .triggered.connect(self.__action_obj_del_between_target)
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -1162,6 +1169,37 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             annotation_obj.del_by_label(label)
 
         self.r_object_list_widget.selection_index = -1
+
+        self.__update_object_list_widget()
+
+    def __action_obj_del_between_target(self):
+        dialog = DialogInput2Int(
+            default_value1=0,
+            default_value2=0,
+            label1="Start Frame:",
+            label2="End Frame:",
+            min_value=0,
+            max_value=len(self.annotation_directory.annotation_file) - 1,
+            title="Delete Target Between Frames",
+            parent=self
+        )
+        dialog.setGeometry(100, 100, 200, 150)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        frame_start, frame_end = dialog.get_integers()
+
+        index = self.r_object_list_widget.selection_index
+        logger.info(f"[{index}]Delete the target in range({frame_start}~{frame_end})")
+        label = self.current_annotation_object.rect_annotation_list[index].label
+        logger.info(f"Delete Label:{label}")
+
+        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+            if not (frame_start <= i <= frame_end):
+                continue
+
+            annotation_obj.del_by_label(label)
 
         self.__update_object_list_widget()
 

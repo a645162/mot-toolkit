@@ -58,6 +58,14 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_operate_del_subsequent)
         select_enable_list.append(self.menu_operate_del_subsequent)
 
+        self.menu_operate_del_between = \
+            QAction(
+                "Delete the target between frames(Label)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_operate_del_between)
+        select_enable_list.append(self.menu_operate_del_between)
+
         q_menu.addSeparator()
 
         self.menu_mark_appear = \
