@@ -21,6 +21,8 @@ class DatasetImageView(ScrollImageView):
 
     slot_selection_changed: Signal = Signal(int)
 
+    slot_property_changed: Signal = Signal()
+
     __annotation_obj: XAnyLabelingAnnotation
     __previous_annotation_obj: XAnyLabelingAnnotation
 
@@ -107,6 +109,14 @@ class DatasetImageView(ScrollImageView):
                     case Qt.Key.Key_V:
                         self.__resize_annotation_by_previous(move=False)
                         self.__move_annotation_to_mouse_position()
+                        return
+                    case Qt.Key.Key_H:
+                        self.show_box = not self.show_box
+                        self.slot_property_changed.emit()
+                        return
+                    case Qt.Key.Key_L:
+                        self.show_box_label = not self.show_box_label
+                        self.slot_property_changed.emit()
                         return
 
         if (

@@ -19,3 +19,15 @@ class ObjectAnnotation:
 
     def __ne__(self, other):
         return self.label != other.label_text
+
+    def __copy__(self):
+        new_object = ObjectAnnotation(self.label)
+        new_object.text = self.text
+
+        return new_object
+
+    def copy(self):
+        return self.__copy__()
+
+    def clone(self):
+        return self.__copy__()

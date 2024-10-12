@@ -27,6 +27,25 @@ class RectDataAnnotation(ObjectAnnotation):
 
         self.ori_dict = {}
 
+    def __copy__(self):
+        new_object = RectDataAnnotation(self.label)
+
+        new_object.text = self.text
+
+        new_object.x1 = self.x1
+        new_object.y1 = self.y1
+
+        new_object.x2 = self.x2
+        new_object.y2 = self.y2
+
+        new_object.ori_dict = {}
+        new_object.ori_dict.update(self.ori_dict)
+
+        new_object.picture_width = self.picture_width
+        new_object.picture_height = self.picture_height
+
+        return new_object
+
     @property
     def x(self) -> float:
         return self.x1

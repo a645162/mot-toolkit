@@ -166,6 +166,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
         self.main_image_view.slot_save.connect(self.save_current_opened)
         self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
+        self.main_image_view.slot_property_changed.connect(self.__slot_property_changed)
 
         self.main_h_layout.addWidget(self.main_image_view)
 
@@ -865,6 +866,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.selection_index = index
 
         self.update_detail_info()
+
+    def __slot_property_changed(self):
+        self.menu_rect_show_box.setChecked(self.main_image_view.show_box)
+        self.menu_rect_show_box_label.setChecked(self.main_image_view.show_box_label)
 
     def save_current_opened(self):
         if self.current_annotation_object is not None:

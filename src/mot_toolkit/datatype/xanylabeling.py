@@ -25,6 +25,30 @@ class XAnyLabelingRect(RectDataAnnotation):
     def __init__(self, label: str = ""):
         super().__init__(label)
 
+    def __copy__(self):
+        new_object = XAnyLabelingRect(self.label)
+
+        new_object.text = self.text
+
+        new_object.x1 = self.x1
+        new_object.y1 = self.y1
+
+        new_object.x2 = self.x2
+        new_object.y2 = self.y2
+
+        new_object.ori_dict = {}
+        new_object.ori_dict.update(self.ori_dict)
+
+        new_object.picture_width = self.picture_width
+        new_object.picture_height = self.picture_height
+
+        new_object.group_id = self.group_id
+        new_object.shape_type = self.shape_type
+        new_object.flags = {}
+        new_object.flags.update(self.flags)
+
+        return new_object
+
 
 class XAnyLabelingAnnotation(AnnotationFile):
     version: str
@@ -301,7 +325,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 self.rect_annotation_list[i].update_by(rect_item)
                 return
 
-        self.rect_annotation_list.append(rect_item)
+        self.rect_annotation_list.append(rect_item.copy())
 
     def add_rect(
             self,
