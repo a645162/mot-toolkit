@@ -1,4 +1,4 @@
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QPixmap
 from PySide6.QtWidgets import QMainWindow
 
 # Load Settings
@@ -15,6 +15,13 @@ class BaseQMainWindow(QMainWindow):
 
     def __setup_window_properties(self):
         # Set Logo
+        # https://stackoverflow.com/questions/78354598/setting-the-window-icon-using-a-system-theme-icon
+        # https://github.com/OpenShot/openshot-qt/issues/1112
+
+        # icon = QIcon()
+        # icon.addPixmap(QPixmap(":/general/logo"), QIcon.Selected, QIcon.On)
+        # self.setWindowIcon(icon)
+
         self.setWindowIcon(QIcon(":/general/logo"))
 
     def __init_widgets(self):

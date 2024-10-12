@@ -190,6 +190,8 @@ class MainWindow(QMainWindow):
 def init_main_window():
     app = QApplication(sys.argv)
 
+    # app.setDesktopFileName("mot-toolkit")
+
     dpi_ratio = app.devicePixelRatio()
     logger.info(f"The current DPI ratio is: {dpi_ratio}")
 
