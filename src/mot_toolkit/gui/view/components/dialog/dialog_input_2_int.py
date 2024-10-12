@@ -1,5 +1,9 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QLineEdit, QPushButton, QApplication, QMessageBox, QSizePolicy
+    QApplication,
+    QDialog, QMessageBox,
+    QWidget, QHBoxLayout, QVBoxLayout,
+    QLabel, QLineEdit, QPushButton,
+    QSizePolicy,
 )
 
 
@@ -47,14 +51,13 @@ class DialogInput2Int(QDialog):
         self.setWindowTitle(title)
 
     def __init_widgets(self, default_value1, default_value2, label1, label2):
-        layout = QVBoxLayout()
+        self.main_layout = QVBoxLayout()
 
         self.setSizePolicy(
             QSizePolicy.Policy.Minimum,
             QSizePolicy.Policy.Minimum
         )
 
-        # 创建标签和输入框
         self.label1 = QLabel(label1, self)
         self.label1.setSizePolicy(
             QSizePolicy.Policy.Minimum,
@@ -62,8 +65,8 @@ class DialogInput2Int(QDialog):
         )
         self.lineEdit1 = QLineEdit(self)
         self.lineEdit1.setText(str(default_value1) if default_value1 is not None else "")
-        layout.addWidget(self.label1)
-        layout.addWidget(self.lineEdit1)
+        self.main_layout.addWidget(self.label1)
+        self.main_layout.addWidget(self.lineEdit1)
 
         self.label2 = QLabel(label2, self)
         self.label2.setSizePolicy(
@@ -72,19 +75,27 @@ class DialogInput2Int(QDialog):
         )
         self.lineEdit2 = QLineEdit(self)
         self.lineEdit2.setText(str(default_value2) if default_value2 is not None else "")
-        layout.addWidget(self.label2)
-        layout.addWidget(self.lineEdit2)
+        self.main_layout.addWidget(self.label2)
+        self.main_layout.addWidget(self.lineEdit2)
+
+        self.control_button_widget = QWidget(parent=self)
+        self.control_button_layout = QHBoxLayout()
+        self.control_button_widget.setLayout(self.control_button_layout)
+        self.main_layout.addWidget(self.control_button_widget)
+
+        # 创建取消按钮
+        self.cancelButton = QPushButton("Cancel", self.control_button_widget)
+        self.cancelButton.clicked.connect(self.reject)
+        self.control_button_layout.addWidget(self.cancelButton)
 
         # 创建确认按钮
-        self.okButton = QPushButton("OK", self)
+        self.okButton = QPushButton("OK", self.control_button_widget)
+        # Red color
+        self.okButton.setStyleSheet("background-color: red")
         self.okButton.clicked.connect(self.__on_ok_clicked)
-        layout.addWidget(self.okButton)
+        self.control_button_layout.addWidget(self.okButton)
 
-        self.cancelButton = QPushButton("Cancel", self)
-        self.cancelButton.clicked.connect(self.reject)
-        layout.addWidget(self.cancelButton)
-
-        self.setLayout(layout)
+        self.setLayout(self.main_layout)
 
     def __on_ok_clicked(self):
         # 获取输入框的文本并转换为整数
@@ -123,10 +134,16 @@ class DialogInput2Int(QDialog):
         return self.input1, self.input2
 
 
-# 示例用法
 if __name__ == "__main__":
     app = QApplication([])
-    dialog = DialogInput2Int(default_value1=10, default_value2=20, label1="First number:", label2="Second number:")
+    dialog = DialogInput2Int(
+        default_value1=10,
+        default_value2=20,
+        label1="First number:",
+        label2="Second number:",
+        min_value=0,
+        max_value=100,
+    )
     if dialog.exec() == QDialog.DialogCode.Accepted:
         int1, int2 = dialog.get_integers()
         print(f"Input 1: {int1}, Input 2: {int2}")

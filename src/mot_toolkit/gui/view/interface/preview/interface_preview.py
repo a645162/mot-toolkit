@@ -1110,8 +1110,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.r_object_list_widget.selection_index
         ]
 
+        file_index = self.get_current_file_truly_index()
+        if file_index == -1:
+            return
+
         for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
-            if i < self.r_file_list_widget.selection_index:
+            if i < file_index:
                 continue
 
             annotation_obj.add_or_update_rect(selected_rect_obj)
