@@ -12,6 +12,8 @@ class AnnotationDirectory(QObject):
 
     __walked: bool = False
 
+    frame_rate = 30
+
     def __init__(self, dir_path: str = ""):
         super().__init__()
 

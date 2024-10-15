@@ -19,6 +19,8 @@ class AnnotationFile(QObject):
     uuid: str = ""
     index = -1
 
+    mot_index = -1
+
     label: str = ""
 
     file_path: str = ""
@@ -75,6 +77,27 @@ class AnnotationFile(QObject):
         return self.__pic_path
 
     @property
+    def pic_file_name(self) -> str:
+        return os.path.basename(self.pic_path)
+
+    @property
+    def pic_file_name_no_extension(self) -> str:
+        return os.path.splitext(self.pic_file_name)[0]
+
+    @property
+    def pic_file_extension(self) -> str:
+        file_name = self.pic_file_name
+
+        if len(file_name) == 0:
+            return ""
+
+        name_spilt = os.path.splitext(file_name)
+        if len(name_spilt) == 0:
+            return ""
+
+        return name_spilt[-1]
+
+    @property
     def file_name(self) -> str:
         path = self.file_path.strip()
 
@@ -91,6 +114,19 @@ class AnnotationFile(QObject):
             return ""
 
         return os.path.splitext(file_name)[0]
+
+    @property
+    def file_extension(self) -> str:
+        file_name = self.file_name
+
+        if len(file_name) == 0:
+            return ""
+
+        name_spilt = os.path.splitext(file_name)
+        if len(name_spilt) == 0:
+            return ""
+
+        return name_spilt[-1]
 
     def check_pic_is_exist(self) -> bool:
         return self.pic_path != ""

@@ -3,6 +3,7 @@ import json
 import os.path
 
 from PySide6.QtCore import Signal
+from setuptools.dist import sequence
 
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
@@ -412,6 +413,13 @@ def parse_xanylabeling_json(
         XAnyLabelingAnnotation()
     current_annotation_obj.index = index
 
+    file_name = os.path.basename(json_path)
+    file_name_no_ext = os.path.splitext(file_name)[0]
+    try:
+        current_annotation_obj.mot_index = int(file_name_no_ext)
+    except ValueError:
+        current_annotation_obj.mot_index = -1
+
     # Save Original Dict
     current_annotation_obj.ori_dict.update(data)
 
@@ -705,6 +713,97 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                 f.write(yolo_text)
 
         return True
+
+    def to_mot_gt_txt(self) -> str:
+        class_list = self.update_label_list()
+        if len(class_list) == 0:
+            return ""
+
+        class_list_int = [int(i) for i in class_list if i.isdigit()]
+        if len(class_list_int) != len(class_list):
+            print(f"Error: Class Name Not All Integer({self.dir_path})")
+            return ""
+        class_list_int.sort()
+        class_list = [str(i) for i in class_list_int]
+
+        final_text = ""
+
+        for class_name in class_list:
+
+            class_annotation_obj_list: List[XAnyLabelingAnnotation] = \
+                self.label_obj_list_dict[class_name].copy()
+            class_annotation_obj_list.sort(key=lambda x: x.mot_index)
+
+            for annotation_obj in class_annotation_obj_list:
+                for rect_annotation in annotation_obj.rect_annotation_list:
+                    if rect_annotation.label == class_name:
+                        frame = annotation_obj.mot_index
+                        label = class_name
+
+                        x = rect_annotation.x1
+                        y = rect_annotation.y1
+                        w = rect_annotation.width
+                        h = rect_annotation.height
+
+                        x, y, w, h = (
+                            int(x),
+                            int(y),
+                            int(w),
+                            int(h)
+                        )
+
+                        final_text += f"{frame},{label},{x},{y},{w},{h},1,1,1\n"
+
+                        break
+
+            # for annotation_file in self.annotation_file:
+            #     for rect_annotation in annotation_file.rect_annotation_list:
+            #         if rect_annotation.label == class_name:
+            #             frame = int(annotation_file.file_name_no_extension)
+            #             label = class_name
+            #
+            #             x = rect_annotation.x1
+            #             y = rect_annotation.y1
+            #             w = rect_annotation.width
+            #             h = rect_annotation.height
+            #
+            #             x, y, w, h = (
+            #                 int(x),
+            #                 int(y),
+            #                 int(w),
+            #                 int(h)
+            #             )
+            #
+            #             final_text += f"{frame},{label},{x},{y},{w},{h},1,1,1\n"
+
+        return final_text
+
+    def to_mot_seq_info_ini(self) -> str:
+        video_name = os.path.basename(os.path.dirname(self.dir_path))
+        sequence_name = os.path.basename(self.dir_path)
+
+        name = f"{video_name}-{sequence_name}"
+        im_dir = "img1"
+        frame_rate = self.frame_rate
+        seq_length = len(self.annotation_file)
+        if len(self.annotation_file) == 0:
+            return ""
+        im_width = self.annotation_file[0].image_width
+        im_height = self.annotation_file[0].image_height
+        im_ext = self.annotation_file[0].pic_file_extension
+
+        ini_text = (
+            f"[Sequence]\n"
+            f"name={name}\n"
+            f"imDir={im_dir}\n"
+            f"frameRate={frame_rate}\n"
+            f"seqLength={seq_length}\n"
+            f"imWidth={im_width}\n"
+            f"imHeight={im_height}\n"
+            f"imExt={im_ext}\n"
+        )
+
+        return ini_text.strip() + "\n"
 
 
 if __name__ == '__main__':
