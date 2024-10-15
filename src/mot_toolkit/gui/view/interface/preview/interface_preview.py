@@ -2,6 +2,8 @@ import json
 import os.path
 from typing import List
 
+import cv2
+
 from PySide6.QtCore import QSize, QUrl
 from PySide6.QtGui import (
     QColor, QAction, QIcon, QDesktopServices, QActionGroup, Qt
@@ -447,6 +449,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QAction("Fix All", self.menu_frame)
         self.action_frame_fix_all.triggered.connect(self.__action_frame_fix_all)
         self.menu_frame.addAction(self.action_frame_fix_all)
+
+        self.menu_frame.addSeparator()
+
+        self.action_frame_opencv_rect = \
+            QAction("OpenCV Draw Rect", self.menu_frame)
+        self.action_frame_opencv_rect.triggered.connect(self.__action_frame_opencv_rect)
+        self.menu_frame.addAction(self.action_frame_opencv_rect)
 
     def __init_menu_rect(self):
         # Rect Menu
@@ -1263,6 +1272,25 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if self.annotation_directory.fix_bugs():
             logger.info("Fix All have modified")
             self.update_annotation_object_display()
+
+    def __action_frame_opencv_rect(self):
+        if self.current_annotation_object is None:
+            return
+        img_path = self.current_annotation_object.pic_path
+        img = cv2.imread(img_path)
+
+        for rect in self.current_annotation_object.rect_annotation_list:
+            img = cv2.rectangle(
+                img,
+                (int(rect.x1), int(rect.y1)),
+                (int(rect.x2), int(rect.y2)),
+                (0, 255, 0),
+                2
+            )
+
+        cv2.imshow(img_path, img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
     def __action_set_frame_outline_binary_threshold(self):
         number, ok = QInputDialog.getInt(

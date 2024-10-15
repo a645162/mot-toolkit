@@ -116,9 +116,9 @@ def save_to_csv(
 
 if __name__ == "__main__":
     result_list = \
-        stat_count(r"C:\Users\user\Desktop\Datasets\TrackShipOnlineVideo\sea_video_20240313_part2\OnboardTL")
+        stat_count(r"/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part2/OnboardTL")
     save_to_csv(result_list, "part2.csv")
 
     result_list = \
-        stat_count(r"C:\Users\user\Desktop\Datasets\TrackShipOnlineVideo\sea_video_20240313_part4\OnshoreTL")
+        stat_count(r"/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part4/OnshoreTL")
     save_to_csv(result_list, "part4.csv")
