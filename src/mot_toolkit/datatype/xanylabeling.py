@@ -22,6 +22,8 @@ class XAnyLabelingRect(RectDataAnnotation):
     shape_type: str = ""
     flags: dict = {}
 
+    description: str = ""
+
     def __init__(self, label: str = ""):
         super().__init__(label)
 
@@ -89,7 +91,8 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 "points": rect_item.get_rect_two_point_2dim_array(),
                 "group_id": rect_item.group_id,
                 "shape_type": rect_item.shape_type,
-                "flags": rect_item.flags
+                "flags": rect_item.flags,
+                "description": rect_item.description,
             }
             final_shape_dict.update(current_shape_dict)
 
@@ -104,6 +107,44 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict["imageWidth"] = self.image_width
 
         return result_dict
+
+    def to_yolo_format(self, replace_label_dict: dict = None) -> str:
+        yolo_text_item: List[str] = []
+
+        for rect_item in self.rect_annotation_list:
+            x, y, w, h = (
+                rect_item.center_x_ratio,
+                rect_item.center_y_ratio,
+                rect_item.width_ratio,
+                rect_item.height_ratio
+            )
+
+            end_count = 6
+            x, y, w, h = (
+                round(x, end_count),
+                round(y, end_count),
+                round(w, end_count),
+                round(h, end_count)
+            )
+
+            label = rect_item.label
+
+            if replace_label_dict is not None:
+                if label in replace_label_dict.keys():
+                    label = replace_label_dict[label]
+                else:
+                    for key in replace_label_dict.keys():
+                        if "*" in key:
+                            keyword = key.replace("*", "")
+                            if len(keyword) == 0 or keyword in label:
+                                label = replace_label_dict[key]
+                                break
+
+            yolo_text_item.append(f"{label} {x} {y} {w} {h}")
+
+        yolo_text = "\n".join(yolo_text_item).strip() + "\n"
+
+        return yolo_text
 
     def __dict__(self) -> dict:
         return self.to_dict()
@@ -158,6 +199,11 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.version = data.get("version", "")
         self.flags = data.get("flags", {})
 
+        self.image_path = data.get("imagePath", "")
+        self.image_data = data.get("imageData", None)
+        self.image_height = data.get("imageHeight", 0)
+        self.image_width = data.get("imageWidth", 0)
+
         shapes_list: List[dict] = data.get("shapes", [])
 
         # Clear Old Data
@@ -170,6 +216,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
             item_group_id = shape_item.get("group_id", "")
             item_shape_type = shape_item.get("shape_type", "")
             item_flags = shape_item.get("flags", {})
+            item_description = shape_item.get("description", "")
 
             if item_shape_type == "rectangle":
                 current_rect_annotation = XAnyLabelingRect(item_label)
@@ -186,6 +233,10 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 current_rect_annotation.group_id = item_group_id
                 current_rect_annotation.shape_type = item_shape_type
                 current_rect_annotation.flags = item_flags
+                current_rect_annotation.description = item_description
+
+                current_rect_annotation.picture_width = self.image_width
+                current_rect_annotation.picture_height = self.image_height
 
                 self.rect_annotation_list.append(
                     current_rect_annotation
@@ -193,11 +244,6 @@ class XAnyLabelingAnnotation(AnnotationFile):
             else:
                 self.other_shape_dict_list.append(shape_item)
                 logger.info(f"Unknown shape type: {item_label}({item_shape_type}) in {self.file_path}")
-
-        self.image_path = data.get("imagePath", "")
-        self.image_data = data.get("imageData", None)
-        self.image_height = data.get("imageHeight", 0)
-        self.image_width = data.get("imageWidth", 0)
 
         self.is_modified = False
         self.slot_modified.emit(self.index)
@@ -632,6 +678,33 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                 modified = True
 
         return modified
+
+    def export_yolo_annotation(
+            self,
+            output_dir: str = "",
+            name_front: str = "",
+            replace_label_dict: dict = None
+    ) -> bool:
+        if len(output_dir) == 0:
+            output_dir = os.path.join(self.dir_path, "labels")
+
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+
+        for annotation_obj in self.annotation_file:
+            yolo_text = annotation_obj.to_yolo_format(
+                replace_label_dict=replace_label_dict
+            ).strip() + "\n"
+            yolo_file_path = \
+                os.path.join(
+                    output_dir,
+                    name_front + annotation_obj.file_name_no_extension + ".txt"
+                )
+
+            with open(yolo_file_path, "w") as f:
+                f.write(yolo_text)
+
+        return True
 
 
 if __name__ == '__main__':
