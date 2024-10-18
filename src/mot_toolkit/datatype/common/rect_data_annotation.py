@@ -196,6 +196,12 @@ class RectDataAnnotation(ObjectAnnotation):
             [self.x2, self.y2]
         ]
 
+    def get_rect_two_point_tuple(self) -> tuple:
+        return self.x1, self.y1, self.x2, self.y2
+
+    def get_rect_two_point_tuple_int(self) -> tuple:
+        return int(self.x1), int(self.y1), int(self.x2), int(self.y2)
+
     def set_by_center_and_size(
             self,
             center_x: float, center_y: float,

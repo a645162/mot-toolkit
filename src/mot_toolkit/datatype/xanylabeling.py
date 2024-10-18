@@ -3,7 +3,9 @@ import json
 import os.path
 
 from PySide6.QtCore import Signal
-from setuptools.dist import sequence
+
+import cv2
+import numpy as np
 
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
@@ -401,6 +403,57 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.modifying()
 
         return True
+
+    def get_cv_mat(self) -> np.ndarray | None:
+        if len(self.pic_path) == 0:
+            return None
+
+        if not os.path.exists(self.pic_path):
+            return None
+
+        img_np = cv2.imread(self.pic_path, cv2.IMREAD_COLOR)
+
+        return img_np
+
+    def get_cv_mat_with_box(
+            self,
+            with_text=True,
+            color: tuple = (0, 255, 0),
+            text_color: tuple = (0, 0, 255),
+            thickness: int = 2,
+    ) -> np.ndarray | None:
+        img_np = self.get_cv_mat()
+        if img_np is None:
+            return None
+
+        new_image = img_np.copy()
+
+        for rect_item in self.rect_annotation_list:
+            x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
+
+            new_image = \
+                cv2.rectangle(
+                    new_image,
+                    (x1, y1),
+                    (x2, y2),
+                    color,
+                    thickness
+                )
+
+            if with_text:
+                text = f"{rect_item.label}"
+
+                cv2.putText(
+                    new_image,
+                    text,
+                    (x1, y1 + 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    text_color,
+                    2
+                )
+
+        return new_image
 
 
 def parse_xanylabeling_json(

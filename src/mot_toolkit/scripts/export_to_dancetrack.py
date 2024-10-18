@@ -89,8 +89,9 @@ def __handle_task_multiprocess():
 
 if __name__ == "__main__":
     source_dir = [
-        "/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part2/OnboardTL",
-        "/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part4/OnshoreTL"
+        # "/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part2/OnboardTL",
+        # "/mnt/h/Datasets/TrackShipOnlineVideo/sea_video_20240313_part4/OnshoreTL",
+        "/mnt/h/Datasets/TrackShipOnlineVideo/ok",
     ]
 
     dt_save_dir = "/mnt/h/Datasets/TrackShipOnlineVideo/TrackShipOnlineVideoDT"
