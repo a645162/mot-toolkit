@@ -5,3 +5,5 @@ opencv-python
 numpy<2
 
 chardet
+
+pygame
