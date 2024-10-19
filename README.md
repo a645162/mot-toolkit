@@ -6,13 +6,50 @@ Multiple Object Tracking (MOT) Toolkit
 
 - [x] Statistics of the dataset
 - [x] Preview
-- [x] Edit `Annotation Rectangle`
-- [ ] Preview certain target
+- [x] Edit `Annotation Rectangle` (Move, Resize)
 - [x] Delete a certain target in subsequent frames
+- [x] Multi-Level File Explorer (Apple macOS Finder)
+- [ ] Support `XBox Controller`
+- [ ] Preview certain target
+- [ ] Export the dataset
+- [ ] Support Text Annotation (Refer-MOT)
+- [ ] Dataset Format Convertor
 
 ## Compatability
 
-Aim to compatible with `X-AnyLabeling` and these following tools:
+Aim to compatible with `X-AnyLabeling` and `LabelMe` and these following:
+
+- [x] `X-AnyLabeling`
+- [x] `LabelMe`
+- [x] `DanceTrack` (Python script)
+- [x] `ultralytics (YOLO Series)` (Python script)
+- [ ] Export to `COCO Format` (Python script)
+- [ ] Export to `MOT Challenge` (Python script)
+- [ ] Export to `DanceTrack` (GUI)
+- [ ] Export to `ultralytics (YOLO Series)` (GUI)
+- [ ] Export to `COCO Format` (GUI)
+
+## Installation
+
+### 1. Use `rye`
+
+```bash
+rye sync --update-all
+```
+
+### 2. Use `pip`
+
+1. (Optional) Create a virtual environment:
+
+```bash
+conda create -n mot-toolkit python=3.12 -y
+```
+
+2. Install the dependencies:
+
+```bash
+pip install -r requirements.txt
+```
 
 ### System
 
@@ -80,17 +117,24 @@ Using `apt` on `Ubuntu` or `Debian`:
 
 ```bash
 # Minimal Version
-sudo apt-get install libxcb-cursor0
+sudo apt-get install libxcb-cursor0 -y
 # or Full Version
-sudo apt-get install libxcb-cursor-dev
+sudo apt-get install libxcb-cursor-dev -y
 ```
 
 or using `dnf`/`yum` on `RHEL` series or `Fedora`:
 
 ```bash
-sudo dnf install xcb-util-cursor
+sudo dnf install xcb-util-cursor -y
 # or
-# sudo yum install xcb-util-cursor
+# sudo yum install xcb-util-cursor -y
+```
+
+or using `pacman` on `Arch` series
+(Such as `Manjaro` and `EndavourOS`):
+
+```bash
+pacman -S xcb-util-cursor
 ```
 
 ## Wayland
