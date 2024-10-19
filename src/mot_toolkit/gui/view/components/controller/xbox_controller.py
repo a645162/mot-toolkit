@@ -1,5 +1,6 @@
 import threading
 from enum import Enum
+from typing import List
 
 import pygame
 
@@ -19,6 +20,8 @@ class XBoxControllerStatusDirection:
     direction_left: bool = False
     direction_right: bool = False
 
+    __last_state: tuple = (False, False, False, False)
+
     def __init__(
             self,
             direction_none: bool = True,
@@ -34,32 +37,53 @@ class XBoxControllerStatusDirection:
         self.direction_left = direction_left
         self.direction_right = direction_right
 
-    def update_direction_state(self, state: tuple) -> "XBoxControllerStatusDirection":
+    @staticmethod
+    def parse_direction_state(state: tuple) -> tuple:
         x, y = state
 
-        self.direction_none = x == 0 and y == 0
-
         if x == -1:
-            self.direction_left = True
-            self.direction_right = False
+            left = True
+            right = False
         elif x == 1:
-            self.direction_left = False
-            self.direction_right = True
+            left = False
+            right = True
         else:
-            self.direction_left = False
-            self.direction_right = False
+            left = False
+            right = False
 
         if y == -1:
-            self.direction_up = False
-            self.direction_down = True
+            up = False
+            down = True
         elif y == 1:
-            self.direction_up = True
-            self.direction_down = False
+            up = True
+            down = False
         else:
-            self.direction_up = False
-            self.direction_down = False
+            up = False
+            down = False
+
+        return up, down, left, right
+
+    def update_direction_state(self, state: tuple) -> "XBoxControllerStatusDirection":
+        self.__last_state = (
+            self.direction_up,
+            self.direction_down,
+            self.direction_left,
+            self.direction_right
+        )
+
+        (
+            self.direction_up,
+            self.direction_down,
+            self.direction_left,
+            self.direction_right
+        ) = self.parse_direction_state(state=state)
+
+        self.direction_none = self.is_have_direction()
 
         return self
+
+    def get_last_direction_state(self) -> tuple:
+        return self.__last_state
 
     def __eq__(self, other):
         return (
@@ -229,7 +253,7 @@ class XBoxControllerStatusJoystick:
         return not self.is_have_direction()
 
 
-class XBoxButtonKey(Enum):
+class XBoxControllerButtonKey(Enum):
     A = 1
     B = 0
     X = 3
@@ -244,10 +268,10 @@ class XBoxButtonKey(Enum):
     BACK = 6
     START = 7
 
-    D_UP = 12
-    D_DOWN = 13
-    D_LEFT = 14
-    D_RIGHT = 15
+    DIRECTION_UP = 12
+    DIRECTION_DOWN = 13
+    DIRECTION_LEFT = 14
+    DIRECTION_RIGHT = 15
 
     LEFT_JOYSTICK_X_AXIS = 0
     LEFT_JOYSTICK_Y_AXIS = 1
@@ -258,14 +282,19 @@ class XBoxButtonKey(Enum):
 
 class XboxController(QWidget):
     slot_direction_changed: Signal = Signal(XBoxControllerStatusDirection)
+    slot_direction_pressed: Signal = Signal(list)
+    slot_direction_released: Signal = Signal(list)
 
     slot_trigger_left_changed: Signal = Signal(XBoxControllerStatusTrigger)
     slot_trigger_right_changed: Signal = Signal(XBoxControllerStatusTrigger)
 
-    slot_button_pressed: Signal = Signal(XBoxButtonKey)
-    slot_button_released: Signal = Signal(XBoxButtonKey)
-    slot_button_triggered: Signal = Signal(XBoxButtonKey)
-    slot_button_changed: Signal = Signal(XBoxButtonKey, bool)
+    slot_joystick_left_changed: Signal = Signal(XBoxControllerStatusJoystick)
+    slot_joystick_right_changed: Signal = Signal(XBoxControllerStatusJoystick)
+
+    slot_button_pressed: Signal = Signal(XBoxControllerButtonKey)
+    slot_button_released: Signal = Signal(XBoxControllerButtonKey)
+    slot_button_triggered: Signal = Signal(XBoxControllerButtonKey)
+    slot_button_changed: Signal = Signal(XBoxControllerButtonKey, bool)
 
     status_direction: XBoxControllerStatusDirection
 
@@ -362,6 +391,7 @@ class XboxController(QWidget):
 
     def __init_objects(self):
         self.status_direction = XBoxControllerStatusDirection()
+        self.slot_direction_changed.connect(self.__slot_direction_changed)
 
         self.status_button = XBoxControllerStatusButton()
         self.slot_button_changed.connect(self.__slot_button_changed)
@@ -382,28 +412,55 @@ class XboxController(QWidget):
         self.__timer_tick.setInterval(self.__tick_time_interval)
         self.__timer_tick.start(self.__tick_time_interval)
 
-    def __slot_button_changed(self, button: XBoxButtonKey, is_pressed: bool):
+    def __slot_direction_changed(self, direction: XBoxControllerStatusDirection):
+        button_list: List[XBoxControllerButtonKey] = list()
+
+        if not direction.is_have_direction():
+            up, down, left, right = self.status_direction.get_last_direction_state()
+            if up:
+                button_list.append(XBoxControllerButtonKey.DIRECTION_UP)
+            if down:
+                button_list.append(XBoxControllerButtonKey.DIRECTION_DOWN)
+            if left:
+                button_list.append(XBoxControllerButtonKey.DIRECTION_LEFT)
+            if right:
+                button_list.append(XBoxControllerButtonKey.DIRECTION_RIGHT)
+
+            self.slot_direction_released.emit(button_list)
+            return
+
+        if direction.direction_up:
+            button_list.append(XBoxControllerButtonKey.DIRECTION_UP)
+        elif direction.direction_down:
+            button_list.append(XBoxControllerButtonKey.DIRECTION_DOWN)
+        elif direction.direction_left:
+            button_list.append(XBoxControllerButtonKey.DIRECTION_LEFT)
+        elif direction.direction_right:
+            button_list.append(XBoxControllerButtonKey.DIRECTION_RIGHT)
+        self.slot_direction_pressed.emit(button_list)
+
+    def __slot_button_changed(self, button: XBoxControllerButtonKey, is_pressed: bool):
         if is_pressed:
             self.slot_button_pressed.emit(button)
         else:
             self.slot_button_released.emit(button)
             self.slot_button_triggered.emit(button)
 
-        if button == XBoxButtonKey.A:
+        if button == XBoxControllerButtonKey.A:
             self.status_button.button_a = is_pressed
-        elif button == XBoxButtonKey.B:
+        elif button == XBoxControllerButtonKey.B:
             self.status_button.button_b = is_pressed
-        elif button == XBoxButtonKey.X:
+        elif button == XBoxControllerButtonKey.X:
             self.status_button.button_x = is_pressed
-        elif button == XBoxButtonKey.Y:
+        elif button == XBoxControllerButtonKey.Y:
             self.status_button.button_y = is_pressed
-        elif button == XBoxButtonKey.LB:
+        elif button == XBoxControllerButtonKey.LB:
             self.status_button.button_lb = is_pressed
-        elif button == XBoxButtonKey.RB:
+        elif button == XBoxControllerButtonKey.RB:
             self.status_button.button_rb = is_pressed
-        elif button == XBoxButtonKey.BACK:
+        elif button == XBoxControllerButtonKey.BACK:
             self.status_button.button_back = is_pressed
-        elif button == XBoxButtonKey.START:
+        elif button == XBoxControllerButtonKey.START:
             self.status_button.button_start = is_pressed
 
     def is_ready(self) -> bool:
@@ -452,6 +509,7 @@ class XboxController(QWidget):
                             self.status_joystick_left.x = value
                         if axis == 1:
                             self.status_joystick_left.y = value
+                        self.slot_joystick_left_changed.emit(self.status_joystick_left)
 
                     # Right JoyStick
                     if axis == 3 or axis == 4:
@@ -459,20 +517,21 @@ class XboxController(QWidget):
                             self.status_joystick_right.x = value
                         if axis == 4:
                             self.status_joystick_right.y = value
+                        self.slot_joystick_right_changed.emit(self.status_joystick_right)
 
                 if self.debug_mode:
                     self.update_state(f"轴 {axis} 值: {value:.2f}")
             elif event.type == pygame.JOYBUTTONDOWN:
                 button = event.button
 
-                self.slot_button_changed.emit(XBoxButtonKey(button), True)
+                self.slot_button_changed.emit(XBoxControllerButtonKey(button), True)
 
                 if self.debug_mode:
                     self.update_state(f"按钮 {button} 被按下")
             elif event.type == pygame.JOYBUTTONUP:
                 button = event.button
 
-                self.slot_button_changed.emit(XBoxButtonKey(button), False)
+                self.slot_button_changed.emit(XBoxControllerButtonKey(button), False)
 
                 if self.debug_mode:
                     self.update_state(f"按钮 {button} 被释放")
