@@ -18,6 +18,10 @@ from PySide6.QtWidgets import (
 
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
+from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
+    get_pygame_version, get_pygame_version_info,
+    GamepadMonitor, GamepadButtonKey
+)
 from mot_toolkit.gui.view.components. \
     dialog.dialog_input_2_int import DialogInput2Int
 from mot_toolkit.gui.view.components. \
@@ -218,6 +222,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.main_h_layout.setStretch(0, 0)
         self.main_h_layout.setStretch(1, 8)
         self.main_h_layout.setStretch(2, 1)
+
+        # Gamepad Monitor
+        self.__init_gamepad()
 
     def __init_menu(self):
         self.__init_menu_window()
@@ -629,6 +636,39 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
                         self.__action_frame_show_box()
                         return
+
+    def __init_gamepad(self):
+        pygame_version = get_pygame_version()
+        logger.info(f"Pygame Version: {pygame_version}")
+        logger.info(get_pygame_version_info())
+
+        self.gamepad_monitor = GamepadMonitor()
+
+        def __slot_gamepad_button_triggered(button: GamepadButtonKey):
+            if button == GamepadButtonKey.B:
+                # Resize + Move(Copy Previous)
+                self.main_image_view.resize_annotation_by_previous(move=True)
+            elif button == GamepadButtonKey.X:
+                # Show or Hide Box
+                self.menu_rect_show_box.setChecked(
+                    not self.menu_rect_show_box.isChecked()
+                )
+                self.__action_frame_show_box()
+            elif button == GamepadButtonKey.Y or button == GamepadButtonKey.A:
+                bigger = (button == GamepadButtonKey.A)
+                pass
+            elif button == GamepadButtonKey.LB or button == GamepadButtonKey.RB:
+                previous_index = self.r_file_list_widget.selection_index
+
+                self.next_previous_image(is_next=(button == GamepadButtonKey.RB))
+
+                # Vibration when not change
+                if previous_index == self.r_file_list_widget.selection_index:
+                    self.gamepad_monitor.vibration(500)
+
+        self.gamepad_monitor.slot_button_triggered.connect(
+            __slot_gamepad_button_triggered
+        )
 
     def update(self):
         super().update()

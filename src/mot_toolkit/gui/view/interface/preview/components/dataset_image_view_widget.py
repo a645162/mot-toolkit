@@ -101,13 +101,13 @@ class DatasetImageView(ScrollImageView):
                 # Alt
                 match key:
                     case Qt.Key.Key_R:
-                        self.__resize_annotation_by_previous(move=True)
+                        self.resize_annotation_by_previous(move=True)
                         return
                     case Qt.Key.Key_C:
                         self.__move_annotation_to_mouse_position()
                         return
                     case Qt.Key.Key_V:
-                        self.__resize_annotation_by_previous(move=False)
+                        self.resize_annotation_by_previous(move=False)
                         self.__move_annotation_to_mouse_position()
                         return
                     case Qt.Key.Key_H:
@@ -438,7 +438,7 @@ class DatasetImageView(ScrollImageView):
 
                 rect_widget.modify()
 
-    def __resize_annotation_by_previous(self, move: bool = True):
+    def resize_annotation_by_previous(self, move: bool = True):
         selected_rect_widget = None
         for rect_widget in self.annotation_widget_rect_list:
             if (

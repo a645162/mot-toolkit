@@ -2,7 +2,10 @@ import platform
 import threading
 from enum import Enum
 from typing import List
+import os
+import sys
 
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
 import pygame
 
 from time import sleep as time_sleep
@@ -11,6 +14,19 @@ from PySide6.QtCore import Signal, QTimer
 from PySide6.QtWidgets import QWidget
 
 interval_input_check = 100
+
+
+def get_pygame_version() -> str:
+    return pygame.__version__
+
+
+def get_pygame_version_info() -> str:
+    from pygame import ver as pygame_ver
+    from pygame import get_sdl_version as pygame_get_sdl_version
+    # pylint: disable=consider-using-f-string
+    return "pygame {} (SDL {}.{}.{}, Python {}.{}.{})".format(
+        pygame_ver, *pygame_get_sdl_version() + sys.version_info[0:3]
+    )
 
 
 class GamepadStatusDirection:
@@ -590,6 +606,8 @@ class GamepadMonitor(QWidget):
             self.status_button.button_back = is_pressed
         elif button == GamepadButtonKey.START:
             self.status_button.button_start = is_pressed
+        elif button == GamepadButtonKey.LOGO:
+            self.status_button.button_logo = is_pressed
 
     def is_ready(self) -> bool:
         return self.__is_ready

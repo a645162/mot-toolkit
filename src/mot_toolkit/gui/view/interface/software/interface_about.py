@@ -1,3 +1,5 @@
+import sys
+
 import PySide6
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QLabel
@@ -55,7 +57,8 @@ class InterFaceAbout(BaseQMainWindow):
 
         self.add_label("")
 
-        self.add_label(f"Python Version: Python {sys.version}")
+        python_version = str(sys.version)
+        self.add_label(f"Python Version: Python {python_version}")
         qt_version = PySide6.__version__
         self.add_label(f"Qt Version: PySide6({qt_version})")
 
