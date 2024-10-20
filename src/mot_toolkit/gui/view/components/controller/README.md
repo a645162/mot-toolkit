@@ -14,18 +14,25 @@ Device: 北通阿修罗2(Xbox 360 Controller)
 
 弹起事件为`(0, 0)`，也就是默认状态
 
+### macOS方向键
+
+- 上: 11
+- 下: 12
+- 左: 13
+- 右: 14
+
 ## 按键
 
-- START: 7
-- BACK: 6
-- LOGO: Windows:10, Linux:8
+- BACK: 6 macOS:4
+- START: 7 macOS:6
+- LOGO: Windows:10, Linux:8, macOS:5
 
 - A: 1
 - B: 0
 - X: 3
 - Y: 2
 
-肩键(LB, RB)为4, 5
+肩键(LB, RB)为4, 5 macOS:9, 10
 
 ## 摇杆
 
@@ -34,7 +41,7 @@ Device: 北通阿修罗2(Xbox 360 Controller)
 - 左摇杆-横向(x)-axis 0
 - 左摇杆-纵向(y)-axis 1
 
-### Windows下的右摇杆
+### Windows/macOS下的右摇杆
 
 - 右摇杆-横向(x)-axis 2
 - 右摇杆-纵向(y)-axis 3
@@ -62,7 +69,7 @@ Device: 北通阿修罗2(Xbox 360 Controller)
 
 ## 扳机(LT, RT)
 
-### Windows下的扳机
+### Windows/macOS下的扳机
 
 - 左扳机(LT): axis 4
 - 右扳机(RT): axis 5

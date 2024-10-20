@@ -55,6 +55,7 @@ class InterFaceAbout(BaseQMainWindow):
 
         self.add_label("")
 
+        self.add_label(f"Python Version: Python {sys.version}")
         qt_version = PySide6.__version__
         self.add_label(f"Qt Version: PySide6({qt_version})")
 
