@@ -221,6 +221,8 @@ class DatasetImageView(ScrollImageView):
             # print(rect_item)
             rect_widget = AnnotationWidgetRect(parent=self.image_view)
 
+            rect_widget.source = rect_item
+
             rect_widget.slot_try_to_select.connect(try_to_select)
             rect_widget.slot_resized.connect(self.__rect_widget_resized)
             rect_widget.slot_try_to_show_menu.connect(

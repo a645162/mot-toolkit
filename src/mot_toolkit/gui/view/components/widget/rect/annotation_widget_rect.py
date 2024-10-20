@@ -4,6 +4,7 @@ from PySide6.QtWidgets import QWidget
 
 from mot_toolkit.datatype.common. \
     rect_data_annotation import RectDataAnnotation
+from mot_toolkit.datatype.xanylabeling import XAnyLabelingRect
 from mot_toolkit.gui.view.components.widget. \
     rect.resizable_rect import ResizableRect
 
@@ -72,6 +73,8 @@ class AnnotationWidgetRect(ResizableRect):
     theme_color: dict = {}
 
     activate_theme_name: str = "light"
+
+    source: XAnyLabelingRect | None = None
 
     def __init__(self, parent=None):
         super().__init__(parent)

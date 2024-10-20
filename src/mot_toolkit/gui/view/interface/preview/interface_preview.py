@@ -28,6 +28,7 @@ from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
 from mot_toolkit.gui.view.components.widget. \
     basic.base_image_view_graphics import ImageDisplayType
+from mot_toolkit.gui.view.components.widget.rect.annotation_widget_rect import AnnotationWidgetRect
 from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect
 from mot_toolkit.gui.view.interface. \
@@ -39,7 +40,7 @@ from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
     XAnyLabelingAnnotationDirectory,
-    XAnyLabelingAnnotation
+    XAnyLabelingAnnotation, XAnyLabelingRect
 )
 from mot_toolkit.gui.view.components. \
     window.base_interface_window import BaseWorkInterfaceWindow
@@ -475,6 +476,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.action_frame_opencv_rect.triggered.connect(self.__action_frame_opencv_rect)
         self.menu_frame.addAction(self.action_frame_opencv_rect)
 
+        self.action_frame_opencv_rect_near = \
+            QAction("OpenCV Draw Rect Near", self.menu_frame)
+        self.action_frame_opencv_rect_near.triggered.connect(self.__action_frame_opencv_rect_near)
+        self.menu_frame.addAction(self.action_frame_opencv_rect_near)
+
     def __init_menu_rect(self):
         # Rect Menu
         self.menu_rect = self.menu.addMenu("Rect")
@@ -646,6 +652,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     case Qt.Key.Key_H:
                         self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
                         self.__action_frame_show_box()
+                        return
+                    case Qt.Key.Key_S:
+                        self.__action_frame_opencv_rect_near()
                         return
 
     def __init_gamepad(self):
@@ -1345,6 +1354,59 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         img = self.current_annotation_object.get_cv_mat_with_box()
 
         cv2.imshow(img_path, img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    def __action_frame_opencv_rect_near(self):
+        # Widget
+        selected_widget: AnnotationWidgetRect | None = None
+        for _, widget in enumerate(self.main_image_view.annotation_widget_rect_list):
+            if widget.selecting:
+                selected_widget = widget
+                break
+        if selected_widget is None:
+            QMessageBox.warning(self, "Warning", "Please select a rect first.")
+            return
+
+        rect_obj: XAnyLabelingRect | None = selected_widget.source
+        if rect_obj is None:
+            QMessageBox.warning(self, "Warning", "Please select a rect first.")
+            return
+
+        image = self.current_annotation_object.get_cv_mat()
+        if image is None:
+            QMessageBox.warning(self, "Warning", "Image is None.")
+            return
+
+        x1, y1, x2, y2 = rect_obj.x1, rect_obj.y1, rect_obj.x2, rect_obj.y2
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+
+        # Draw Rect
+        image = cv2.rectangle(
+            image,
+            (x1, y1),
+            (x2, y2),
+            (0, 255, 0),
+            2
+        )
+
+        padding = 50
+
+        crop_x1 = max(0, x1 - padding)
+        crop_y1 = max(0, y1 - padding)
+        crop_x2 = min(image.shape[1], x2 + padding)
+        crop_y2 = min(image.shape[0], y2 + padding)
+
+        crop_image = image[crop_y1:crop_y2, crop_x1:crop_x2]
+
+        crop_image_width, crop_image_height = crop_image.shape[1], crop_image.shape[0]
+
+        min_size = 1000
+        if crop_image_width < min_size or crop_image_height < min_size:
+            scale_factor = min_size / max(crop_image_width, crop_image_height)
+            crop_image = cv2.resize(crop_image, (0, 0), fx=scale_factor, fy=scale_factor)
+
+        cv2.imshow("Crop Image", crop_image)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
