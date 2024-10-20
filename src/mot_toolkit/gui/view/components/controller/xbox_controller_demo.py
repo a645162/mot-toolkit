@@ -20,9 +20,12 @@ from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
 
 
 class XboxControllerDemoMainWindow(QMainWindow):
+    gamepad_index: int = 0
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, gamepad_index: int = 0, parent=None):
+        super().__init__(parent=parent)
+
+        self.gamepad_index = gamepad_index
 
         self.setWindowTitle("Xbox Controller")
 
@@ -46,7 +49,7 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.grid_widget.setLayout(self.grid_layout)
         self.layout.addWidget(self.grid_widget)
 
-        self.gamepad_monitor = GamepadMonitor()
+        self.gamepad_monitor = GamepadMonitor(target_index=self.gamepad_index)
         self.gamepad_monitor.debug_mode = True
 
         self.__init_widget()
@@ -80,6 +83,11 @@ class XboxControllerDemoMainWindow(QMainWindow):
             parent=self.grid_widget
         )
 
+        self.controller_logo = XBoxDemoColorButton(
+            text="Logo",
+            parent=self.grid_widget
+        )
+
         self.controller_direction = XBoxDemoDirection()
         self.controller_button = XBoxDemoButton()
 
@@ -87,6 +95,7 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.grid_layout.addWidget(self.controller_rt, 0, 3)
 
         self.grid_layout.addWidget(self.controller_lb, 1, 0)
+        self.grid_layout.addWidget(self.controller_logo, 1, 1, 1, 2)
         self.grid_layout.addWidget(self.controller_rb, 1, 3)
 
         self.grid_layout.addWidget(self.controller_left_stick, 2, 0)
@@ -133,6 +142,8 @@ class XboxControllerDemoMainWindow(QMainWindow):
             self.controller_button.button_x.is_pressed = is_pressed
         elif button == GamepadButtonKey.Y:
             self.controller_button.button_y.is_pressed = is_pressed
+        elif button == GamepadButtonKey.LOGO:
+            self.controller_logo.is_pressed = is_pressed
 
     def on_trigger_left_changed(self, status: GamepadStatusTrigger):
         self.controller_lt.value = status.value
@@ -155,10 +166,23 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.controller_direction.button_right.is_pressed = status.direction_right
 
 
-if __name__ == '__main__':
+def main(gamepad_index: int):
     app = QApplication(sys.argv)
 
-    main_window = XboxControllerDemoMainWindow()
-    main_window.show()
+    gamepad_windows_1 = XboxControllerDemoMainWindow(gamepad_index=gamepad_index)
+    gamepad_windows_1.show()
 
     sys.exit(app.exec())
+
+
+if __name__ == '__main__':
+    gamepad_count = 2
+
+    # Multi Process
+    from multiprocessing import Process
+
+    processes = []
+    for i in range(gamepad_count):
+        process = Process(target=main, args=(i,))
+        processes.append(process)
+        process.start()

@@ -18,6 +18,7 @@ Device: 北通阿修罗2
 
 - START: 7
 - BACK: 6
+- LOGO: 8
 
 - A: 1
 - B: 0

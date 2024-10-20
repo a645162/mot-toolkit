@@ -268,6 +268,8 @@ class GamepadButtonKey(Enum):
     BACK = 6
     START = 7
 
+    LOGO = 8
+
     DIRECTION_UP = 12
     DIRECTION_DOWN = 13
     DIRECTION_LEFT = 14
@@ -317,7 +319,8 @@ class GamepadMonitor(QWidget):
 
     joystick: pygame.joystick.Joystick = None
 
-    name = ""
+    gamepad_index: int = 0
+    gamepad_name: str = ""
     status: GamepadStatusCode = GamepadStatusCode.NONE
     status_str = ""
 
@@ -334,7 +337,9 @@ class GamepadMonitor(QWidget):
 
     debug_mode = False
 
-    def __init__(self, auto_connect=True, parent=None):
+    target_index = 0
+
+    def __init__(self, target_index=0, auto_connect=True, parent=None):
         super().__init__(parent=parent)
 
         self.__init_properties()
@@ -343,6 +348,9 @@ class GamepadMonitor(QWidget):
 
         self.__init_objects()
 
+        if target_index < 0:
+            target_index = 0
+        self.target_index = target_index
         self.__auto_connect = auto_connect
 
         if self.__auto_connect:
@@ -364,25 +372,27 @@ class GamepadMonitor(QWidget):
     def __init_controller_thread(self):
         self.update_status("Checking controller...")
 
-        try:
-            pygame.quit()
-            pygame.joystick.quit()
-        except Exception:
-            pass
+        # try:
+        #     pygame.quit()
+        #     pygame.joystick.quit()
+        # except Exception:
+        #     pass
 
         pygame.init()
         pygame.joystick.init()
         device_count = pygame.joystick.get_count()
 
-        if device_count == 0:
+        target_index = self.target_index
+        target_count = target_index + 1
+        if device_count < target_count:
             self.status = GamepadStatusCode.WAITING
-            self.update_status("Waiting for controller...")
+            self.update_status(f"Waiting for controller {target_index}...")
 
-        while device_count == 0:
+        while device_count < target_count:
             self.joystick = None
             self.__is_ready = False
 
-            pygame.quit()
+            # pygame.quit()
             pygame.joystick.quit()
 
             time_sleep(1)
@@ -392,21 +402,22 @@ class GamepadMonitor(QWidget):
 
             device_count = pygame.joystick.get_count()
 
-        if device_count > 1:
-            self.update_status("Multiple controllers detected. Using the first one.")
+        # if device_count > 1:
+        #     self.update_status("Multiple controllers detected. Using the first one.")
 
-        self.joystick = pygame.joystick.Joystick(0)
+        self.joystick = pygame.joystick.Joystick(target_index)
         self.joystick.init()
 
         self.__is_ready = True
 
-        self.name = self.joystick.get_name()
+        self.gamepad_index = target_index
+        self.gamepad_name = self.joystick.get_name()
         self.status = GamepadStatusCode.READY
 
         __status_check_thread = threading.Thread(target=self.__controller_monitor_thread)
         __status_check_thread.start()
 
-        self.update_status(f"Used controller: {self.name}")
+        self.update_status(f"Used controller: [{self.gamepad_index}] {self.gamepad_name}")
 
     def __controller_monitor_thread(self):
         # Monitor the controller status
@@ -414,7 +425,13 @@ class GamepadMonitor(QWidget):
         while self.__is_ready:
             time_sleep(1)
 
-            if pygame.joystick.get_count() == 0:
+            count = self.target_index + 1
+            try:
+                count = pygame.joystick.get_count()
+            except Exception:
+                pass
+
+            if count == 0:
                 self.joystick = None
                 self.__is_ready = False
                 self.status = GamepadStatusCode.DISCONNECTED
