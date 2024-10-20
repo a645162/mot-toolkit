@@ -5,15 +5,21 @@ from PySide6.QtGui import QPainter, QBrush, QColor
 
 
 class XBoxDemoTrigger(QWidget):
+    __value = -1
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.value = 0  # 默认值为0
-        self.setMinimumSize(20, 100)  # 设置最小尺寸
 
-    def setValue(self, value):
-        """设置进度条的值，范围从-1到1"""
+        self.setMinimumSize(20, 100)
+
+    @property
+    def value(self):
+        return self.__value
+
+    @value.setter
+    def value(self, value):
         if -1 <= value <= 1:
-            self.value = value
+            self.__value = value
             self.update()  # 触发重绘
 
     def paintEvent(self, event):
@@ -25,16 +31,20 @@ class XBoxDemoTrigger(QWidget):
         height = self.height()
 
         # 计算进度条的高度
-        bar_height = int((self.value + 1) / 2 * height)  # 将-1到1映射到0到height
+        # 将-1到1映射到0到height
+        bar_height = int((self.value + 1) / 2 * height)
 
         # 绘制背景
-        background_brush = QBrush(QColor(200, 200, 200))  # 背景颜色
+        # 背景颜色
+        background_brush = QBrush(QColor(200, 200, 200))
         painter.fillRect(QRect(0, 0, width, height), background_brush)
 
         # 绘制进度
         if bar_height > 0:
-            progress_brush = QBrush(QColor(0, 255, 0))  # 进度颜色
+            # 进度颜色
+            progress_brush = QBrush(QColor(0, 255, 0))
             painter.fillRect(QRect(0, height - bar_height, width, bar_height), progress_brush)
+
 
 if __name__ == '__main__':
     # 创建应用程序实例
@@ -42,7 +52,7 @@ if __name__ == '__main__':
 
     # 创建并显示进度条
     progress_bar = XBoxDemoTrigger()
-    progress_bar.setValue(0)  # 设置进度条的初始值
+    progress_bar.value = 0.5
     progress_bar.show()
 
     # 运行应用程序

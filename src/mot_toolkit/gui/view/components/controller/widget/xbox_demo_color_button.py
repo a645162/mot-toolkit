@@ -23,6 +23,8 @@ class XBoxDemoColorButton(QPushButton):
         color = self.color_pressed if value else self.color_default
         self.setStyleSheet(f"background-color: {color};")
 
+        self.update()
+
 
 if __name__ == '__main__':
     import sys
