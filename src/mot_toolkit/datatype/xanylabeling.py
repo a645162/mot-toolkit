@@ -431,12 +431,15 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         new_image = img_np.copy()
 
+        def rgb2bgr(rgb: object) -> tuple:
+            return rgb[2], rgb[1], rgb[0]
+
         if isinstance(color, QColor):
-            color = color.getRgb()
+            color = rgb2bgr(color.getRgb())
         if isinstance(text_color, QColor):
-            text_color = text_color.getRgb()
+            text_color = rgb2bgr(text_color.getRgb())
         if isinstance(selection_color, QColor):
-            selection_color = selection_color.getRgb()
+            selection_color = rgb2bgr(selection_color.getRgb())
 
         for rect_item in self.rect_annotation_list:
             x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()

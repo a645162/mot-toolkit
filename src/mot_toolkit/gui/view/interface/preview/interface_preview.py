@@ -1095,6 +1095,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.close()
 
     def get_current_file_truly_index(self) -> int:
+        if not self.current_file_str_list:
+            return -1
+
         current_list_index = self.r_file_list_widget.selection_index
         file_name = self.current_file_str_list[current_list_index]
 
@@ -1360,7 +1363,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         option_window = OpenCVPreviewOptionWindow(
             parent=self,
             annotation_file=self.annotation_directory.annotation_file,
-            current_frame=current_frame_index,
+            current_frame=current_frame_index + 1,
             start_frame=1,
             end_frame=len(self.annotation_directory.annotation_file),
             selection_label=selection_label

@@ -8,6 +8,14 @@ from PySide6.QtGui import QColor
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
 
 
+def bgr2rgb(color: tuple) -> tuple:
+    return color[2], color[1], color[0]
+
+
+def reverse_color(color: QColor) -> QColor:
+    return QColor(255 - color.red(), 255 - color.green(), 255 - color.blue())
+
+
 class OpenCVPreviewOptionWindow(QMainWindow):
     frame_index_min: int
     frame_index_max: int
@@ -22,9 +30,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             current_frame: int = -1,
             start_frame: int = 0,
             end_frame: int = 1,
-            unselected_color: tuple | QColor = QColor(0, 255, 0),
-            selected_color: tuple | QColor = QColor(0, 255, 255),
-            text_color: tuple | QColor = QColor(0, 0, 255),
+            unselected_color: tuple | QColor = (0, 255, 0),
+            selected_color: tuple | QColor = (0, 255, 255),
+            text_color: tuple | QColor = (0, 0, 255),
             thickness: int = 2,
             selection_label="",
             parent=None
@@ -32,11 +40,11 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         super().__init__(parent=parent)
 
         if isinstance(selected_color, tuple):
-            selected_color = QColor(*selected_color)
+            selected_color = QColor(*bgr2rgb(selected_color))
         if isinstance(unselected_color, tuple):
-            unselected_color = QColor(*unselected_color)
+            unselected_color = QColor(*bgr2rgb(unselected_color))
         if isinstance(text_color, tuple):
-            text_color = QColor(*text_color)
+            text_color = QColor(*bgr2rgb(text_color))
 
         if annotation_file is None:
             annotation_file = []
@@ -61,11 +69,27 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.end_label = QLabel('End Frame:')
         self.end_edit = QLineEdit(str(end_frame))
 
-        if current_frame != -1 and start_frame <= current_frame <= end_frame:
-            self.start_edit.setText(str(current_frame))
-            self.end_edit.setText(str(current_frame))
+        # if current_frame != -1 and start_frame <= current_frame <= end_frame:
+        #     self.start_edit.setText(str(current_frame))
+        #     self.end_edit.setText(str(current_frame))
 
-        self.label_frame_range = QLabel(f'Frame Range:{start_frame} - {end_frame}')
+        self.label_frame_range = QLabel(f'Frame Range: {start_frame} - {end_frame}')
+        self.label_current_frame = QLabel(f'Current Frame: {current_frame}')
+
+        range_widget = QWidget()
+        range_layout = QHBoxLayout()
+        range_widget.setLayout(range_layout)
+
+        self.button_current_frame = QPushButton('Current Frame')
+        self.button_current_frame.clicked.connect(self.set_current_frame)
+        range_layout.addWidget(self.button_current_frame)
+        self.button_restore_range = QPushButton('Restore Range')
+        self.button_restore_range.clicked.connect(self.restore_range)
+        range_layout.addWidget(self.button_restore_range)
+
+        if current_frame == -1:
+            self.label_current_frame.setVisible(False)
+            self.button_current_frame.setVisible(False)
 
         self.show_box_checkbox = QCheckBox('Show Box')
         self.show_box_checkbox.setChecked(True)
@@ -93,7 +117,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         # 连接事件
         self.select_color_button.clicked.connect(self.select_selected_color)
+        self.text_color_button.clicked.connect(self.select_text_color)
         self.unselect_color_button.clicked.connect(self.select_unselected_color)
+
         self.ok_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
 
@@ -107,6 +133,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         layout.addWidget(self.end_edit)
 
         layout.addWidget(self.label_frame_range)
+        layout.addWidget(self.label_current_frame)
+        layout.addWidget(range_widget)
 
         layout.addWidget(self.show_box_checkbox)
         layout.addWidget(self.with_text_checkbox)
@@ -135,6 +163,17 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         container.setLayout(layout)
         self.setCentralWidget(container)
 
+    def set_current_frame(self):
+        if self.current_frame_index == -1:
+            return
+        if self.frame_index_min <= self.current_frame_index <= self.frame_index_max:
+            self.start_edit.setText(str(self.current_frame_index))
+            self.end_edit.setText(str(self.current_frame_index))
+
+    def restore_range(self):
+        self.start_edit.setText(str(self.frame_index_min))
+        self.end_edit.setText(str(self.frame_index_max))
+
     def select_selected_color(self):
         color = QColorDialog.getColor(initial=self.selected_color, parent=self)
         if color.isValid():
@@ -154,9 +193,19 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             self.update_color_buttons_style()
 
     def update_color_buttons_style(self):
-        self.select_color_button.setStyleSheet(f'background-color: {self.selected_color.name()};')
-        self.text_color_button.setStyleSheet(f'background-color: {self.text_color.name()};')
-        self.unselect_color_button.setStyleSheet(f'background-color: {self.unselected_color.name()};')
+        # self.select_color_button.setStyleSheet(f'background-color: {self.selected_color.name()};')
+        # self.text_color_button.setStyleSheet(f'background-color: {self.text_color.name()};')
+        # self.unselect_color_button.setStyleSheet(f'background-color: {self.unselected_color.name()};')
+
+        # Set button Text Color
+        self.select_color_button.setStyleSheet(f'color: {self.selected_color.name()};')
+        self.text_color_button.setStyleSheet(f'color: {self.text_color.name()};')
+        self.unselect_color_button.setStyleSheet(f'color: {self.unselected_color.name()};')
+
+        # # Set button Background Color(Reverse Color)
+        # self.select_color_button.setStyleSheet(f'background-color: {reverse_color(self.selected_color).name()};')
+        # self.text_color_button.setStyleSheet(f'background-color: {reverse_color(self.text_color).name()};')
+        # self.unselect_color_button.setStyleSheet(f'background-color: {reverse_color(self.unselected_color).name()};')
 
     def accept(self):
         try:
@@ -190,18 +239,6 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         file_count = len(self.annotation_file)
 
-        """
-        def get_cv_mat_with_box(
-            self,
-            with_text=True,
-            color: tuple = (0, 255, 0),
-            text_color: tuple = (0, 0, 255),
-            thickness: int = 2,
-            selection_label: str = "",
-            selection_color: tuple = (0, 255, 255),
-    )
-    """
-
         for i, annotation in enumerate(self.annotation_file):
             frame_index = i + 1
             if frame_index < start_frame or frame_index > end_frame:
@@ -232,7 +269,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             )
 
             cv2.imshow("OpenCV Preview", image)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
 
