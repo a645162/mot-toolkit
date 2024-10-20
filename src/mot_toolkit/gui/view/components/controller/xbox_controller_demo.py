@@ -13,8 +13,10 @@ from mot_toolkit.gui.view.components.controller.widget.xbox_demo_color_button im
 from mot_toolkit.gui.view.components.controller.widget.xbox_demo_direction import XBoxDemoDirection
 from mot_toolkit.gui.view.components.controller.widget.xbox_demo_joystick import XBoxDemoJoystick
 from mot_toolkit.gui.view.components.controller.widget.xbox_demo_trigger import XBoxDemoTrigger
-from mot_toolkit.gui.view.components.controller.xbox_controller import XboxController, XBoxControllerButtonKey, \
-    XBoxControllerStatusTrigger, XBoxControllerStatusDirection, XBoxControllerStatusJoystick
+from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
+    GamepadMonitor, GamepadButtonKey,
+    GamepadStatusTrigger, GamepadStatusDirection, GamepadStatusJoystick
+)
 
 
 class XboxControllerDemoMainWindow(QMainWindow):
@@ -44,8 +46,8 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.grid_widget.setLayout(self.grid_layout)
         self.layout.addWidget(self.grid_widget)
 
-        self.controller = XboxController()
-        self.controller.debug_mode = True
+        self.gamepad_monitor = GamepadMonitor()
+        self.gamepad_monitor.debug_mode = True
 
         self.__init_widget()
 
@@ -96,57 +98,57 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.grid_layout.addWidget(self.controller_right_stick, 3, 2)
 
     def __init_slot(self):
-        self.controller.slot_button_changed.connect(self.on_button_changed)
+        self.gamepad_monitor.slot_button_changed.connect(self.on_button_changed)
 
-        self.controller.slot_trigger_left_changed.connect(self.on_trigger_left_changed)
-        self.controller.slot_trigger_right_changed.connect(self.on_trigger_right_changed)
+        self.gamepad_monitor.slot_trigger_left_changed.connect(self.on_trigger_left_changed)
+        self.gamepad_monitor.slot_trigger_right_changed.connect(self.on_trigger_right_changed)
 
-        self.controller.slot_joystick_left_changed.connect(self.on_joystick_left_changed)
-        self.controller.slot_joystick_right_changed.connect(self.on_joystick_right_changed)
+        self.gamepad_monitor.slot_joystick_left_changed.connect(self.on_joystick_left_changed)
+        self.gamepad_monitor.slot_joystick_right_changed.connect(self.on_joystick_right_changed)
 
-        self.controller.slot_direction_changed.connect(self.on_direction_changed)
+        self.gamepad_monitor.slot_direction_changed.connect(self.on_direction_changed)
 
-        self.controller.slot_status_changed.connect(self.on_status_changed)
+        self.gamepad_monitor.slot_status_changed.connect(self.on_status_changed)
 
     def on_status_changed(self, status):
         self.label_status.setText(status)
 
     def controller_vibration(self):
-        self.controller.vibration(500)
+        self.gamepad_monitor.vibration(500)
 
-    def on_button_changed(self, button: XBoxControllerButtonKey, is_pressed: bool):
-        if button == XBoxControllerButtonKey.LB:
+    def on_button_changed(self, button: GamepadButtonKey, is_pressed: bool):
+        if button == GamepadButtonKey.LB:
             self.controller_lb.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.RB:
+        elif button == GamepadButtonKey.RB:
             self.controller_rb.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.BACK:
+        elif button == GamepadButtonKey.BACK:
             self.controller_back.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.START:
+        elif button == GamepadButtonKey.START:
             self.controller_start.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.A:
+        elif button == GamepadButtonKey.A:
             self.controller_button.button_a.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.B:
+        elif button == GamepadButtonKey.B:
             self.controller_button.button_b.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.X:
+        elif button == GamepadButtonKey.X:
             self.controller_button.button_x.is_pressed = is_pressed
-        elif button == XBoxControllerButtonKey.Y:
+        elif button == GamepadButtonKey.Y:
             self.controller_button.button_y.is_pressed = is_pressed
 
-    def on_trigger_left_changed(self, status: XBoxControllerStatusTrigger):
+    def on_trigger_left_changed(self, status: GamepadStatusTrigger):
         self.controller_lt.value = status.value
 
-    def on_trigger_right_changed(self, status: XBoxControllerStatusTrigger):
+    def on_trigger_right_changed(self, status: GamepadStatusTrigger):
         self.controller_rt.value = status.value
 
-    def on_joystick_left_changed(self, status: XBoxControllerStatusJoystick):
+    def on_joystick_left_changed(self, status: GamepadStatusJoystick):
         self.controller_left_stick.x = status.x
         self.controller_left_stick.y = status.y
 
-    def on_joystick_right_changed(self, status: XBoxControllerStatusJoystick):
+    def on_joystick_right_changed(self, status: GamepadStatusJoystick):
         self.controller_right_stick.x = status.x
         self.controller_right_stick.y = status.y
 
-    def on_direction_changed(self, status: XBoxControllerStatusDirection):
+    def on_direction_changed(self, status: GamepadStatusDirection):
         self.controller_direction.button_top.is_pressed = status.direction_up
         self.controller_direction.button_bottom.is_pressed = status.direction_down
         self.controller_direction.button_left.is_pressed = status.direction_left

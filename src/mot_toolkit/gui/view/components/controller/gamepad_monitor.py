@@ -12,7 +12,7 @@ from PySide6.QtWidgets import QWidget
 interval_input_check = 100
 
 
-class XBoxControllerStatusDirection:
+class GamepadStatusDirection:
     direction_none: bool = True
 
     direction_up: bool = False
@@ -63,7 +63,7 @@ class XBoxControllerStatusDirection:
 
         return up, down, left, right
 
-    def update_direction_state(self, state: tuple) -> "XBoxControllerStatusDirection":
+    def update_direction_state(self, state: tuple) -> "GamepadStatusDirection":
         self.__last_state = (
             self.direction_up,
             self.direction_down,
@@ -141,7 +141,7 @@ class XBoxControllerStatusDirection:
         return "未知"
 
 
-class XBoxControllerStatusTrigger:
+class GamepadStatusTrigger:
     __value: float = -1
 
     def __init__(self):
@@ -175,7 +175,7 @@ class XBoxControllerStatusTrigger:
         return self.is_pressed()
 
 
-class XBoxControllerStatusButton:
+class GamepadStatusButton:
     button_a: bool = False
     button_b: bool = False
     button_x: bool = False
@@ -191,7 +191,7 @@ class XBoxControllerStatusButton:
     button_start: bool = False
 
 
-class XBoxControllerStatusJoystick:
+class GamepadStatusJoystick:
     __x: float = 0
     __y: float = 0
 
@@ -253,7 +253,7 @@ class XBoxControllerStatusJoystick:
         return not self.is_have_direction()
 
 
-class XBoxControllerButtonKey(Enum):
+class GamepadButtonKey(Enum):
     A = 1
     B = 0
     X = 3
@@ -280,45 +280,45 @@ class XBoxControllerButtonKey(Enum):
     RIGHT_JOYSTICK_Y_AXIS = 4
 
 
-class XBoxControllerStatusCode(Enum):
+class GamepadStatusCode(Enum):
     NONE = 0
     WAITING = 1
     READY = 2
     DISCONNECTED = 3
 
 
-class XboxController(QWidget):
+class GamepadMonitor(QWidget):
     slot_status_changed: Signal = Signal(str)
 
-    slot_direction_changed: Signal = Signal(XBoxControllerStatusDirection)
+    slot_direction_changed: Signal = Signal(GamepadStatusDirection)
     slot_direction_pressed: Signal = Signal(list)
     slot_direction_released: Signal = Signal(list)
 
-    slot_trigger_left_changed: Signal = Signal(XBoxControllerStatusTrigger)
-    slot_trigger_right_changed: Signal = Signal(XBoxControllerStatusTrigger)
+    slot_trigger_left_changed: Signal = Signal(GamepadStatusTrigger)
+    slot_trigger_right_changed: Signal = Signal(GamepadStatusTrigger)
 
-    slot_joystick_left_changed: Signal = Signal(XBoxControllerStatusJoystick)
-    slot_joystick_right_changed: Signal = Signal(XBoxControllerStatusJoystick)
+    slot_joystick_left_changed: Signal = Signal(GamepadStatusJoystick)
+    slot_joystick_right_changed: Signal = Signal(GamepadStatusJoystick)
 
-    slot_button_pressed: Signal = Signal(XBoxControllerButtonKey)
-    slot_button_released: Signal = Signal(XBoxControllerButtonKey)
-    slot_button_triggered: Signal = Signal(XBoxControllerButtonKey)
-    slot_button_changed: Signal = Signal(XBoxControllerButtonKey, bool)
+    slot_button_pressed: Signal = Signal(GamepadButtonKey)
+    slot_button_released: Signal = Signal(GamepadButtonKey)
+    slot_button_triggered: Signal = Signal(GamepadButtonKey)
+    slot_button_changed: Signal = Signal(GamepadButtonKey, bool)
 
-    status_direction: XBoxControllerStatusDirection
+    status_direction: GamepadStatusDirection
 
-    status_button: XBoxControllerStatusButton
+    status_button: GamepadStatusButton
 
-    status_trigger_left: XBoxControllerStatusTrigger
-    status_trigger_right: XBoxControllerStatusTrigger
+    status_trigger_left: GamepadStatusTrigger
+    status_trigger_right: GamepadStatusTrigger
 
-    status_joystick_left: XBoxControllerStatusJoystick
-    status_joystick_right: XBoxControllerStatusJoystick
+    status_joystick_left: GamepadStatusJoystick
+    status_joystick_right: GamepadStatusJoystick
 
     joystick: pygame.joystick.Joystick = None
 
     name = ""
-    status: XBoxControllerStatusCode = XBoxControllerStatusCode.NONE
+    status: GamepadStatusCode = GamepadStatusCode.NONE
     status_str = ""
 
     __timer_monitor: QTimer
@@ -375,7 +375,7 @@ class XboxController(QWidget):
         device_count = pygame.joystick.get_count()
 
         if device_count == 0:
-            self.status = XBoxControllerStatusCode.WAITING
+            self.status = GamepadStatusCode.WAITING
             self.update_status("Waiting for controller...")
 
         while device_count == 0:
@@ -401,7 +401,7 @@ class XboxController(QWidget):
         self.__is_ready = True
 
         self.name = self.joystick.get_name()
-        self.status = XBoxControllerStatusCode.READY
+        self.status = GamepadStatusCode.READY
 
         __status_check_thread = threading.Thread(target=self.__controller_monitor_thread)
         __status_check_thread.start()
@@ -417,7 +417,7 @@ class XboxController(QWidget):
             if pygame.joystick.get_count() == 0:
                 self.joystick = None
                 self.__is_ready = False
-                self.status = XBoxControllerStatusCode.DISCONNECTED
+                self.status = GamepadStatusCode.DISCONNECTED
                 self.update_status("Controller disconnected.")
 
                 if self.__auto_connect:
@@ -437,17 +437,17 @@ class XboxController(QWidget):
         pass
 
     def __init_objects(self):
-        self.status_direction = XBoxControllerStatusDirection()
+        self.status_direction = GamepadStatusDirection()
         self.slot_direction_changed.connect(self.__slot_direction_changed)
 
-        self.status_button = XBoxControllerStatusButton()
+        self.status_button = GamepadStatusButton()
         self.slot_button_changed.connect(self.__slot_button_changed)
 
-        self.status_trigger_left = XBoxControllerStatusTrigger()
-        self.status_trigger_right = XBoxControllerStatusTrigger()
+        self.status_trigger_left = GamepadStatusTrigger()
+        self.status_trigger_right = GamepadStatusTrigger()
 
-        self.status_joystick_left = XBoxControllerStatusJoystick()
-        self.status_joystick_right = XBoxControllerStatusJoystick()
+        self.status_joystick_left = GamepadStatusJoystick()
+        self.status_joystick_right = GamepadStatusJoystick()
 
         self.__timer_monitor = QTimer(self)
         self.__timer_monitor.timeout.connect(self.__update_controller_input)
@@ -459,55 +459,55 @@ class XboxController(QWidget):
         self.__timer_tick.setInterval(self.__tick_time_interval)
         self.__timer_tick.start(self.__tick_time_interval)
 
-    def __slot_direction_changed(self, direction: XBoxControllerStatusDirection):
-        button_list: List[XBoxControllerButtonKey] = list()
+    def __slot_direction_changed(self, direction: GamepadStatusDirection):
+        button_list: List[GamepadButtonKey] = list()
 
         if not direction.is_have_direction():
             up, down, left, right = self.status_direction.get_last_direction_state()
             if up:
-                button_list.append(XBoxControllerButtonKey.DIRECTION_UP)
+                button_list.append(GamepadButtonKey.DIRECTION_UP)
             if down:
-                button_list.append(XBoxControllerButtonKey.DIRECTION_DOWN)
+                button_list.append(GamepadButtonKey.DIRECTION_DOWN)
             if left:
-                button_list.append(XBoxControllerButtonKey.DIRECTION_LEFT)
+                button_list.append(GamepadButtonKey.DIRECTION_LEFT)
             if right:
-                button_list.append(XBoxControllerButtonKey.DIRECTION_RIGHT)
+                button_list.append(GamepadButtonKey.DIRECTION_RIGHT)
 
             self.slot_direction_released.emit(button_list)
             return
 
         if direction.direction_up:
-            button_list.append(XBoxControllerButtonKey.DIRECTION_UP)
+            button_list.append(GamepadButtonKey.DIRECTION_UP)
         elif direction.direction_down:
-            button_list.append(XBoxControllerButtonKey.DIRECTION_DOWN)
+            button_list.append(GamepadButtonKey.DIRECTION_DOWN)
         elif direction.direction_left:
-            button_list.append(XBoxControllerButtonKey.DIRECTION_LEFT)
+            button_list.append(GamepadButtonKey.DIRECTION_LEFT)
         elif direction.direction_right:
-            button_list.append(XBoxControllerButtonKey.DIRECTION_RIGHT)
+            button_list.append(GamepadButtonKey.DIRECTION_RIGHT)
         self.slot_direction_pressed.emit(button_list)
 
-    def __slot_button_changed(self, button: XBoxControllerButtonKey, is_pressed: bool):
+    def __slot_button_changed(self, button: GamepadButtonKey, is_pressed: bool):
         if is_pressed:
             self.slot_button_pressed.emit(button)
         else:
             self.slot_button_released.emit(button)
             self.slot_button_triggered.emit(button)
 
-        if button == XBoxControllerButtonKey.A:
+        if button == GamepadButtonKey.A:
             self.status_button.button_a = is_pressed
-        elif button == XBoxControllerButtonKey.B:
+        elif button == GamepadButtonKey.B:
             self.status_button.button_b = is_pressed
-        elif button == XBoxControllerButtonKey.X:
+        elif button == GamepadButtonKey.X:
             self.status_button.button_x = is_pressed
-        elif button == XBoxControllerButtonKey.Y:
+        elif button == GamepadButtonKey.Y:
             self.status_button.button_y = is_pressed
-        elif button == XBoxControllerButtonKey.LB:
+        elif button == GamepadButtonKey.LB:
             self.status_button.button_lb = is_pressed
-        elif button == XBoxControllerButtonKey.RB:
+        elif button == GamepadButtonKey.RB:
             self.status_button.button_rb = is_pressed
-        elif button == XBoxControllerButtonKey.BACK:
+        elif button == GamepadButtonKey.BACK:
             self.status_button.button_back = is_pressed
-        elif button == XBoxControllerButtonKey.START:
+        elif button == GamepadButtonKey.START:
             self.status_button.button_start = is_pressed
 
     def is_ready(self) -> bool:
@@ -564,14 +564,14 @@ class XboxController(QWidget):
             elif event.type == pygame.JOYBUTTONDOWN:
                 button = event.button
 
-                self.slot_button_changed.emit(XBoxControllerButtonKey(button), True)
+                self.slot_button_changed.emit(GamepadButtonKey(button), True)
 
                 if self.debug_mode:
                     self.print_state(f"按钮 {button} 被按下")
             elif event.type == pygame.JOYBUTTONUP:
                 button = event.button
 
-                self.slot_button_changed.emit(XBoxControllerButtonKey(button), False)
+                self.slot_button_changed.emit(GamepadButtonKey(button), False)
 
                 if self.debug_mode:
                     self.print_state(f"按钮 {button} 被释放")
@@ -647,10 +647,14 @@ if __name__ == '__main__':
     layout = QVBoxLayout()
     widget.setLayout(layout)
 
-    layout.addWidget(QLabel("Hello World!"))
+    label_status = QLabel("Hello World!")
+    layout.addWidget(label_status)
 
-    controller = XboxController()
-    controller.debug_mode = True
+    gamepad_monitor = GamepadMonitor()
+    gamepad_monitor.debug_mode = True
+    gamepad_monitor.slot_status_changed.connect(
+        lambda status: label_status.setText(status)
+    )
 
     main_window.show()
     sys.exit(app.exec())
