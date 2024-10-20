@@ -6,7 +6,7 @@ from PySide6.QtGui import QPainter, QPen, QColor
 
 class XBoxDemoJoystick(QWidget):
     __outline_color = Qt.GlobalColor.black
-    __point_color = QColor(0, 0, 255)  # 蓝色
+    __point_color = Qt.GlobalColor.blue
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -45,12 +45,14 @@ class XBoxDemoJoystick(QWidget):
 
     @x.setter
     def x(self, value):
-        # 限制 x 值在 -1 到 1 之间
+        value = round(value, 2)
+
+        # Restrict x value between -1 and 1
         if -1 <= value <= 1:
             self.__x = value
             self.update()
         else:
-            raise ValueError("x must be between -1 and 1")
+            raise ValueError(f"Value[{value}], x must be between -1 and 1")
 
     @property
     def y(self):
@@ -58,12 +60,14 @@ class XBoxDemoJoystick(QWidget):
 
     @y.setter
     def y(self, value):
-        # 限制 y 值在 -1 到 1 之间
+        value = round(value, 2)
+
+        # Restrict x value between -1 and 1
         if -1 <= value <= 1:
             self.__y = value
             self.update()
         else:
-            raise ValueError("y must be between -1 and 1")
+            raise ValueError(f"Value[{value}], y must be between -1 and 1")
 
     def paintEvent(self, event):
         painter = QPainter(self)

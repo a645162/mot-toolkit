@@ -1,4 +1,6 @@
 import sys
+
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QGridLayout
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -30,9 +32,11 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.layout = QVBoxLayout()
         self.widget.setLayout(self.layout)
 
-        self.layout.addWidget(QLabel("Hello World!"))
+        self.label_status = QLabel("Hello World!", parent=self.widget)
+        self.layout.addWidget(self.label_status)
 
         self.button_vibration = XBoxDemoColorButton(text="Vibration")
+        self.button_vibration.clicked.connect(self.controller_vibration)
         self.layout.addWidget(self.button_vibration)
 
         self.grid_widget = QWidget(parent=self.widget)
@@ -61,7 +65,9 @@ class XboxControllerDemoMainWindow(QMainWindow):
         )
 
         self.controller_left_stick = XBoxDemoJoystick()
+        self.controller_left_stick.point_color = Qt.GlobalColor.red
         self.controller_right_stick = XBoxDemoJoystick()
+        self.controller_right_stick.point_color = Qt.GlobalColor.blue
 
         self.controller_back = XBoxDemoColorButton(
             text="Back",
@@ -99,6 +105,14 @@ class XboxControllerDemoMainWindow(QMainWindow):
         self.controller.slot_joystick_right_changed.connect(self.on_joystick_right_changed)
 
         self.controller.slot_direction_changed.connect(self.on_direction_changed)
+
+        self.controller.slot_status_changed.connect(self.on_status_changed)
+
+    def on_status_changed(self, status):
+        self.label_status.setText(status)
+
+    def controller_vibration(self):
+        self.controller.vibration(500)
 
     def on_button_changed(self, button: XBoxControllerButtonKey, is_pressed: bool):
         if button == XBoxControllerButtonKey.LB:

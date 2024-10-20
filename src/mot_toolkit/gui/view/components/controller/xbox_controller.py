@@ -280,7 +280,16 @@ class XBoxControllerButtonKey(Enum):
     RIGHT_JOYSTICK_Y_AXIS = 4
 
 
+class XBoxControllerStatusCode(Enum):
+    NONE = 0
+    WAITING = 1
+    READY = 2
+    DISCONNECTED = 3
+
+
 class XboxController(QWidget):
+    slot_status_changed: Signal = Signal(str)
+
     slot_direction_changed: Signal = Signal(XBoxControllerStatusDirection)
     slot_direction_pressed: Signal = Signal(list)
     slot_direction_released: Signal = Signal(list)
@@ -308,16 +317,24 @@ class XboxController(QWidget):
 
     joystick: pygame.joystick.Joystick = None
 
+    name = ""
+    status: XBoxControllerStatusCode = XBoxControllerStatusCode.NONE
+    status_str = ""
+
     __timer_monitor: QTimer
     __timer_tick: QTimer
     __tick_time_interval = 1000
 
     __is_ready: bool = False
     __wait_thread: threading.Thread | None = None
+    # Check the controller status (when the controller is disconnected)
+    __status_check_thread: threading.Thread | None = None
+
+    __auto_connect: bool = True
 
     debug_mode = False
 
-    def __init__(self, auto_work=True, parent=None):
+    def __init__(self, auto_connect=True, parent=None):
         super().__init__(parent=parent)
 
         self.__init_properties()
@@ -326,7 +343,9 @@ class XboxController(QWidget):
 
         self.__init_objects()
 
-        if auto_work:
+        self.__auto_connect = auto_connect
+
+        if self.__auto_connect:
             self.start_to_init()
 
     def start_to_init(self):
@@ -337,20 +356,33 @@ class XboxController(QWidget):
         self.__wait_thread = threading.Thread(target=self.__init_controller_thread)
         self.__wait_thread.start()
 
+    def update_status(self, status_str):
+        self.status_str = status_str
+        print(status_str)
+        self.slot_status_changed.emit(status_str)
+
     def __init_controller_thread(self):
-        print("Checking controller...")
+        self.update_status("Checking controller...")
+
+        try:
+            pygame.quit()
+            pygame.joystick.quit()
+        except Exception:
+            pass
 
         pygame.init()
         pygame.joystick.init()
         device_count = pygame.joystick.get_count()
 
         if device_count == 0:
-            print("Waiting for controller...")
+            self.status = XBoxControllerStatusCode.WAITING
+            self.update_status("Waiting for controller...")
 
         while device_count == 0:
             self.joystick = None
             self.__is_ready = False
 
+            pygame.quit()
             pygame.joystick.quit()
 
             time_sleep(1)
@@ -361,23 +393,38 @@ class XboxController(QWidget):
             device_count = pygame.joystick.get_count()
 
         if device_count > 1:
-            print("Multiple controllers detected. Using the first one.")
+            self.update_status("Multiple controllers detected. Using the first one.")
 
         self.joystick = pygame.joystick.Joystick(0)
         self.joystick.init()
 
         self.__is_ready = True
-        # self.__ready_status_changed()
-        print(f"Used controller: {self.joystick.get_name()}")
+
+        self.name = self.joystick.get_name()
+        self.status = XBoxControllerStatusCode.READY
+
+        __status_check_thread = threading.Thread(target=self.__controller_monitor_thread)
+        __status_check_thread.start()
+
+        self.update_status(f"Used controller: {self.name}")
 
     def __controller_monitor_thread(self):
         # Monitor the controller status
         # Check if the controller is disconnected
         while self.__is_ready:
+            time_sleep(1)
+
             if pygame.joystick.get_count() == 0:
                 self.joystick = None
                 self.__is_ready = False
-                # self.__ready_status_changed()
+                self.status = XBoxControllerStatusCode.DISCONNECTED
+                self.update_status("Controller disconnected.")
+
+                if self.__auto_connect:
+                    self.__wait_thread = None
+                    self.start_to_init()
+
+                break
 
     def __init_properties(self):
         self.setMinimumWidth(0)
@@ -466,13 +513,6 @@ class XboxController(QWidget):
     def is_ready(self) -> bool:
         return self.__is_ready
 
-    def __ready_status_changed(self):
-        if self.is_ready and not self.__timer_monitor.isActive():
-            self.__timer_monitor.start(interval_input_check)
-        else:
-            if self.__timer_monitor.isActive():
-                self.__timer_monitor.stop()
-
     @property
     def ready(self) -> bool:
         return self.is_ready()
@@ -520,21 +560,21 @@ class XboxController(QWidget):
                         self.slot_joystick_right_changed.emit(self.status_joystick_right)
 
                 if self.debug_mode:
-                    self.update_state(f"轴 {axis} 值: {value:.2f}")
+                    self.print_state(f"轴 {axis} 值: {value:.2f}")
             elif event.type == pygame.JOYBUTTONDOWN:
                 button = event.button
 
                 self.slot_button_changed.emit(XBoxControllerButtonKey(button), True)
 
                 if self.debug_mode:
-                    self.update_state(f"按钮 {button} 被按下")
+                    self.print_state(f"按钮 {button} 被按下")
             elif event.type == pygame.JOYBUTTONUP:
                 button = event.button
 
                 self.slot_button_changed.emit(XBoxControllerButtonKey(button), False)
 
                 if self.debug_mode:
-                    self.update_state(f"按钮 {button} 被释放")
+                    self.print_state(f"按钮 {button} 被释放")
             elif event.type == pygame.JOYHATMOTION:
                 hat = event.hat
                 value = event.value
@@ -542,13 +582,30 @@ class XboxController(QWidget):
                 self.status_direction.update_direction_state(value)
 
                 if self.debug_mode:
-                    self.update_state(f"方向键 {hat} 值: {value}")
+                    self.print_state(f"方向键 {hat} 值: {value}")
                     print(self.status_direction.get_human_direction())
 
                 self.slot_direction_changed.emit(self.status_direction)
 
-    def update_state(self, text):
+    def print_state(self, text):
         print(text)
+
+    def vibration(
+            self,
+            duration: int = 500,
+            low_frequency: float = 0.5,
+            high_frequency: float = 0.5
+    ):
+        if self.joystick is not None:
+            self.joystick.rumble(
+                low_frequency=low_frequency,
+                high_frequency=high_frequency,
+                duration=duration
+            )
+
+    def vibration_stop(self):
+        if self.joystick is not None:
+            self.joystick.rumble(0.0, 0.0, 0)
 
     @property
     def tick_time_interval(self) -> int:
