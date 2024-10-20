@@ -176,13 +176,16 @@ def main(gamepad_index: int):
 
 
 if __name__ == '__main__':
-    gamepad_count = 2
+    gamepad_count = 1
 
-    # Multi Process
-    from multiprocessing import Process
+    if gamepad_count > 1:
+        # Multi Process
+        from multiprocessing import Process
 
-    processes = []
-    for i in range(gamepad_count):
-        process = Process(target=main, args=(i,))
-        processes.append(process)
-        process.start()
+        processes = []
+        for i in range(gamepad_count):
+            process = Process(target=main, args=(i,))
+            processes.append(process)
+            process.start()
+    else:
+        main(gamepad_index=0)

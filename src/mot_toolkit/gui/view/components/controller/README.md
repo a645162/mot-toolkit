@@ -1,6 +1,6 @@
 # Python Game XBox 360 Controller
 
-Device: 北通阿修罗2
+Device: 北通阿修罗2(Xbox 360 Controller)
 
 ## 方向键
 
@@ -18,7 +18,7 @@ Device: 北通阿修罗2
 
 - START: 7
 - BACK: 6
-- LOGO: 8
+- LOGO: Windows:10, Linux:8
 
 - A: 1
 - B: 0
@@ -31,11 +31,18 @@ Device: 北通阿修罗2
 
 右下角为正
 
-- 左摇杆-横向-axis 0
-- 左摇杆-纵向-axis 1
+- 左摇杆-横向(x)-axis 0
+- 左摇杆-纵向(y)-axis 1
 
-- 右摇杆-横向-axis 3
-- 右摇杆-纵向-axis 4
+### Windows下的右摇杆
+
+- 右摇杆-横向(x)-axis 2
+- 右摇杆-纵向(y)-axis 3
+
+### Linux下的右摇杆
+
+- 右摇杆-横向(x)-axis 3
+- 右摇杆-纵向(y)-axis 4
 
 ### 左摇杆
 
@@ -46,12 +53,21 @@ Device: 北通阿修罗2
 
 ### 右摇杆
 
+以Linux为例
+
 - 左: axis 3的值为-1
 - 右: axis 3的值为1
 - 上: axis 4的值为-1
 - 下: axis 4的值为1
 
 ## 扳机(LT, RT)
+
+### Windows下的扳机
+
+- 左扳机(LT): axis 4
+- 右扳机(RT): axis 5
+
+### Linux下的扳机
 
 - 左扳机(LT): axis 2
 - 右扳机(RT): axis 5
