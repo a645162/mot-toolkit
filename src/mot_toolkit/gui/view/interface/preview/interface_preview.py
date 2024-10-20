@@ -34,6 +34,7 @@ from mot_toolkit.gui.view.interface. \
     preview.components.detail.detail_widget import DetailWidget
 from mot_toolkit.gui.view.interface.preview.components. \
     option.dialog_brightness_contrast import DialogBrightnessContrast
+from mot_toolkit.gui.view.interface.preview.feature.opencv_preview import OpenCVPreviewOptionWindow
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -384,6 +385,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.__action_item_jump_file_count
         )
         self.menu_file_list.addAction(self.menu_file_list_jump_file_count)
+
+        self.menu_file_list.addSeparator()
+
+        # OpenCV Show Video
+        self.menu_file_list_show_video_opencv = \
+            QAction("Show Video(OpenCV)", self.menu_file_list)
+        self.menu_file_list_show_video_opencv.triggered.connect(
+            self.__action_file_list_show_video
+        )
+        self.menu_file_list.addAction(self.menu_file_list_show_video_opencv)
 
     def __init_menu_frame(self):
         # Frame Menu
@@ -1317,20 +1328,44 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if self.current_annotation_object is None:
             return
         img_path = self.current_annotation_object.pic_path
-        img = cv2.imread(img_path)
+        # img = cv2.imread(img_path)
+        #
+        # for rect in self.current_annotation_object.rect_annotation_list:
+        #     img = cv2.rectangle(
+        #         img,
+        #         (int(rect.x1), int(rect.y1)),
+        #         (int(rect.x2), int(rect.y2)),
+        #         (0, 255, 0),
+        #         2
+        #     )
 
-        for rect in self.current_annotation_object.rect_annotation_list:
-            img = cv2.rectangle(
-                img,
-                (int(rect.x1), int(rect.y1)),
-                (int(rect.x2), int(rect.y2)),
-                (0, 255, 0),
-                2
-            )
+        img = self.current_annotation_object.get_cv_mat_with_box()
 
         cv2.imshow(img_path, img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+    def __action_file_list_show_video(self):
+        current_frame_index = self.get_current_file_truly_index()
+
+        selection_label = ""
+        try:
+            for _, widget in enumerate(self.main_image_view.annotation_widget_rect_list):
+                if widget.selecting:
+                    selection_label = widget.label_text
+                    break
+        except Exception:
+            pass
+
+        option_window = OpenCVPreviewOptionWindow(
+            parent=self,
+            annotation_file=self.annotation_directory.annotation_file,
+            current_frame=current_frame_index,
+            start_frame=1,
+            end_frame=len(self.annotation_directory.annotation_file),
+            selection_label=selection_label
+        )
+        option_window.show()
 
     def __action_set_frame_outline_binary_threshold(self):
         number, ok = QInputDialog.getInt(

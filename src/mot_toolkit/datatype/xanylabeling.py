@@ -6,6 +6,7 @@ from PySide6.QtCore import Signal
 
 import cv2
 import numpy as np
+from PySide6.QtGui import QColor
 
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
@@ -418,9 +419,11 @@ class XAnyLabelingAnnotation(AnnotationFile):
     def get_cv_mat_with_box(
             self,
             with_text=True,
-            color: tuple = (0, 255, 0),
-            text_color: tuple = (0, 0, 255),
+            color: tuple | QColor = (0, 255, 0),
+            text_color: tuple | QColor = (0, 0, 255),
             thickness: int = 2,
+            selection_label: str = "",
+            selection_color: tuple | QColor = (0, 255, 255),
     ) -> np.ndarray | None:
         img_np = self.get_cv_mat()
         if img_np is None:
@@ -428,15 +431,27 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         new_image = img_np.copy()
 
+        if isinstance(color, QColor):
+            color = color.getRgb()
+        if isinstance(text_color, QColor):
+            text_color = text_color.getRgb()
+        if isinstance(selection_color, QColor):
+            selection_color = selection_color.getRgb()
+
         for rect_item in self.rect_annotation_list:
             x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
+
+            current_color = color
+
+            if len(selection_label) > 0 and rect_item.label == selection_label:
+                current_color = selection_color
 
             new_image = \
                 cv2.rectangle(
                     new_image,
                     (x1, y1),
                     (x2, y2),
-                    color,
+                    current_color,
                     thickness
                 )
 
