@@ -190,6 +190,7 @@ class GamepadStatusButton:
 
     button_back: bool = False
     button_start: bool = False
+    button_logo: bool = False
 
 
 class GamepadStatusJoystick:
@@ -318,34 +319,30 @@ class GamepadAxisKey():
     def RIGHT_TRIGGER(self):
         return 5
 
-    @staticmethod
-    def is_joystick_axis(axis: int) -> bool:
+    def is_joystick_axis(self, axis: int) -> bool:
         return axis in (
-            GamepadAxisKey.LEFT_JOYSTICK_X_AXIS,
-            GamepadAxisKey.LEFT_JOYSTICK_Y_AXIS,
-            GamepadAxisKey.RIGHT_JOYSTICK_X_AXIS,
-            GamepadAxisKey.RIGHT_JOYSTICK_Y_AXIS
+            self.LEFT_JOYSTICK_X_AXIS,
+            self.LEFT_JOYSTICK_Y_AXIS,
+            self.RIGHT_JOYSTICK_X_AXIS,
+            self.RIGHT_JOYSTICK_Y_AXIS
         )
 
-    @staticmethod
-    def is_joystick_left_axis(axis: int) -> bool:
+    def is_joystick_left_axis(self, axis: int) -> bool:
         return axis in (
-            GamepadAxisKey.LEFT_JOYSTICK_X_AXIS,
-            GamepadAxisKey.LEFT_JOYSTICK_Y_AXIS
+            self.LEFT_JOYSTICK_X_AXIS,
+            self.LEFT_JOYSTICK_Y_AXIS
         )
 
-    @staticmethod
-    def is_joystick_right_axis(axis: int) -> bool:
+    def is_joystick_right_axis(self, axis: int) -> bool:
         return axis in (
-            GamepadAxisKey.RIGHT_JOYSTICK_X_AXIS,
-            GamepadAxisKey.RIGHT_JOYSTICK_Y_AXIS
+            self.RIGHT_JOYSTICK_X_AXIS,
+            self.RIGHT_JOYSTICK_Y_AXIS
         )
 
-    @staticmethod
-    def is_trigger_axis(axis: int) -> bool:
+    def is_trigger_axis(self, axis: int) -> bool:
         return axis in (
-            GamepadAxisKey.LEFT_TRIGGER,
-            GamepadAxisKey.RIGHT_TRIGGER
+            self.LEFT_TRIGGER,
+            self.RIGHT_TRIGGER
         )
 
 
@@ -668,10 +665,13 @@ class GamepadMonitor(QWidget):
             elif event.type == pygame.JOYBUTTONDOWN:
                 button = event.button
 
-                if self.debug_mode:
-                    self.slot_button_changed.emit(GamepadButtonKey(button), True)
+                if button == 10 and platform.system() == 'Windows':
+                    button = GamepadButtonKey.LOGO
 
-                self.print_state(f"按钮 {button} 被按下")
+                if self.debug_mode:
+                    self.print_state(f"按钮 {button} 被按下")
+
+                self.slot_button_changed.emit(GamepadButtonKey(button), True)
             elif event.type == pygame.JOYBUTTONUP:
                 button = event.button
 
@@ -683,13 +683,13 @@ class GamepadMonitor(QWidget):
                 hat = event.hat
                 value = event.value
 
-                self.status_direction.update_direction_state(value)
-
                 if self.debug_mode:
                     self.print_state(
                         f"方向键 {hat} 值: {value} " +
                         self.status_direction.get_human_direction()
                     )
+
+                self.status_direction.update_direction_state(value)
 
                 self.slot_direction_changed.emit(self.status_direction)
 
