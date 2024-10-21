@@ -95,6 +95,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.show_box_checkbox.setChecked(True)
         self.with_text_checkbox = QCheckBox('With Text')
         self.with_text_checkbox.setChecked(True)
+        self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
+        self.only_near_selection_checkbox.setChecked(False)
 
         self.select_color_button = QPushButton('Select Selected Color')
         self.text_color_button = QPushButton('Select Text Color')
@@ -138,6 +140,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         layout.addWidget(self.show_box_checkbox)
         layout.addWidget(self.with_text_checkbox)
+        layout.addWidget(self.only_near_selection_checkbox)
 
         layout.addWidget(self.select_color_button)
         layout.addWidget(self.text_color_button)
@@ -218,6 +221,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
             show_box = self.show_box_checkbox.isChecked()
             with_text = self.with_text_checkbox.isChecked()
+            only_near_selection = self.only_near_selection_checkbox.isChecked()
         except ValueError:
             QMessageBox.critical(self, 'Error', 'Invalid input')
             return
@@ -252,9 +256,14 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                     thickness=thickness,
                     selection_label=selection_label,
                     selection_color=selected_color,
+                    crop_selection=only_near_selection,
+                    not_found_return_none=only_near_selection
                 )
             else:
                 image = annotation.get_cv_mat()
+
+            if image is None:
+                continue
 
             # Draw Text
             text = f"{i + 1}/{file_count}"

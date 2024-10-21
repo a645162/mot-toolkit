@@ -424,6 +424,12 @@ class XAnyLabelingAnnotation(AnnotationFile):
             thickness: int = 2,
             selection_label: str = "",
             selection_color: tuple | QColor = (0, 255, 255),
+            not_found_return_none: bool = False,
+            crop_selection: bool = False,
+            crop_x1: int = 0, crop_y1: int = 0,
+            crop_x2: int = 0, crop_y2: int = 0,
+            crop_padding: int = 50,
+            min_size: int = 1000
     ) -> np.ndarray | None:
         img_np = self.get_cv_mat()
         if img_np is None:
@@ -441,13 +447,20 @@ class XAnyLabelingAnnotation(AnnotationFile):
         if isinstance(selection_color, QColor):
             selection_color = rgb2bgr(selection_color.getRgb())
 
+        selection_x1, selection_y1, selection_x2, selection_y2 = 0, 0, 0, 0
+        found_selection = False
+
         for rect_item in self.rect_annotation_list:
             x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
 
             current_color = color
 
+            # Find Selection
             if len(selection_label) > 0 and rect_item.label == selection_label:
                 current_color = selection_color
+
+                selection_x1, selection_y1, selection_x2, selection_y2 = x1, y1, x2, y2
+                found_selection = True
 
             new_image = \
                 cv2.rectangle(
@@ -471,7 +484,61 @@ class XAnyLabelingAnnotation(AnnotationFile):
                     2
                 )
 
-        return new_image
+        if (
+                not_found_return_none and
+                len(selection_label) > 0 and
+                not found_selection
+        ):
+            return None
+
+        crop_selection = crop_selection and found_selection
+
+        if (
+                (not crop_selection) and
+                (
+                        crop_x1 == 0 and
+                        crop_y1 == 0 and
+                        crop_x2 == 0 and
+                        crop_y2 == 0
+                )
+        ):
+            return new_image
+
+        image_width, image_height = new_image.shape[1], new_image.shape[0]
+
+        crop_x1 = crop_x1
+        crop_y1 = crop_y1
+        crop_x2 = crop_x2
+        crop_y2 = crop_y2
+
+        if crop_selection:
+            crop_x1 = selection_x1
+            crop_y1 = selection_y1
+            crop_x2 = selection_x2
+            crop_y2 = selection_y2
+
+        # Add Padding
+        crop_x1 -= crop_padding
+        crop_y1 -= crop_padding
+        crop_x2 += crop_padding
+        crop_y2 += crop_padding
+
+        # Fix Crop Size
+        crop_x1 = max(0, crop_x1)
+        crop_y1 = max(0, crop_y1)
+        crop_x2 = min(image_width, crop_x2)
+        crop_y2 = min(image_height, crop_y2)
+
+        crop_image = new_image[crop_y1:crop_y2, crop_x1:crop_x2]
+
+        crop_image_width, crop_image_height = crop_image.shape[1], crop_image.shape[0]
+
+        if min_size > 0:
+            if crop_image_width < min_size or crop_image_height < min_size:
+                scale_factor = min_size / max(crop_image_width, crop_image_height)
+                crop_image = cv2.resize(crop_image, (0, 0), fx=scale_factor, fy=scale_factor)
+
+        return crop_image
 
 
 def parse_xanylabeling_json(

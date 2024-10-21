@@ -1398,11 +1398,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_frame_opencv_rect_near(self):
         # Widget
-        selected_widget: AnnotationWidgetRect | None = None
-        for _, widget in enumerate(self.main_image_view.annotation_widget_rect_list):
-            if widget.selecting:
-                selected_widget = widget
-                break
+        selected_widget: AnnotationWidgetRect | None = \
+            self.main_image_view.selection_widget
         if selected_widget is None:
             QMessageBox.warning(self, "Warning", "Please select a rect first.")
             return
@@ -1412,38 +1409,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.warning(self, "Warning", "Please select a rect first.")
             return
 
-        image = self.current_annotation_object.get_cv_mat()
-        if image is None:
-            QMessageBox.warning(self, "Warning", "Image is None.")
-            return
-
         x1, y1, x2, y2 = rect_obj.x1, rect_obj.y1, rect_obj.x2, rect_obj.y2
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-        # Draw Rect
-        image = cv2.rectangle(
-            image,
-            (x1, y1),
-            (x2, y2),
-            (0, 255, 0),
-            2
+        crop_image = self.current_annotation_object.get_cv_mat_with_box(
+            with_text=False,
+            crop_x1=x1, crop_y1=y1, crop_x2=x2, crop_y2=y2
         )
-
-        padding = 50
-
-        crop_x1 = max(0, x1 - padding)
-        crop_y1 = max(0, y1 - padding)
-        crop_x2 = min(image.shape[1], x2 + padding)
-        crop_y2 = min(image.shape[0], y2 + padding)
-
-        crop_image = image[crop_y1:crop_y2, crop_x1:crop_x2]
-
-        crop_image_width, crop_image_height = crop_image.shape[1], crop_image.shape[0]
-
-        min_size = 1000
-        if crop_image_width < min_size or crop_image_height < min_size:
-            scale_factor = min_size / max(crop_image_width, crop_image_height)
-            crop_image = cv2.resize(crop_image, (0, 0), fx=scale_factor, fy=scale_factor)
+        if crop_image is None:
+            QMessageBox.warning(self, "Warning", "Image is None.")
+            return
 
         cv2.imshow("Crop Image", crop_image)
         cv2.waitKey(0)
