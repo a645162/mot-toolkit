@@ -530,3 +530,10 @@ class DatasetImageView(ScrollImageView):
 
     def __scroll_value_changed(self):
         self.slot_scroll.emit(self.display_area())
+
+    @property
+    def selection_widget(self) -> AnnotationWidgetRect | None:
+        for rect_widget in self.annotation_widget_rect_list:
+            if rect_widget.selecting:
+                return rect_widget
+        return None

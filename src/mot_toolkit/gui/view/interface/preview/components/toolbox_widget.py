@@ -112,6 +112,11 @@ class ToolboxWidget(QWidget):
         self.btn_zoom_input.setToolTip("Zoom")
         self.v_layout.addWidget(self.btn_zoom_input)
 
+        self.btn_center = ToolboxButton(parent=self)
+        self.btn_center.setText("Center")
+        self.btn_center.setToolTip("Center")
+        self.v_layout.addWidget(self.btn_center)
+
         self.v_layout.addWidget(QLabel(parent=self))
 
         self.btn_reverse_color = ToolboxButton(parent=self)

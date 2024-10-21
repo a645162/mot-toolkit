@@ -180,9 +180,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             __toolkit_input_zoom_factor
         )
 
+        self.toolkit_widget.btn_center.clicked.connect(
+            self.move_area_to_center
+        )
+
         self.toolkit_widget.btn_reverse_color.clicked.connect(
             lambda: self.main_image_view.try_to_reverse_color()
         )
+
         self.main_h_layout.addWidget(self.toolkit_widget)
 
         # Main Image View
@@ -676,9 +681,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
                         self.__action_frame_show_box()
                         return
-                    case Qt.Key.Key_S:
+                    case Qt.Key.Key_Q:
                         self.__action_frame_opencv_rect_near()
                         return
+                    case Qt.Key.Key_W:
+                        self.__action_frame_opencv_rect()
+                        return
+                    case Qt.Key.Key_S:
+                        self.move_area_to_center()
+                        return
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+
+        self.__update_display_area()
 
     def __init_gamepad(self):
         pygame_version = get_pygame_version()
@@ -1659,11 +1675,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.toolkit_widget.update()
 
-        self.__update_display_area(
-            self.main_image_view.display_area()
-        )
+        self.__update_display_area()
 
-    def __update_display_area(self, display_area: tuple):
+    def __update_display_area(self, display_area: tuple | None = None):
+        if display_area is None:
+            display_area = self.main_image_view.display_area()
+
         def update_display_area_thread():
             display_rect: ImageRect = self.r_file_detail_widget.display_rect
 
@@ -1697,6 +1714,25 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.toolkit_widget.update()
 
         threading.Thread(target=update_display_area_thread).start()
+
+    def move_area_to_center(self):
+        # Widget
+        selection_widget: AnnotationWidgetRect | None = \
+            self.main_image_view.selection_widget
+        if selection_widget is None:
+            return
+
+            # annotation_obj:XAnyLabelingRect|None=selection_widget.source
+        # if annotation_obj is None:
+        #     return
+
+        center_x, center_y = selection_widget.center_x, selection_widget.center_y
+
+        start_x = center_x - self.main_image_view.scroll_area.width() / 2
+        start_y = center_y - self.main_image_view.scroll_area.height() / 2
+
+        self.main_image_view.horizontal_pos = start_x
+        self.main_image_view.vertical_pos = start_y
 
     def closeEvent(self, event):
         super().closeEvent(event)
