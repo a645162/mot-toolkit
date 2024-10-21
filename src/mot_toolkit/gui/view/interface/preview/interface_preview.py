@@ -1,5 +1,6 @@
 import json
-import os.path
+import os
+import threading
 from typing import List
 
 import cv2
@@ -158,6 +159,27 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.toolkit_widget.btn_zoom_fit.clicked.connect(
             lambda: self.main_image_view.set_to_fit_scale_factor()
         )
+
+        def __toolkit_input_zoom_factor():
+            current_scale_factor = \
+                self.main_image_view.image_view.scale_factor
+            input_text, ok = QInputDialog.getText(
+                self,
+                "Input Zoom Factor",
+                "Zoom Factor:",
+                text=str(current_scale_factor)
+            )
+            if ok:
+                try:
+                    scale_factor = float(input_text)
+                    self.main_image_view.slot_try_to_zoom.emit(scale_factor)
+                except ValueError:
+                    pass
+
+        self.toolkit_widget.btn_zoom_input.clicked.connect(
+            __toolkit_input_zoom_factor
+        )
+
         self.toolkit_widget.btn_reverse_color.clicked.connect(
             lambda: self.main_image_view.try_to_reverse_color()
         )
@@ -174,6 +196,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
         self.main_image_view.slot_save.connect(self.save_current_opened)
         self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
+        self.main_image_view.slot_scroll.connect(self.__update_display_area)
         self.main_image_view.slot_property_changed.connect(self.__slot_property_changed)
 
         self.main_h_layout.addWidget(self.main_image_view)
@@ -1635,6 +1658,45 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         image_rect.rect_height = ori_h
 
         self.toolkit_widget.update()
+
+        self.__update_display_area(
+            self.main_image_view.display_area()
+        )
+
+    def __update_display_area(self, display_area: tuple):
+        def update_display_area_thread():
+            display_rect: ImageRect = self.r_file_detail_widget.display_rect
+
+            x1, y1, x2, y2 = display_area
+            scale_factor = self.main_image_view.image_view.scale_factor
+
+            x1, y1, x2, y2 = (
+                int(x1 / scale_factor),
+                int(y1 / scale_factor),
+                int(x2 / scale_factor),
+                int(y2 / scale_factor)
+            )
+
+            img_width = 0
+            img_height = 0
+
+            if self.current_annotation_object is not None:
+                img_width = \
+                    self.current_annotation_object.image_width
+                img_height = \
+                    self.current_annotation_object.image_height
+
+            display_rect.img_width = img_width
+            display_rect.img_height = img_height
+
+            display_rect.rect_x = x1
+            display_rect.rect_y = y1
+            display_rect.rect_width = x2 - x1
+            display_rect.rect_height = y2 - y1
+
+            self.toolkit_widget.update()
+
+        threading.Thread(target=update_display_area_thread).start()
 
     def closeEvent(self, event):
         super().closeEvent(event)

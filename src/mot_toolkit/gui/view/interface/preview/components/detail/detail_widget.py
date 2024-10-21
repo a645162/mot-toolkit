@@ -11,6 +11,7 @@ from mot_toolkit.gui.view.components. \
 
 class DetailWidget(BaseQWidget):
     image_rect: ImageRect
+    display_rect: ImageRect
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -24,7 +25,10 @@ class DetailWidget(BaseQWidget):
 
     def __init_widgets(self):
         self.image_rect = ImageRect(parent=self)
+        self.display_rect = ImageRect(parent=self)
+
         self.image_rect.slot_update.connect(self.update)
+        self.display_rect.slot_update.connect(self.update)
 
         self.v_layout = QVBoxLayout()
         self.setLayout(self.v_layout)
@@ -39,6 +43,7 @@ class DetailWidget(BaseQWidget):
 
         self.rect_thumbnail = RectThumbnail(
             image_rect=self.image_rect,
+            display_rect=self.display_rect,
             parent=self
         )
         self.rect_thumbnail.setSizePolicy(

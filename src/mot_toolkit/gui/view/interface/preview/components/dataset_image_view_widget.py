@@ -1,6 +1,6 @@
 from typing import List
 
-from PySide6.QtCore import Signal, Qt, QPoint
+from PySide6.QtCore import Signal, Qt, QPoint, QRect
 from PySide6.QtGui import QPixmap, QCursor
 from PySide6.QtWidgets import QMenu
 
@@ -20,6 +20,8 @@ class DatasetImageView(ScrollImageView):
     slot_save: Signal = Signal()
 
     slot_selection_changed: Signal = Signal(int)
+
+    slot_scroll: Signal = Signal(tuple)
 
     slot_property_changed: Signal = Signal()
 
@@ -61,6 +63,12 @@ class DatasetImageView(ScrollImageView):
         self.image_view.slot_image_scale_factor_changed_and_displayed.connect(
             self.__image_scale_factor_changed
         )
+
+        # Listen Scroll Bar Value Changed
+        self.scroll_area.verticalScrollBar().valueChanged \
+            .connect(self.__scroll_value_changed)
+        self.scroll_area.horizontalScrollBar().valueChanged \
+            .connect(self.__scroll_value_changed)
 
     def __init_shortcut(self):
         pass
@@ -479,3 +487,46 @@ class DatasetImageView(ScrollImageView):
         super().update()
 
         self.image_view.update()
+
+    @property
+    def vertical_pos(self) -> int:
+        return self.scroll_area.verticalScrollBar().value()
+
+    @vertical_pos.setter
+    def vertical_pos(self, value: int):
+        if value < 0:
+            value = 0
+        if value > self.scroll_area.verticalScrollBar().maximum():
+            value = self.scroll_area.verticalScrollBar().maximum()
+
+        self.scroll_area.verticalScrollBar().setValue(value)
+
+    @property
+    def horizontal_pos(self) -> int:
+        return self.scroll_area.horizontalScrollBar().value()
+
+    @horizontal_pos.setter
+    def horizontal_pos(self, value: int):
+        if value < 0:
+            value = 0
+        if value > self.scroll_area.horizontalScrollBar().maximum():
+            value = self.scroll_area.horizontalScrollBar().maximum()
+
+        self.scroll_area.horizontalScrollBar().setValue(value)
+
+    def display_area(self) -> tuple:
+        x1, y1 = self.horizontal_pos, self.vertical_pos
+        x2, y2 = (
+            x1 + self.scroll_area.width(),
+            y1 + self.scroll_area.height()
+        )
+
+        return x1, y1, x2, y2
+
+    def display_q_rect(self) -> QRect:
+        x1, y1, x2, y2 = self.display_area()
+
+        return QRect(x1, y1, x2, y2)
+
+    def __scroll_value_changed(self):
+        self.slot_scroll.emit(self.display_area())
