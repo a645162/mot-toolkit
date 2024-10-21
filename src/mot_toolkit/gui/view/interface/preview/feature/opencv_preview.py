@@ -91,10 +91,12 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             self.label_current_frame.setVisible(False)
             self.button_current_frame.setVisible(False)
 
+        self.play_loop_checkbox = QCheckBox('Play in a loop')
+        self.play_loop_checkbox.setChecked(False)
         self.show_box_checkbox = QCheckBox('Show Box')
         self.show_box_checkbox.setChecked(True)
         self.with_text_checkbox = QCheckBox('With Text')
-        self.with_text_checkbox.setChecked(True)
+        self.with_text_checkbox.setChecked(False)
         self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
         self.only_near_selection_checkbox.setChecked(False)
 
@@ -138,6 +140,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         layout.addWidget(self.label_current_frame)
         layout.addWidget(range_widget)
 
+        layout.addWidget(self.play_loop_checkbox)
         layout.addWidget(self.show_box_checkbox)
         layout.addWidget(self.with_text_checkbox)
         layout.addWidget(self.only_near_selection_checkbox)
@@ -219,6 +222,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             frame_interval = int(self.frame_interval_edit.text())
             selection_label = str(self.selection_label_edit.text()).strip()
 
+            loop_play = self.play_loop_checkbox.isChecked()
             show_box = self.show_box_checkbox.isChecked()
             with_text = self.with_text_checkbox.isChecked()
             only_near_selection = self.only_near_selection_checkbox.isChecked()
@@ -243,43 +247,47 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         file_count = len(self.annotation_file)
 
-        for i, annotation in enumerate(self.annotation_file):
-            frame_index = i + 1
-            if frame_index < start_frame or frame_index > end_frame:
-                continue
+        play_one = False
+        while loop_play or (not play_one):
+            play_one = True
+            for i, annotation in enumerate(self.annotation_file):
+                frame_index = i + 1
+                if frame_index < start_frame or frame_index > end_frame:
+                    continue
 
-            if show_box:
-                image = annotation.get_cv_mat_with_box(
-                    with_text=with_text,
-                    color=unselected_color,
-                    text_color=text_color,
-                    thickness=thickness,
-                    selection_label=selection_label,
-                    selection_color=selected_color,
-                    crop_selection=only_near_selection,
-                    not_found_return_none=only_near_selection
+                if show_box:
+                    image = annotation.get_cv_mat_with_box(
+                        with_text=with_text,
+                        color=unselected_color,
+                        text_color=text_color,
+                        thickness=thickness,
+                        selection_label=selection_label,
+                        selection_color=selected_color,
+                        crop_selection=only_near_selection,
+                        not_found_return_none=only_near_selection
+                    )
+                else:
+                    image = annotation.get_cv_mat()
+
+                if image is None:
+                    continue
+
+                # Draw Text
+                text = f"{i + 1}/{file_count}"
+                cv2.putText(
+                    image,
+                    text,
+                    (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    2
                 )
-            else:
-                image = annotation.get_cv_mat()
 
-            if image is None:
-                continue
-
-            # Draw Text
-            text = f"{i + 1}/{file_count}"
-            cv2.putText(
-                image,
-                text,
-                (10, 30),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 255, 0),
-                2
-            )
-
-            cv2.imshow("OpenCV Preview", image)
-            if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
-                break
+                cv2.imshow("OpenCV Preview", image)
+                if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
+                    loop_play = False
+                    break
         cv2.destroyAllWindows()
 
     def reject(self):
