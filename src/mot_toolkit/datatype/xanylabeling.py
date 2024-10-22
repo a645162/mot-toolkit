@@ -433,7 +433,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
             crop_x1: int = 0, crop_y1: int = 0,
             crop_x2: int = 0, crop_y2: int = 0,
             crop_padding: int = 50,
-            min_size: int = 1000
+            crop_min_size: int = 1000
     ) -> np.ndarray | None:
         if center_point_trajectory is None:
             center_point_trajectory = {}
@@ -583,9 +583,9 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         crop_image_width, crop_image_height = crop_image.shape[1], crop_image.shape[0]
 
-        if min_size > 0:
-            if crop_image_width < min_size or crop_image_height < min_size:
-                scale_factor = min_size / max(crop_image_width, crop_image_height)
+        if crop_min_size > 0:
+            if crop_image_width < crop_min_size or crop_image_height < crop_min_size:
+                scale_factor = crop_min_size / max(crop_image_width, crop_image_height)
                 crop_image = cv2.resize(crop_image, (0, 0), fx=scale_factor, fy=scale_factor)
 
         return crop_image

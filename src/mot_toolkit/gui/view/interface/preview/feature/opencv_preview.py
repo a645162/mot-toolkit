@@ -128,6 +128,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.selection_label_label = QLabel('Selection Label:')
         self.selection_label_edit = QLineEdit(selection_label)
 
+        self.crop_padding_label = QLabel('Crop Padding:')
+        self.crop_padding_edit = QLineEdit("50")
+
         self.ok_button = QPushButton('Start')
         self.cancel_button = QPushButton('Close')
 
@@ -175,6 +178,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         layout.addWidget(self.selection_label_label)
         layout.addWidget(self.selection_label_edit)
+
+        layout.addWidget(self.crop_padding_label)
+        layout.addWidget(self.crop_padding_edit)
 
         button_layout = QHBoxLayout()
 
@@ -236,6 +242,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             start_frame = int(self.start_edit.text())
             end_frame = int(self.end_edit.text())
             thickness = int(self.thickness_edit.text())
+            crop_padding = int(self.crop_padding_edit.text())
 
             frame_interval = int(self.frame_interval_edit.text())
             selection_label = str(self.selection_label_edit.text()).strip()
@@ -253,6 +260,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         if thickness <= 0:
             thickness = 1
+
+        if crop_padding < 0:
+            crop_padding = 0
 
         if start_frame < self.frame_index_min or start_frame > self.frame_index_max:
             QMessageBox.critical(self, 'Error', 'Start frame out of range')
@@ -294,7 +304,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                         selection_color=selected_color,
                         only_selection_box=only_selection_box,
                         crop_selection=only_near_selection,
-                        not_found_return_none=only_near_selection
+                        not_found_return_none=only_near_selection,
+                        crop_padding=crop_padding
                     )
                 else:
                     image = annotation.get_cv_mat()
