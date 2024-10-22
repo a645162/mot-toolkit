@@ -22,11 +22,12 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
     current_frame_index: int
 
-    annotation_file: List[XAnyLabelingAnnotation]
+    annotation_file_list: List[XAnyLabelingAnnotation]
+    color_dict: dict
 
     def __init__(
             self,
-            annotation_file=None,
+            annotation_file: List[XAnyLabelingAnnotation] = None,
             current_frame: int = -1,
             start_frame: int = 0,
             end_frame: int = 1,
@@ -34,7 +35,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             selected_color: tuple | QColor = (0, 255, 255),
             text_color: tuple | QColor = (0, 0, 255),
             thickness: int = 2,
-            selection_label="",
+            selection_label: str = "",
+            color_dict: dict = None,
             parent=None
     ):
         super().__init__(parent=parent)
@@ -48,7 +50,11 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         if annotation_file is None:
             annotation_file = []
-        self.annotation_file = annotation_file
+        self.annotation_file_list = annotation_file
+
+        if color_dict is None:
+            color_dict = {}
+        self.color_dict = color_dict
 
         self.frame_index_min = start_frame
         self.frame_index_max = end_frame
@@ -106,6 +112,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.pause_on_last_frame_checkbox.setChecked(False)
         self.show_box_checkbox = QCheckBox('Show Box')
         self.show_box_checkbox.setChecked(True)
+        self.different_color_checkbox = QCheckBox('Different Color')
+        self.different_color_checkbox.setChecked(False)
         self.with_text_checkbox = QCheckBox('With Text')
         self.with_text_checkbox.setChecked(False)
         self.center_point_trajectory_checkbox = QCheckBox('Center Point Trajectory')
@@ -161,6 +169,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         layout.addWidget(self.play_loop_checkbox)
         layout.addWidget(self.pause_on_last_frame_checkbox)
         layout.addWidget(self.show_box_checkbox)
+        layout.addWidget(self.different_color_checkbox)
         layout.addWidget(self.with_text_checkbox)
         layout.addWidget(self.center_point_trajectory_checkbox)
         layout.addWidget(self.only_near_selection_checkbox)
@@ -250,6 +259,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             loop_play = self.play_loop_checkbox.isChecked()
             pause_on_last_frame = self.pause_on_last_frame_checkbox.isChecked()
             show_box = self.show_box_checkbox.isChecked()
+            different_color = self.different_color_checkbox.isChecked()
             with_text = self.with_text_checkbox.isChecked()
             show_center_point_trajectory = self.center_point_trajectory_checkbox.isChecked()
             only_near_selection = self.only_near_selection_checkbox.isChecked()
@@ -276,9 +286,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         text_color = self.text_color
         unselected_color = self.unselected_color
 
-        class_list = []
+        # Generate Color List
 
-        file_count = len(self.annotation_file)
+        file_count = len(self.annotation_file_list)
 
         play_one = False
         while loop_play or (not play_one):
@@ -286,7 +296,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
             center_point_trajectory: dict = {}
 
-            for i, annotation in enumerate(self.annotation_file):
+            for i, annotation in enumerate(self.annotation_file_list):
                 frame_index = i + 1
                 is_last_frame = frame_index == file_count
                 if frame_index < start_frame or frame_index > end_frame:
@@ -305,7 +315,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                         only_selection_box=only_selection_box,
                         crop_selection=only_near_selection,
                         not_found_return_none=only_near_selection,
-                        crop_padding=crop_padding
+                        crop_padding=crop_padding,
+                        color_dict=self.color_dict if different_color else None
                     )
                 else:
                     image = annotation.get_cv_mat()

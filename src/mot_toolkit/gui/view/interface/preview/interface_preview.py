@@ -1,5 +1,6 @@
 import json
 import os
+import random
 import threading
 from typing import List
 
@@ -19,6 +20,7 @@ from PySide6.QtWidgets import (
 
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
+from mot_toolkit.gui.utils.q_color import generate_unique_q_colors
 from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
     get_pygame_version, get_pygame_version_info,
     GamepadMonitor, GamepadButtonKey
@@ -1436,13 +1438,21 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         except Exception:
             pass
 
+        class_list = self.annotation_directory.label_list
+        color_list = generate_unique_q_colors(len(class_list))
+        color_dict: dict = {}
+        for class_name in class_list:
+            random_index = random.randint(0, len(color_list) - 1)
+            color_dict[class_name] = color_list.pop(random_index)
+
         option_window = OpenCVPreviewOptionWindow(
             parent=self,
             annotation_file=self.annotation_directory.annotation_file,
             current_frame=current_frame_index + 1,
             start_frame=1,
             end_frame=len(self.annotation_directory.annotation_file),
-            selection_label=selection_label
+            selection_label=selection_label,
+            color_dict=color_dict
         )
         option_window.show()
 

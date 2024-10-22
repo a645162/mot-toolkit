@@ -433,10 +433,13 @@ class XAnyLabelingAnnotation(AnnotationFile):
             crop_x1: int = 0, crop_y1: int = 0,
             crop_x2: int = 0, crop_y2: int = 0,
             crop_padding: int = 50,
-            crop_min_size: int = 1000
+            crop_min_size: int = 1000,
+            color_dict: dict = None
     ) -> np.ndarray | None:
         if center_point_trajectory is None:
             center_point_trajectory = {}
+        if color_dict is None:
+            color_dict = {}
         img_np = self.get_cv_mat()
         if img_np is None:
             return None
@@ -469,12 +472,24 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
             current_color = color
 
+            found_color = False
+            if label in color_dict.keys():
+                found_color_obj: QColor = color_dict[label]
+                current_color = rgb2bgr(found_color_obj.getRgb())
+                found_color = True
+
             if len(selection_label) > 0:
                 # Find Selection
                 if rect_item.label == selection_label:
-                    current_color = selection_color
+                    if not found_color:
+                        current_color = selection_color
 
-                    selection_x1, selection_y1, selection_x2, selection_y2 = x1, y1, x2, y2
+                    (
+                        selection_x1,
+                        selection_y1,
+                        selection_x2,
+                        selection_y2
+                    ) = x1, y1, x2, y2
                     found_selection = True
                 else:
                     if only_selection_box:
