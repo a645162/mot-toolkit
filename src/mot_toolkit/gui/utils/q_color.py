@@ -9,10 +9,10 @@ def generate_unique_q_colors(n: int) -> list[QColor]:
     :return: list[QColor], a list containing n unique QColor objects.
     """
     if n <= 0:
-        raise ValueError("The number of colors must be greater than 0")
+        return []
 
     # List to store the generated colors
-    colors: list[QColor] = []
+    color_list: list[QColor] = []
 
     for i in range(n):
         # Calculate the hue value (H in HSV), which is evenly distributed between 0 and 359
@@ -20,12 +20,12 @@ def generate_unique_q_colors(n: int) -> list[QColor]:
 
         # Create a QColor object from the HSV values
         # S (saturation) and V (value) are set to 255 for maximum saturation and brightness
-        color: QColor = QColor.fromHsv(hue, 255, 255)
+        current_color: QColor = QColor.fromHsv(hue, 255, 255)
 
         # Add the generated color to the list
-        colors.append(color)
+        color_list.append(current_color)
 
-    return colors
+    return color_list
 
 
 def rgb2bgr(rgb: tuple) -> tuple[int, int, int]:

@@ -7,7 +7,7 @@ class MyWidget(QWidget):
         super().__init__()
 
         # 创建一个大标签列表，以便可以滚动
-        self.labels = [QLabel(f'Item {i+1}') for i in range(100)]
+        self.labels = [QLabel(f'Item {i + 1}') for i in range(100)]
         for label in self.labels:
             label.setFixedHeight(50)  # 设置固定高度以便于计算
 
@@ -47,12 +47,14 @@ class MyWidget(QWidget):
         else:
             print("No items are currently visible.")
 
-# 创建应用程序实例
-app = QApplication([])
 
-# 创建并显示窗口
-widget = MyWidget()
-widget.show()
+if __name__ == "__main__":
+    # 创建应用程序
+    app = QApplication([])
 
-# 运行应用程序主循环
-app.exec_()
+    # 创建并显示窗口
+    widget = MyWidget()
+    widget.show()
+
+    # 运行应用程序主循环
+    app.exec()

@@ -3,12 +3,20 @@ import os
 from typing import List
 
 import cv2
-from PySide6.QtWidgets import (QApplication, QMainWindow, QLabel, QLineEdit, QPushButton,
-                               QVBoxLayout, QWidget, QColorDialog, QCheckBox, QHBoxLayout, QMessageBox)
+
+from PySide6.QtWidgets import (
+    QApplication,
+    QWidget,
+    QVBoxLayout, QHBoxLayout, QGroupBox,
+    QColorDialog,
+    QLabel, QLineEdit, QPushButton, QCheckBox,
+    QMessageBox
+)
 from PySide6.QtGui import QColor
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
 from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
+from mot_toolkit.gui.view.components.window.base_q_main_window import BaseQMainWindow
 
 
 def bgr2rgb(color: tuple) -> tuple:
@@ -19,7 +27,7 @@ def reverse_color(color: QColor) -> QColor:
     return QColor(255 - color.red(), 255 - color.green(), 255 - color.blue())
 
 
-class OpenCVPreviewOptionWindow(QMainWindow):
+class OpenCVPreviewOptionWindow(BaseQMainWindow):
     frame_index_min: int
     frame_index_max: int
 
@@ -63,29 +71,19 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.frame_index_max = end_frame
         self.current_frame_index = current_frame
 
-        # 设置窗口标题
-        self.setWindowTitle('OpenCV Preview')
-
-        # 设置默认颜色
         self.selected_color = selected_color
         self.unselected_color = unselected_color
         self.text_color = text_color
 
-        # 创建控件
-        self.start_label = QLabel('Start Frame:')
-        self.start_edit = QLineEdit(str(start_frame))
+        self.__setup_properties()
 
-        self.end_label = QLabel('End Frame:')
-        self.end_edit = QLineEdit(str(end_frame))
-
-        # if current_frame != -1 and start_frame <= current_frame <= end_frame:
-        #     self.start_edit.setText(str(current_frame))
-        #     self.end_edit.setText(str(current_frame))
-
-        self.label_frame_range = QLabel(f'Frame Range: {start_frame} - {end_frame}')
-        self.label_current_frame = QLabel(f'Current Frame: {current_frame}')
-
+        # Create widget
         self.__init_ui(current_frame, thickness, selection_label)
+
+        self.move_to_center()
+
+    def __setup_properties(self):
+        self.setWindowTitle('OpenCV Preview')
 
     def __init_ui(
             self,
@@ -93,6 +91,41 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             thickness: int,
             selection_label: str
     ):
+        main_layout = QVBoxLayout()
+
+        content_widget = QWidget()
+        content_layout = QHBoxLayout()
+        content_widget.setLayout(content_layout)
+
+        left_layout = QVBoxLayout()
+        right_layout = QVBoxLayout()
+        content_layout.addLayout(left_layout)
+        content_layout.addLayout(right_layout)
+
+        main_layout.addWidget(content_widget)
+
+        # Group Range
+        group_range = QGroupBox("Range")
+        group_range_layout = QVBoxLayout()
+        group_range.setLayout(group_range_layout)
+        left_layout.addWidget(group_range)
+
+        self.start_label = QLabel('Start Frame:')
+        group_range_layout.addWidget(self.start_label)
+        self.start_edit = QLineEdit(str(self.frame_index_min))
+        group_range_layout.addWidget(self.start_edit)
+
+        self.end_label = QLabel('End Frame:')
+        group_range_layout.addWidget(self.end_label)
+        self.end_edit = QLineEdit(str(self.frame_index_max))
+        group_range_layout.addWidget(self.end_edit)
+
+        self.label_frame_range = QLabel(
+            f'Frame Range: {self.frame_index_min} - {self.frame_index_max}'
+        )
+        group_range_layout.addWidget(self.label_frame_range)
+        self.label_current_frame = QLabel(f'Current Frame: {current_frame}')
+        group_range_layout.addWidget(self.label_current_frame)
 
         range_widget = QWidget()
         range_layout = QHBoxLayout()
@@ -105,117 +138,125 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.button_restore_range.clicked.connect(self.restore_range)
         range_layout.addWidget(self.button_restore_range)
 
+        group_range_layout.addWidget(range_widget)
+
         if current_frame == -1:
             self.label_current_frame.setVisible(False)
             self.button_current_frame.setVisible(False)
 
-        self.play_loop_checkbox = QCheckBox('Play in a loop')
-        self.play_loop_checkbox.setChecked(False)
-        self.pause_on_last_frame_checkbox = QCheckBox('Pause on Last Frame')
-        self.pause_on_last_frame_checkbox.setChecked(False)
-        self.show_box_checkbox = QCheckBox('Show Box')
-        self.show_box_checkbox.setChecked(True)
-        self.different_color_checkbox = QCheckBox('Different Color')
-        self.different_color_checkbox.setChecked(False)
-        self.with_text_checkbox = QCheckBox('With Text')
-        self.with_text_checkbox.setChecked(False)
-        self.center_point_trajectory_checkbox = QCheckBox('Center Point Trajectory')
-        self.center_point_trajectory_checkbox.setChecked(True)
-        self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
-        self.only_near_selection_checkbox.setChecked(False)
-        self.only_selection_box = QCheckBox('Only Selection Box')
-        self.only_selection_box.setChecked(False)
+        # Group Play Control
+        group_play_control = QGroupBox("Play Control")
+        group_play_control_layout = QVBoxLayout()
+        group_play_control.setLayout(group_play_control_layout)
+        left_layout.addWidget(group_play_control)
 
-        self.select_color_button = QPushButton('Select Selected Color')
-        self.text_color_button = QPushButton('Select Text Color')
-        self.unselect_color_button = QPushButton('Select Unselected Color')
+        self.play_loop_checkbox = QCheckBox('Play in a loop')
+        group_play_control_layout.addWidget(self.play_loop_checkbox)
+        self.play_loop_checkbox.setChecked(False)
+        group_play_control_layout.addWidget(self.play_loop_checkbox)
+        self.pause_on_last_frame_checkbox = QCheckBox('Pause on Last Frame')
+        group_play_control_layout.addWidget(self.pause_on_last_frame_checkbox)
+        self.pause_on_last_frame_checkbox.setChecked(False)
+        group_play_control_layout.addWidget(self.pause_on_last_frame_checkbox)
 
         self.frame_interval_label = QLabel('Frame Interval:')
+        group_play_control_layout.addWidget(self.frame_interval_label)
         self.frame_interval_edit = QLineEdit('1')
+        group_play_control_layout.addWidget(self.frame_interval_edit)
+
+        # Group Box Control
+        group_box_control = QGroupBox("Box Control")
+        group_box_control_layout = QVBoxLayout()
+        group_box_control.setLayout(group_box_control_layout)
+        right_layout.addWidget(group_box_control)
+
+        self.show_box_checkbox = QCheckBox('Show Box')
+        group_box_control_layout.addWidget(self.show_box_checkbox)
+        self.show_box_checkbox.setChecked(True)
+        self.different_color_checkbox = QCheckBox('Different Color')
+        group_box_control_layout.addWidget(self.different_color_checkbox)
+        self.different_color_checkbox.setChecked(False)
+        self.with_text_checkbox = QCheckBox('With Text')
+        group_box_control_layout.addWidget(self.with_text_checkbox)
+        self.with_text_checkbox.setChecked(False)
+        self.center_point_trajectory_checkbox = QCheckBox('Center Point Trajectory')
+        group_box_control_layout.addWidget(self.center_point_trajectory_checkbox)
+        self.center_point_trajectory_checkbox.setChecked(True)
+
+        self.select_color_button = QPushButton('Select Selected Color')
+        self.select_color_button.clicked.connect(self.select_selected_color)
+        group_box_control_layout.addWidget(self.select_color_button)
+        self.text_color_button = QPushButton('Select Text Color')
+        self.text_color_button.clicked.connect(self.select_text_color)
+        group_box_control_layout.addWidget(self.text_color_button)
+        self.unselect_color_button = QPushButton('Select Unselected Color')
+        self.unselect_color_button.clicked.connect(self.select_unselected_color)
+        group_box_control_layout.addWidget(self.unselect_color_button)
+        # Set Button Text Color
+        self.update_color_buttons_style()
 
         self.thickness_label = QLabel('Thickness:')
+        group_box_control_layout.addWidget(self.thickness_label)
         self.thickness_edit = QLineEdit(str(thickness))
+        group_box_control_layout.addWidget(self.thickness_edit)
+
+        # Group Filter
+        group_filter = QGroupBox("Filter")
+        group_filter_layout = QVBoxLayout()
+        group_filter.setLayout(group_filter_layout)
+        right_layout.addWidget(group_filter)
+        self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
+        group_filter_layout.addWidget(self.only_near_selection_checkbox)
+        self.only_near_selection_checkbox.setChecked(False)
+        self.only_selection_box = QCheckBox('Only Selection Box')
+        group_filter_layout.addWidget(self.only_selection_box)
+        self.only_selection_box.setChecked(False)
 
         self.selection_label_label = QLabel('Selection Label:')
+        group_filter_layout.addWidget(self.selection_label_label)
         self.selection_label_edit = QLineEdit(selection_label)
+        group_filter_layout.addWidget(self.selection_label_edit)
 
         self.crop_padding_label = QLabel('Crop Padding:')
+        group_filter_layout.addWidget(self.crop_padding_label)
         self.crop_padding_edit = QLineEdit("50")
+        group_filter_layout.addWidget(self.crop_padding_edit)
+
+        # Group Output
+        group_output = QGroupBox("Output")
+        group_output_layout = QVBoxLayout()
+        group_output.setLayout(group_output_layout)
+        left_layout.addWidget(group_output)
 
         self.output_video_checkbox = QCheckBox('Output Video')
+        group_output_layout.addWidget(self.output_video_checkbox)
         self.output_video_checkbox.setChecked(False)
 
         self.video_path_widget = FileSaveWidget()
+        group_output_layout.addWidget(self.video_path_widget)
 
         now = datetime.datetime.now()
         formatted_time = now.strftime("%Y-%m-%d-%H-%M-%S")
         self.video_path_widget.file_path = f"{formatted_time}.mp4"
         self.video_path_widget.filter = "MP4 Video (*.mp4);;AVI Video (*.avi);;All Files (*)"
 
+        # Control Buttons
+        control_button_widget = QWidget()
+        control_button_layout = QHBoxLayout()
+        control_button_widget.setLayout(control_button_layout)
+
         self.ok_button = QPushButton('Start')
-        self.cancel_button = QPushButton('Close')
-
-        # Set Button Text Color
-        self.update_color_buttons_style()
-
-        #  Connect Signals
-        self.select_color_button.clicked.connect(self.select_selected_color)
-        self.text_color_button.clicked.connect(self.select_text_color)
-        self.unselect_color_button.clicked.connect(self.select_unselected_color)
-
         self.ok_button.clicked.connect(self.accept)
+        control_button_layout.addWidget(self.ok_button)
+
+        self.cancel_button = QPushButton('Close')
         self.cancel_button.clicked.connect(self.reject)
+        control_button_layout.addWidget(self.cancel_button)
 
-        # Setup Layout
-        layout = QVBoxLayout()
-
-        layout.addWidget(self.start_label)
-        layout.addWidget(self.start_edit)
-
-        layout.addWidget(self.end_label)
-        layout.addWidget(self.end_edit)
-
-        layout.addWidget(self.label_frame_range)
-        layout.addWidget(self.label_current_frame)
-        layout.addWidget(range_widget)
-
-        layout.addWidget(self.play_loop_checkbox)
-        layout.addWidget(self.pause_on_last_frame_checkbox)
-        layout.addWidget(self.show_box_checkbox)
-        layout.addWidget(self.different_color_checkbox)
-        layout.addWidget(self.with_text_checkbox)
-        layout.addWidget(self.center_point_trajectory_checkbox)
-        layout.addWidget(self.only_near_selection_checkbox)
-        layout.addWidget(self.only_selection_box)
-
-        layout.addWidget(self.select_color_button)
-        layout.addWidget(self.text_color_button)
-        layout.addWidget(self.unselect_color_button)
-
-        layout.addWidget(self.frame_interval_label)
-        layout.addWidget(self.frame_interval_edit)
-
-        layout.addWidget(self.thickness_label)
-        layout.addWidget(self.thickness_edit)
-
-        layout.addWidget(self.selection_label_label)
-        layout.addWidget(self.selection_label_edit)
-
-        layout.addWidget(self.crop_padding_label)
-        layout.addWidget(self.crop_padding_edit)
-
-        layout.addWidget(self.output_video_checkbox)
-        layout.addWidget(self.video_path_widget)
-
-        button_layout = QHBoxLayout()
-
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-
-        layout.addLayout(button_layout)
+        main_layout.addWidget(control_button_widget)
 
         container = QWidget()
-        container.setLayout(layout)
+        container.setLayout(main_layout)
         self.setCentralWidget(container)
 
     def set_current_frame(self):
@@ -410,4 +451,4 @@ if __name__ == '__main__':
     window = OpenCVPreviewOptionWindow(start_frame=1, end_frame=100)
     window.show()
 
-    app.exec_()
+    app.exec()
