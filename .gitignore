@@ -2,6 +2,9 @@ requirements.lock
 requirements-dev.lock
 uv.lock
 
+*.avi
+*.mp4
+
 /Test/
 
 /.venv/

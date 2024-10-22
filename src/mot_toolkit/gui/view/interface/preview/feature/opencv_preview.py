@@ -1,3 +1,5 @@
+import datetime
+import os
 from typing import List
 
 import cv2
@@ -6,6 +8,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QLabel, QLineEdit, QPu
 from PySide6.QtGui import QColor
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
+from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
 
 
 def bgr2rgb(color: tuple) -> tuple:
@@ -139,6 +142,16 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.crop_padding_label = QLabel('Crop Padding:')
         self.crop_padding_edit = QLineEdit("50")
 
+        self.output_video_checkbox = QCheckBox('Output Video')
+        self.output_video_checkbox.setChecked(False)
+
+        self.video_path_widget = FileSaveWidget()
+
+        now = datetime.datetime.now()
+        formatted_time = now.strftime("%Y-%m-%d-%H-%M-%S")
+        self.video_path_widget.file_path = f"{formatted_time}.mp4"
+        self.video_path_widget.filter = "MP4 Video (*.mp4);;AVI Video (*.avi);;All Files (*)"
+
         self.ok_button = QPushButton('Start')
         self.cancel_button = QPushButton('Close')
 
@@ -190,6 +203,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         layout.addWidget(self.crop_padding_label)
         layout.addWidget(self.crop_padding_edit)
+
+        layout.addWidget(self.output_video_checkbox)
+        layout.addWidget(self.video_path_widget)
 
         button_layout = QHBoxLayout()
 
@@ -247,6 +263,10 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         # self.unselect_color_button.setStyleSheet(f'background-color: {reverse_color(self.unselected_color).name()};')
 
     def accept(self):
+        if len(self.annotation_file_list) == 0:
+            QMessageBox.critical(self, 'Error', 'No any annotation file!')
+            return
+
         try:
             start_frame = int(self.start_edit.text())
             end_frame = int(self.end_edit.text())
@@ -264,6 +284,9 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             show_center_point_trajectory = self.center_point_trajectory_checkbox.isChecked()
             only_near_selection = self.only_near_selection_checkbox.isChecked()
             only_selection_box = self.only_selection_box.isChecked()
+
+            output_video = self.output_video_checkbox.isChecked()
+            video_path = self.video_path_widget.get_file_path()
         except ValueError:
             QMessageBox.critical(self, 'Error', 'Invalid input')
             return
@@ -273,6 +296,17 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         if crop_padding < 0:
             crop_padding = 0
+
+        if output_video:
+            try:
+                # Write Test
+                with open(video_path, 'w') as f:
+                    f.write("Test")
+
+                # Remove
+                os.remove(video_path)
+            except Exception:
+                output_video = False
 
         if start_frame < self.frame_index_min or start_frame > self.frame_index_max:
             QMessageBox.critical(self, 'Error', 'Start frame out of range')
@@ -290,11 +324,24 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         file_count = len(self.annotation_file_list)
 
+        image_width, image_height = (
+            self.annotation_file_list[0].image_width,
+            self.annotation_file_list[0].image_height
+        )
+
         play_one = False
         while loop_play or (not play_one):
-            play_one = True
-
             center_point_trajectory: dict = {}
+
+            output_video = output_video and (not play_one)
+
+            video_out = None
+            if output_video:
+                if video_path.endswith('.mp4'):
+                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                else:
+                    fourcc = cv2.VideoWriter_fourcc(*'XVID')
+                video_out = cv2.VideoWriter(video_path, fourcc, 30.0, (image_width, image_height))
 
             for i, annotation in enumerate(self.annotation_file_list):
                 frame_index = i + 1
@@ -336,6 +383,8 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                     2
                 )
 
+                if output_video and video_out is not None:
+                    video_out.write(image)
                 cv2.imshow("OpenCV Preview", image)
                 if is_last_frame and pause_on_last_frame:
                     if cv2.waitKey(0) & 0xFF == ord('q'):
@@ -345,6 +394,10 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                     if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
                         loop_play = False
                         break
+            if video_out:
+                video_out.release()
+            play_one = True
+
         cv2.destroyAllWindows()
 
     def reject(self):
