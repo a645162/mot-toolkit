@@ -480,7 +480,10 @@ class GamepadMonitor(QWidget):
             pygame.init()
             pygame.joystick.init()
 
-            device_count = pygame.joystick.get_count()
+            try:
+                device_count = pygame.joystick.get_count()
+            except Exception:
+                device_count = 0
 
         # if device_count > 1:
         #     self.update_status("Multiple controllers detected. Using the first one.")

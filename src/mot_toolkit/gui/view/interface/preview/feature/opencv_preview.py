@@ -175,7 +175,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         self.show_box_checkbox.setChecked(True)
         self.different_color_checkbox = QCheckBox('Different Color')
         group_box_control_layout.addWidget(self.different_color_checkbox)
-        self.different_color_checkbox.setChecked(False)
+        self.different_color_checkbox.setChecked(True)
         self.with_text_checkbox = QCheckBox('With Text')
         group_box_control_layout.addWidget(self.with_text_checkbox)
         self.with_text_checkbox.setChecked(False)
