@@ -422,15 +422,21 @@ class XAnyLabelingAnnotation(AnnotationFile):
             color: tuple | QColor = (0, 255, 0),
             text_color: tuple | QColor = (0, 0, 255),
             thickness: int = 2,
+            center_point_trajectory: dict = None,
+            draw_trajectory: bool = False,
+            trajectory_line_mode: bool = True,
             selection_label: str = "",
             selection_color: tuple | QColor = (0, 255, 255),
             not_found_return_none: bool = False,
+            only_selection_box: bool = False,
             crop_selection: bool = False,
             crop_x1: int = 0, crop_y1: int = 0,
             crop_x2: int = 0, crop_y2: int = 0,
             crop_padding: int = 50,
             min_size: int = 1000
     ) -> np.ndarray | None:
+        if center_point_trajectory is None:
+            center_point_trajectory = {}
         img_np = self.get_cv_mat()
         if img_np is None:
             return None
@@ -452,15 +458,27 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         for rect_item in self.rect_annotation_list:
             x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
+            center_x, center_y = rect_item.center_x, rect_item.center_y
+            label = rect_item.label.strip()
+
+            if label != "":
+                if label not in center_point_trajectory.keys():
+                    center_point_trajectory[label] = []
+
+                center_point_trajectory[label].append((center_x, center_y))
 
             current_color = color
 
-            # Find Selection
-            if len(selection_label) > 0 and rect_item.label == selection_label:
-                current_color = selection_color
+            if len(selection_label) > 0:
+                # Find Selection
+                if rect_item.label == selection_label:
+                    current_color = selection_color
 
-                selection_x1, selection_y1, selection_x2, selection_y2 = x1, y1, x2, y2
-                found_selection = True
+                    selection_x1, selection_y1, selection_x2, selection_y2 = x1, y1, x2, y2
+                    found_selection = True
+                else:
+                    if only_selection_box:
+                        continue
 
             new_image = \
                 cv2.rectangle(
@@ -471,8 +489,40 @@ class XAnyLabelingAnnotation(AnnotationFile):
                     thickness
                 )
 
+            # Draw Trajectory
+            if (
+                    draw_trajectory and
+                    len(center_point_trajectory.keys()) > 0 and
+                    label and
+                    label in center_point_trajectory.keys()
+            ):
+                if trajectory_line_mode:
+                    # Draw line between points
+                    last_point = None
+                    for point in center_point_trajectory[label]:
+                        center_x, center_y = point
+                        if last_point is not None:
+                            new_image = cv2.line(
+                                new_image,
+                                last_point,
+                                (int(center_x), int(center_y)),
+                                current_color,
+                                thickness
+                            )
+                        last_point = (int(center_x), int(center_y))
+                else:
+                    for point in center_point_trajectory[label]:
+                        center_x, center_y = point
+                        new_image = cv2.circle(
+                            new_image,
+                            (int(center_x), int(center_y)),
+                            3,
+                            current_color,
+                            -1
+                        )
+
             if with_text:
-                text = f"{rect_item.label}"
+                text = f"{label}"
 
                 cv2.putText(
                     new_image,

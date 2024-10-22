@@ -76,6 +76,15 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.label_frame_range = QLabel(f'Frame Range: {start_frame} - {end_frame}')
         self.label_current_frame = QLabel(f'Current Frame: {current_frame}')
 
+        self.__init_ui(current_frame, thickness, selection_label)
+
+    def __init_ui(
+            self,
+            current_frame: int,
+            thickness: int,
+            selection_label: str
+    ):
+
         range_widget = QWidget()
         range_layout = QHBoxLayout()
         range_widget.setLayout(range_layout)
@@ -93,12 +102,18 @@ class OpenCVPreviewOptionWindow(QMainWindow):
 
         self.play_loop_checkbox = QCheckBox('Play in a loop')
         self.play_loop_checkbox.setChecked(False)
+        self.pause_on_last_frame_checkbox = QCheckBox('Pause on Last Frame')
+        self.pause_on_last_frame_checkbox.setChecked(False)
         self.show_box_checkbox = QCheckBox('Show Box')
         self.show_box_checkbox.setChecked(True)
         self.with_text_checkbox = QCheckBox('With Text')
         self.with_text_checkbox.setChecked(False)
+        self.center_point_trajectory_checkbox = QCheckBox('Center Point Trajectory')
+        self.center_point_trajectory_checkbox.setChecked(True)
         self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
         self.only_near_selection_checkbox.setChecked(False)
+        self.only_selection_box = QCheckBox('Only Selection Box')
+        self.only_selection_box.setChecked(False)
 
         self.select_color_button = QPushButton('Select Selected Color')
         self.text_color_button = QPushButton('Select Text Color')
@@ -116,10 +131,10 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.ok_button = QPushButton('Start')
         self.cancel_button = QPushButton('Close')
 
-        # 设置颜色按钮的样式
+        # Set Button Text Color
         self.update_color_buttons_style()
 
-        # 连接事件
+        #  Connect Signals
         self.select_color_button.clicked.connect(self.select_selected_color)
         self.text_color_button.clicked.connect(self.select_text_color)
         self.unselect_color_button.clicked.connect(self.select_unselected_color)
@@ -127,7 +142,7 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         self.ok_button.clicked.connect(self.accept)
         self.cancel_button.clicked.connect(self.reject)
 
-        # 设置布局
+        # Setup Layout
         layout = QVBoxLayout()
 
         layout.addWidget(self.start_label)
@@ -141,9 +156,12 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         layout.addWidget(range_widget)
 
         layout.addWidget(self.play_loop_checkbox)
+        layout.addWidget(self.pause_on_last_frame_checkbox)
         layout.addWidget(self.show_box_checkbox)
         layout.addWidget(self.with_text_checkbox)
+        layout.addWidget(self.center_point_trajectory_checkbox)
         layout.addWidget(self.only_near_selection_checkbox)
+        layout.addWidget(self.only_selection_box)
 
         layout.addWidget(self.select_color_button)
         layout.addWidget(self.text_color_button)
@@ -223,9 +241,12 @@ class OpenCVPreviewOptionWindow(QMainWindow):
             selection_label = str(self.selection_label_edit.text()).strip()
 
             loop_play = self.play_loop_checkbox.isChecked()
+            pause_on_last_frame = self.pause_on_last_frame_checkbox.isChecked()
             show_box = self.show_box_checkbox.isChecked()
             with_text = self.with_text_checkbox.isChecked()
+            show_center_point_trajectory = self.center_point_trajectory_checkbox.isChecked()
             only_near_selection = self.only_near_selection_checkbox.isChecked()
+            only_selection_box = self.only_selection_box.isChecked()
         except ValueError:
             QMessageBox.critical(self, 'Error', 'Invalid input')
             return
@@ -245,13 +266,19 @@ class OpenCVPreviewOptionWindow(QMainWindow):
         text_color = self.text_color
         unselected_color = self.unselected_color
 
+        class_list = []
+
         file_count = len(self.annotation_file)
 
         play_one = False
         while loop_play or (not play_one):
             play_one = True
+
+            center_point_trajectory: dict = {}
+
             for i, annotation in enumerate(self.annotation_file):
                 frame_index = i + 1
+                is_last_frame = frame_index == file_count
                 if frame_index < start_frame or frame_index > end_frame:
                     continue
 
@@ -261,8 +288,11 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                         color=unselected_color,
                         text_color=text_color,
                         thickness=thickness,
+                        center_point_trajectory=center_point_trajectory,
+                        draw_trajectory=show_center_point_trajectory,
                         selection_label=selection_label,
                         selection_color=selected_color,
+                        only_selection_box=only_selection_box,
                         crop_selection=only_near_selection,
                         not_found_return_none=only_near_selection
                     )
@@ -285,9 +315,14 @@ class OpenCVPreviewOptionWindow(QMainWindow):
                 )
 
                 cv2.imshow("OpenCV Preview", image)
-                if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
-                    loop_play = False
-                    break
+                if is_last_frame and pause_on_last_frame:
+                    if cv2.waitKey(0) & 0xFF == ord('q'):
+                        loop_play = False
+                        break
+                else:
+                    if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
+                        loop_play = False
+                        break
         cv2.destroyAllWindows()
 
     def reject(self):
