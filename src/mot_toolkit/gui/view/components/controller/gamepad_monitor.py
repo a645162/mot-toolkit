@@ -460,7 +460,10 @@ class GamepadMonitor(QWidget):
 
         pygame.init()
         pygame.joystick.init()
-        device_count = pygame.joystick.get_count()
+        try:
+            device_count = pygame.joystick.get_count()
+        except Exception:
+            device_count = 0
 
         target_index = self.target_index
         target_count = target_index + 1

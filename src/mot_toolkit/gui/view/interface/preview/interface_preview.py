@@ -1,6 +1,7 @@
 import json
 import os
 import random
+import sys
 import threading
 from typing import List
 
@@ -699,6 +700,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.__update_display_area()
 
     def __init_gamepad(self):
+        # Check is Linux
+        if sys.platform != "linux":
+            return
+
         pygame_version = get_pygame_version()
         logger.info(f"Pygame Version: {pygame_version}")
         logger.info(get_pygame_version_info())
