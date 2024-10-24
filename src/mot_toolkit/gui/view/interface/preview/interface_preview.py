@@ -432,7 +432,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         # OpenCV Show Video
         self.menu_file_list_show_video_opencv = \
-            QAction("Preview Video (via OpenCV)", self.menu_file_list)
+            QAction("[OpenCV Preview] Preview Video", self.menu_file_list)
         self.menu_file_list_show_video_opencv.triggered.connect(
             self.__action_file_list_show_video
         )
@@ -1027,12 +1027,23 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         have_file_reload = False
         if reply == QMessageBox.StandardButton.Yes:
             file_index = self.get_current_file_truly_index()
-            for i, annotation in enumerate(self.annotation_directory.annotation_file):
-                if i < file_index:
-                    if annotation.reload():
-                        have_file_reload = True
-                else:
-                    break
+
+            # for i, annotation in enumerate(self.annotation_directory.annotation_file):
+            #     if i < file_index:
+            #         if annotation.reload():
+            #             have_file_reload = True
+            #     else:
+            #         break
+            def restore_before(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+                if index < file_index:
+                    if annotation_file_obj.reload():
+                        return True
+                return False
+
+            self.annotation_directory.do_for_each_file(
+                func=restore_before,
+                end_index=file_index
+            )
 
             self.__update_object_list_widget()
 
@@ -1050,12 +1061,23 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         have_file_reload = False
         if reply == QMessageBox.StandardButton.Yes:
             file_index = self.get_current_file_truly_index()
-            for i, annotation in enumerate(self.annotation_directory.annotation_file):
-                if i > file_index:
-                    if annotation.reload():
-                        have_file_reload = True
-                else:
-                    continue
+
+            # for i, annotation in enumerate(self.annotation_directory.annotation_file):
+            #     if i > file_index:
+            #         if annotation.reload():
+            #             have_file_reload = True
+            #     else:
+            #         continue
+            def restore_after(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+                if index > file_index:
+                    if annotation_file_obj.reload():
+                        return True
+                return False
+
+            self.annotation_directory.do_for_each_file(
+                func=restore_after,
+                start_index=file_index + 1
+            )
 
             self.__update_object_list_widget()
 
@@ -1071,8 +1093,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         if reply == QMessageBox.StandardButton.Yes:
-            for annotation in self.annotation_directory.annotation_file:
-                annotation.reload()
+            # for annotation in self.annotation_directory.annotation_file:
+            #     annotation.reload()
+            self.annotation_directory.do_for_each_file(
+                func=lambda annotation_file_obj, _: annotation_file_obj.reload()
+            )
 
             self.__update_object_list_widget()
 
@@ -1275,11 +1300,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return
 
-        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
-            if i < file_index:
-                continue
-
+        # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+        #     if i < file_index:
+        #         continue
+        #
+        #     annotation_obj.add_or_update_rect(selected_rect_obj)
+        self.annotation_directory.do_for_each_file(
+            func=lambda annotation_obj, i:
             annotation_obj.add_or_update_rect(selected_rect_obj)
+            if i >= file_index else None,
+            start_index=file_index
+        )
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
@@ -1327,11 +1358,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         logger.info(f"Delete Label:{label}")
 
         # self.current_annotation_object.del_by_label(label)
-        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
-            if i < file_index:
-                continue
-
-            annotation_obj.del_by_label(label)
+        # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+        #     if i < file_index:
+        #         continue
+        #
+        #     annotation_obj.del_by_label(label)
+        self.annotation_directory.do_for_each_file(
+            func=lambda annotation_obj, i: annotation_obj.del_by_label(label) if i >= file_index else None,
+            start_index=file_index
+        )
 
         self.r_object_list_widget.selection_index = -1
 
@@ -1360,11 +1395,18 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
-        for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
-            if not (frame_start <= i <= frame_end):
-                continue
-
+        # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
+        #     if not (frame_start <= i <= frame_end):
+        #         continue
+        #
+        #     annotation_obj.del_by_label(label)
+        self.annotation_directory.do_for_each_file(
+            func=lambda annotation_obj, i:
             annotation_obj.del_by_label(label)
+            if frame_start <= i <= frame_end else None,
+            start_index=frame_start,
+            end_index=frame_end
+        )
 
         self.__update_object_list_widget()
 

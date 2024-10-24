@@ -141,6 +141,12 @@ pacman -S xcb-util-cursor
 
 You can't use `Global Menu` on `Wayland`.
 
+## Python 3.13
+
+May not compatible with `PySide6` on `Python 3.13`.
+
+https://wiki.qt.io/Qt_for_Python_Development_Notes
+
 ## Thanks
 
 Thanks to the following projects:

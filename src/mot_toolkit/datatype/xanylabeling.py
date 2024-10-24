@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Callable
+from typing import List, Callable, Any
 import json
 import os.path
 
@@ -682,7 +682,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     def do_for_each_file(
             self,
-            func: Callable[[XAnyLabelingAnnotation, int], None],
+            func: Callable[[XAnyLabelingAnnotation, int], Any],
             multi_thread: bool = True,
             start_index: int = -1,
             end_index: int = -1
