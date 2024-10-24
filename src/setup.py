@@ -33,8 +33,11 @@ setup(
 
         "pyside6",
         "opencv-python",
+        "numpy<2",
 
         "chardet",
+
+        "pygame",
     ],
     entry_points={
         "console_scripts": [
