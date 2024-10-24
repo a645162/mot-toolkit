@@ -420,9 +420,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.menu_file_list.addSeparator()
 
+        # Remove All Object
+        self.menu_file_list_remove_all_object = \
+            QAction("Remove All Object (All Frames)", self.menu_file_list)
+        self.menu_file_list_remove_all_object.triggered.connect(
+            self.__action_file_list_remove_all_object
+        )
+        self.menu_file_list.addAction(self.menu_file_list_remove_all_object)
+
+        self.menu_file_list.addSeparator()
+
         # OpenCV Show Video
         self.menu_file_list_show_video_opencv = \
-            QAction("Show Video(OpenCV)", self.menu_file_list)
+            QAction("Preview Video (via OpenCV)", self.menu_file_list)
         self.menu_file_list_show_video_opencv.triggered.connect(
             self.__action_file_list_show_video
         )
@@ -496,19 +506,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_frame.addSeparator()
 
         self.action_frame_fix_all = \
-            QAction("Fix All", self.menu_frame)
+            QAction("Try to Fix All", self.menu_frame)
         self.action_frame_fix_all.triggered.connect(self.__action_frame_fix_all)
         self.menu_frame.addAction(self.action_frame_fix_all)
 
         self.menu_frame.addSeparator()
 
         self.action_frame_opencv_rect = \
-            QAction("OpenCV Draw Rect", self.menu_frame)
+            QAction("[OpenCV Preview] Draw Rect", self.menu_frame)
         self.action_frame_opencv_rect.triggered.connect(self.__action_frame_opencv_rect)
         self.menu_frame.addAction(self.action_frame_opencv_rect)
 
         self.action_frame_opencv_rect_near = \
-            QAction("OpenCV Draw Rect Near", self.menu_frame)
+            QAction("[OpenCV Preview] Draw Rect Near", self.menu_frame)
         self.action_frame_opencv_rect_near.triggered.connect(self.__action_frame_opencv_rect_near)
         self.menu_frame.addAction(self.action_frame_opencv_rect_near)
 
@@ -1092,13 +1102,25 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         have_saved = False
         if reply == QMessageBox.StandardButton.Yes:
             file_index = self.get_current_file_truly_index()
-            for i, annotation in enumerate(self.annotation_directory.annotation_file):
-                if i < file_index:
-                    if annotation.save():
-                        have_saved = True
-                        self.__successful_saved(annotation)
+
+            # for i, annotation in enumerate(self.annotation_directory.annotation_file):
+            #     if i < file_index:
+            #         if annotation.save():
+            #             have_saved = True
+            #             self.__successful_saved(annotation)
+            #     else:
+            #         break
+            def save_before(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+                if index < file_index:
+                    if annotation_file_obj.save():
+                        self.__successful_saved(annotation_file_obj)
                 else:
-                    break
+                    return
+
+            self.annotation_directory.do_for_each_file(
+                func=save_before,
+                end_index=file_index
+            )
 
         return have_saved
 
@@ -1112,18 +1134,29 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.StandardButton.No
         )
 
-        have_saved = False
         if reply == QMessageBox.StandardButton.Yes:
             file_index = self.get_current_file_truly_index()
-            for i, annotation in enumerate(self.annotation_directory.annotation_file):
-                if i > file_index:
-                    if annotation.save():
-                        have_saved = True
-                        self.__successful_saved(annotation)
-                else:
-                    continue
 
-        return have_saved
+            # for i, annotation in enumerate(self.annotation_directory.annotation_file):
+            #     if i > file_index:
+            #         if annotation.save():
+            #             have_saved = True
+            #             self.__successful_saved(annotation)
+            #     else:
+            #         continue
+            def save_after(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+                if index > file_index:
+                    if annotation_file_obj.save():
+                        self.__successful_saved(annotation_file_obj)
+                else:
+                    return
+
+            self.annotation_directory.do_for_each_file(
+                func=save_after,
+                start_index=file_index + 1
+            )
+
+        return reply == QMessageBox.StandardButton.Yes
 
     def __action_window_save_all(self) -> bool:
         reply = QMessageBox.question(
@@ -1134,10 +1167,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.StandardButton.No
         )
 
+        def save_all(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+            if annotation_file_obj.save():
+                self.__successful_saved(annotation_file_obj)
+
         if reply == QMessageBox.StandardButton.Yes:
-            for annotation in self.annotation_directory.annotation_file:
-                if annotation.save():
-                    self.__successful_saved(annotation)
+            # for annotation in self.annotation_directory.annotation_file:
+            #     if annotation.save():
+            #         self.__successful_saved(annotation)
+            self.annotation_directory.do_for_each_file(save_all)
             return True
 
         return False
@@ -1538,7 +1576,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 for exist_label_name in self.annotation_directory.label_list
             ]
             # Max Value
-            max_value = max(digit_list)
+            max_value = max(digit_list) if len(digit_list) else 0
             default_label_name = str(max_value + 1)
 
         label_name, ok = QInputDialog.getText(
@@ -1597,6 +1635,35 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         if ok:
             self.__set_jump_file_count(number)
+
+    def __action_file_list_remove_all_object(self):
+        reply = QMessageBox.question(
+            self,
+            "Question",
+            "Are you sure you want to remove all objects?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            # for annotation_obj in self.annotation_directory.annotation_file:
+            #     annotation_obj.remove_all_annotations()
+
+            def remove_frame_annotation(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+                print("Removing", annotation_file_obj.file_name)
+                annotation_file_obj.remove_all_annotations()
+
+            # Multi Thread in Thread Pool
+            self.annotation_directory.do_for_each_file(remove_frame_annotation)
+
+            # thread_count = cpu_count
+            # with ThreadPoolExecutor(max_workers=thread_count) as executor:
+            #     executor.map(remove_frame_annotation, self.annotation_directory.annotation_file)
+            #
+            #     # Wait
+            #     executor.shutdown(wait=True)
+
+            QMessageBox.information(self, "Information", "Remove all objects successfully.")
 
     def __set_jump_file_count(self, jump_file_count: int = 1):
         self.jump_file_count = jump_file_count
