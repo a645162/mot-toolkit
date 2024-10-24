@@ -1,4 +1,5 @@
-from typing import List
+from concurrent.futures import ThreadPoolExecutor
+from typing import List, Callable
 import json
 import os.path
 
@@ -8,6 +9,7 @@ import cv2
 import numpy as np
 from PySide6.QtGui import QColor
 
+from mot_toolkit.config.hardware import cpu_count
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
 from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
@@ -74,6 +76,10 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.flags = {}
 
         self.rect_annotation_list = []
+
+    def remove_all_annotations(self):
+        self.rect_annotation_list.clear()
+        self.modifying()
 
     def to_dict(self) -> dict:
         result_dict = {}
@@ -673,6 +679,43 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         self.file_name_list = []
 
         self.file_name_black_list.append(modify_store_file_name)
+
+    def do_for_each_file(
+            self,
+            func: Callable[[XAnyLabelingAnnotation, int], None],
+            multi_thread: bool = True,
+            start_index: int = -1,
+            end_index: int = -1
+    ):
+        """
+        Apply a function to each file in the annotation list, optionally using multiple threads.
+
+        :param func: The function to apply to each file. It should take two arguments: (annotation_obj, index).
+        :param multi_thread: Whether to use multiple threads. Default is True.
+        :param start_index: The starting index of the files to process. If -1, starts from the beginning.
+        :param end_index: The ending index of the files to process. If -1, processes until the end.
+        """
+        if start_index == -1:
+            start_index = 0
+        if end_index == -1 or end_index > len(self.annotation_file):
+            end_index = len(self.annotation_file)
+
+        file_obj_list = self.annotation_file[start_index:end_index]
+        file_index_list = range(start_index, end_index)
+
+        if multi_thread:
+            # Multi-thread processing using ThreadPoolExecutor
+            workers_count = cpu_count if cpu_count > 1 else 1
+            with ThreadPoolExecutor(max_workers=workers_count) as executor:
+                # Use map to apply the function to each file in the specified range
+                executor.map(func, file_obj_list, file_index_list)
+
+                # Wait for all tasks to complete
+                executor.shutdown(wait=True)
+        else:
+            # Single-threaded processing
+            for index in file_index_list:
+                func(file_obj_list[index], index)
 
     @property
     def loaded(self) -> bool:

@@ -104,6 +104,22 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
 
         main_layout.addWidget(content_widget)
 
+        # Group Picture
+        group_picture = QGroupBox("Picture")
+        group_picture_layout = QVBoxLayout()
+        group_picture.setLayout(group_picture_layout)
+        left_layout.addWidget(group_picture)
+
+        self.max_width_label = QLabel('Max Width')
+        group_picture_layout.addWidget(self.max_width_label)
+        self.max_width_edit = QLineEdit(str(1920))
+        group_picture_layout.addWidget(self.max_width_edit)
+
+        self.max_height_label = QLabel('Max Height')
+        group_picture_layout.addWidget(self.max_height_label)
+        self.max_height_edit = QLineEdit(str(1080))
+        group_picture_layout.addWidget(self.max_height_edit)
+
         # Group Range
         group_range = QGroupBox("Range")
         group_range_layout = QVBoxLayout()
@@ -309,6 +325,9 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
             return
 
         try:
+            max_width = int(self.max_width_edit.text())
+            max_height = int(self.max_height_edit.text())
+
             start_frame = int(self.start_edit.text())
             end_frame = int(self.end_edit.text())
             thickness = int(self.thickness_edit.text())
@@ -331,6 +350,22 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         except ValueError:
             QMessageBox.critical(self, 'Error', 'Invalid input')
             return
+
+        image_width, image_height = (
+            self.annotation_file_list[0].image_width,
+            self.annotation_file_list[0].image_height
+        )
+
+        scale_ratio = 1
+        if max_width < 0:
+            max_width = 0
+        if max_height < 0:
+            max_height = 0
+        if max_width > 0 or max_height > 0:
+            width_ratio = max_width / image_width if max_width > 0 else 1
+            height_ratio = max_height / image_height if max_height > 0 else 1
+
+            scale_ratio = min(width_ratio, height_ratio)
 
         if thickness <= 0:
             thickness = 1
@@ -364,11 +399,6 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         # Generate Color List
 
         file_count = len(self.annotation_file_list)
-
-        image_width, image_height = (
-            self.annotation_file_list[0].image_width,
-            self.annotation_file_list[0].image_height
-        )
 
         play_one = False
         while loop_play or (not play_one):
@@ -423,6 +453,16 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     (0, 255, 0),
                     2
                 )
+
+                # Resize
+                if scale_ratio != 1:
+                    image = cv2.resize(
+                        image,
+                        (
+                            int(image_width * scale_ratio),
+                            int(image_height * scale_ratio)
+                        )
+                    )
 
                 if output_video and video_out is not None:
                     video_out.write(image)
