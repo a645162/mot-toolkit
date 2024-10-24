@@ -237,6 +237,9 @@ class ImageViewGraphics(QGraphicsView):
                     # Edge Detection
                     self.image_display = \
                         sobel_edge_detection_q_pixmap(self.image_display)
+
+                    # self.image_display= \
+                    #     canny_edge_detection_q_pixmap(self.image_display)
                 case ImageDisplayType.OutlineBinary:
                     # Edge Detection with Binary Threshold
                     self.image_display = \

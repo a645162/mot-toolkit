@@ -2,7 +2,7 @@ loguru
 
 pyside6
 opencv-python
-numpy<2
+numpy
 
 chardet
 
