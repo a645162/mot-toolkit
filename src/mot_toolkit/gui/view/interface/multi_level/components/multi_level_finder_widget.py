@@ -169,10 +169,10 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             self.list_widget_layout.addWidget(new_list_widget)
             self.__list_widget_list.append(new_list_widget)
 
-            h_scroll_bar = self.scroll_area.horizontalScrollBar()
-            # Set the horizontal scroll bar to the right
-            h_scroll_bar.setValue(h_scroll_bar.maximum())
-            h_scroll_bar.update()
+            # h_scroll_bar = self.scroll_area.horizontalScrollBar()
+            # # Set the horizontal scroll bar to the right
+            # h_scroll_bar.setValue(h_scroll_bar.maximum())
+            # h_scroll_bar.update()
 
             new_list_widget.slot_selection_changed.connect(
                 self.__list_widget_selection_changed
@@ -186,6 +186,14 @@ class MultiLevelFinderWidget(BaseQWidgetWithLayout):
             new_list_widget.slot_double_clicked.connect(
                 self.__list_widget_double_clicked
             )
+
+            self.move_to_right()
+
+    def move_to_right(self):
+        # Get Width
+        content_width = self.h_widget.width()
+        # Set the horizontal scroll bar to the right
+        self.scroll_area.horizontalScrollBar().setValue(content_width)
 
     def __list_widget_double_clicked(self, widget_index: int):
         if self.double_click_enter_sub_directory:
