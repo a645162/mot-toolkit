@@ -10,6 +10,8 @@ logger = get_logger()
 
 device = torch_devices.get_device()
 
+iou_threshold = 0.4
+
 
 def sam_is_loaded() -> bool:
     global model_sam
@@ -53,7 +55,9 @@ def sam_predict_xyxy(
             iou = calculate_iou(prompt_bbox_tuple, box)
             logger.info(f"[{i}] IOU: {iou}")
 
-            if iou > 0.5:
+            if iou > iou_threshold:
                 result_list.append(box)
+            else:
+                logger.info(f"[{i}] IOU({iou}) is too low(<{iou_threshold}), skip.")
 
     return result_list

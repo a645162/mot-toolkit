@@ -147,7 +147,7 @@ https://pytorch.org/get-started/locally/
 
 ### If you want to use GPU
 
-The installation script `install.py` for `torch` is only support `Linux` and `NVIDIA GPU`.
+The installation script `install.py` for `torch` is only support `Linux`+`NVIDIA GPU` and `Apple macOS`.
 
 ### AMD GPU
 

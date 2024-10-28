@@ -35,6 +35,9 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
     if not os.path.isdir(dir_path):
         return []
 
+    # 视频名称	序列数	序列名称	帧数	总目标数	类别数
+    csv_ori_data_list: List[Tuple[str, str, str, str, str, str]] = []
+
     # Onboard Onshore
     class_list = os.listdir(dir_path)
     for class_name in class_list:
@@ -43,8 +46,6 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
             continue
 
         print(class_dir_path)
-        # 视频名称	序列数	序列名称	帧数	总目标数	类别数
-        csv_ori_data_list: List[Tuple[str, str, str, str, str, str]] = []
 
         video_list = walk_dir_get_dir_list(class_dir_path)
         video_count = len(video_list)
