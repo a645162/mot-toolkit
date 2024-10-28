@@ -1,5 +1,7 @@
 loguru
 
+tqdm
+
 pyside6
 opencv-python
 numpy

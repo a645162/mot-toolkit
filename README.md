@@ -141,11 +141,26 @@ pacman -S xcb-util-cursor
 
 You can't use `Global Menu` on `Wayland`.
 
+## Deep Learning
+
+https://pytorch.org/get-started/locally/
+
+### If you want to use GPU
+
+The installation script `install.py` for `torch` is only support `Linux` and `NVIDIA GPU`.
+
+### AMD GPU
+
+If you use AMD GPU(Linux), please manually install `PyTorch` and `Rocm`.
+
 ## Python 3.13
 
-May not compatible with `PySide6` on `Python 3.13`.
+**May** not complete compliant compatible with `PySide6` on `Python 3.13`.
 
 https://wiki.qt.io/Qt_for_Python_Development_Notes
+
+`conda` is available to install `Python 3.13` and `PySide6 6.8.0.2`,
+but `rye` is not support now.
 
 ## Thanks
 
