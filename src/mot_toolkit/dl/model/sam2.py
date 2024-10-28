@@ -1,11 +1,14 @@
 from ultralytics import SAM
 
+from mot_toolkit.dl.common import torch_devices
 from mot_toolkit.dl.utils.value_calc import calculate_iou
 from mot_toolkit.utils.logs import get_logger
 
 model_sam: SAM | None = None
 
 logger = get_logger()
+
+device = torch_devices.get_device()
 
 
 def sam_is_loaded() -> bool:
@@ -18,7 +21,7 @@ def sam_load():
     global model_sam
 
     if model_sam is None:
-        model_sam = SAM("sam2.1_b.pt")
+        model_sam = SAM("sam2.1_b.pt").to(device)
 
 
 def sam_predict_xyxy(

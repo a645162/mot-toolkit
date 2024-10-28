@@ -1477,7 +1477,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.critical(self, "Warning", "No object selected.")
             return
 
-        from mot_toolkit.dl import sam2
+        from mot_toolkit.dl.model import sam2
 
         original_bbox = annotation_object.get_xyxy_list()
         # print(self.current_annotation_object.pic_path)

@@ -153,6 +153,10 @@ The installation script `install.py` for `torch` is only support `Linux` and `NV
 
 If you use AMD GPU(Linux), please manually install `PyTorch` and `Rocm`.
 
+### DirectML on Windows
+
+https://learn.microsoft.com/zh-cn/windows/ai/directml/pytorch-windows
+
 ## Python 3.13
 
 **May** not complete compliant compatible with `PySide6` on `Python 3.13`.
