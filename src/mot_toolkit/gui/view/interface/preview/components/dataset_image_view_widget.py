@@ -319,6 +319,10 @@ class DatasetImageView(ScrollImageView):
     def __image_scale_factor_changed(self):
         self.update_all_rect_widget_boundary()
 
+    def update_all_rect_widget_position(self):
+        for rect_widget in self.annotation_widget_rect_list:
+            rect_widget.update_position_from_source()
+
     def update_all_rect_widget_boundary(self):
         boundary = None
 

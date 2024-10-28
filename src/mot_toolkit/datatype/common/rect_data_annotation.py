@@ -160,6 +160,12 @@ class RectDataAnnotation(ObjectAnnotation):
             return
         self.center_y = self.picture_height * value
 
+    def get_xyxy_tuple(self) -> tuple:
+        return self.x1, self.y1, self.x2, self.y2
+
+    def get_xyxy_list(self) -> list[float]:
+        return [self.x1, self.y1, self.x2, self.y2]
+
     def set_by_position_and_size(
             self,
             x: float, y: float,

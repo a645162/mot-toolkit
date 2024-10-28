@@ -78,6 +78,32 @@ class ObjectListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
+        self.menu_copy_position_float = \
+            QAction(
+                "Copy Position to Clipboard[float]",
+                q_menu
+            )
+        q_menu.addAction(self.menu_copy_position_float)
+        select_enable_list.append(self.menu_copy_position_float)
+
+        self.menu_object_info = \
+            QAction(
+                "Object Info",
+                q_menu
+            )
+        q_menu.addAction(self.menu_object_info)
+        select_enable_list.append(self.menu_object_info)
+
+        self.menu_dl_sam2 = \
+            QAction(
+                "DL: SAM2",
+                q_menu
+            )
+        q_menu.addAction(self.menu_dl_sam2)
+        select_enable_list.append(self.menu_dl_sam2)
+
+        q_menu.addSeparator()
+
         self.menu_unselect_all = \
             QAction(
                 "Unselect All",

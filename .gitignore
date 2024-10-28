@@ -2,6 +2,8 @@ requirements.lock
 requirements-dev.lock
 uv.lock
 
+*.pt
+
 *.avi
 *.mp4
 

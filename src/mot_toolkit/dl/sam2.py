@@ -36,7 +36,7 @@ def sam_predict_xyxy(
 
     results = model_sam.predict(
         source=image_path,
-        bbox=bbox_xyxy,
+        bboxes=bbox_xyxy,
     )
 
     for result in results:

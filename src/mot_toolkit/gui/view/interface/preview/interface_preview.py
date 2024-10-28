@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QDialog, QInputDialog, QMessageBox,
 )
 
+from mot_toolkit.dl.utils.value_calc import calculate_iou
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.utils.q_color import generate_unique_q_colors
@@ -655,6 +656,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_operate_del_between \
             .triggered.connect(self.__action_obj_del_between_target)
 
+        self.r_object_list_widget.menu_copy_position_float \
+            .triggered.connect(self.__action_obj_copy_position)
+        self.r_object_list_widget.menu_dl_sam2 \
+            .triggered.connect(self.__action_obj_dl_sam2)
+
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
 
@@ -702,6 +708,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         return
                     case Qt.Key.Key_S:
                         self.move_area_to_center()
+                        return
+                    case Qt.Key.Key_T:
+                        self.__action_obj_dl_sam2()
                         return
 
     def resizeEvent(self, event):
@@ -1229,6 +1238,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         return file_index
 
+    def get_current_file_object(self) -> XAnyLabelingAnnotation | None:
+        file_index = self.get_current_file_truly_index()
+
+        if file_index == -1:
+            return None
+
+        if file_index >= len(self.annotation_directory.annotation_file):
+            return None
+
+        return self.annotation_directory.annotation_file[file_index]
+
     def __action_file_reload(self):
         ok = QMessageBox.question(
             self,
@@ -1409,6 +1429,111 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         self.__update_object_list_widget()
+
+    def get_selection_object(self) -> XAnyLabelingRect | None:
+        file_index = self.get_current_file_truly_index()
+        if file_index == -1:
+            return None
+
+        obj_index = self.r_object_list_widget.selection_index
+        if (
+                obj_index == -1 or
+                obj_index >= len(self.current_annotation_object.rect_annotation_list)
+        ):
+            return None
+        return self.current_annotation_object.rect_annotation_list[obj_index]
+
+    def __action_obj_copy_position(self):
+        annotation_object = self.get_selection_object()
+
+        position_str = (
+            f"{annotation_object.x1},"
+            f"{annotation_object.y1},"
+            f"{annotation_object.x2},"
+            f"{annotation_object.y2}"
+        )
+
+        # Copy to clipboard
+        clipboard = QApplication.clipboard()
+        clipboard.setText(position_str)
+        logger.info(f"Copy Position:{position_str}")
+
+        QMessageBox.information(self, "Copy Position", position_str)
+
+    def __action_obj_dl_sam2(self):
+        import mot_toolkit.dl as dl
+
+        if not dl.support_torch:
+            QMessageBox.critical(self, "Warning", "PyTorch is not installed.")
+            return
+        if not dl.support_v8:
+            QMessageBox.critical(self, "Warning", "ultralytics is not installed.")
+            return
+
+        annotation_object = self.get_selection_object()
+        rect_widget = self.main_image_view.selection_widget
+
+        if annotation_object is None or rect_widget is None:
+            QMessageBox.critical(self, "Warning", "No object selected.")
+            return
+
+        from mot_toolkit.dl import sam2
+
+        original_bbox = annotation_object.get_xyxy_list()
+        # print(self.current_annotation_object.pic_path)
+
+        result_list = sam2.sam_predict_xyxy(
+            self.current_annotation_object.pic_path,
+            original_bbox
+        )
+
+        logger.info(f"Result Count: {len(result_list)}")
+
+        if len(result_list) != 1:
+            logger.warning(f"Error: SAM result count{len(result_list)} != 1")
+            return
+
+        result_bbox = result_list[0]
+
+        if len(result_bbox) != 4:
+            logger.warning(f"Error: SAM result bbox length({len(result_bbox)}) != 4")
+            return
+
+        x1, y1, x2, y2 = (
+            result_bbox[0],
+            result_bbox[1],
+            result_bbox[2],
+            result_bbox[3]
+        )
+
+        iou = calculate_iou(original_bbox, result_bbox)
+        iou = round(iou, 2)
+
+        logger.info(f"Before: {original_bbox}")
+        logger.info(f"New: {result_bbox}")
+        logger.info(f"IOU: {iou}")
+
+        iou_threshold = 0.4
+        if iou < iou_threshold:
+            logger.info(f"IOU is too low: {iou} < {iou_threshold}")
+            return
+
+        annotation_object.x1 = x1
+        annotation_object.y1 = y1
+        annotation_object.x2 = x2
+        annotation_object.y2 = y2
+
+        # rect_widget.ori_x = x1
+        # rect_widget.ori_x = y1
+        # rect_widget.ori_w = x2 - x1
+        # rect_widget.ori_h = y2 - y1
+        #
+        # rect_widget.update()
+
+        rect_widget.update_position_from_source()
+
+        annotation_file = self.get_current_file_object()
+        annotation_file.modifying()
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1

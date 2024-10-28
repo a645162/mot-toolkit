@@ -338,3 +338,18 @@ class AnnotationWidgetRect(ResizableRect):
             self.show()
         else:
             self.hide()
+
+    def update_position_from_source(self):
+        x, y, w, h = (
+            self.source.x,
+            self.source.y,
+            self.source.width,
+            self.source.height
+        )
+
+        self.ori_x = int(x)
+        self.ori_y = int(y)
+        self.ori_w = int(w)
+        self.ori_h = int(h)
+
+        self.update()
