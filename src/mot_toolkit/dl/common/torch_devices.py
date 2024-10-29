@@ -1,3 +1,5 @@
+import os
+
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -17,6 +19,10 @@ def get_recommended_device():
         # 如果是macOS系统，则启用Metal后端
         if torch.backends.mps.is_available():
             # Apple Metal可用
+
+            # PYTORCH_ENABLE_MPS_FALLBACK=1
+            os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+
             logger.info("Metal backend is available.")
             logger.info("Using Apple Metal Backend...")
             return torch.device("mps")

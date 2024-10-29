@@ -4,7 +4,7 @@ tqdm
 
 pyside6
 opencv-python
-numpy
+numpy<2.0.0
 
 chardet
 
