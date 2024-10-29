@@ -1,6 +1,9 @@
+from enum import Enum
+
 import cv2
 
 from ultralytics import SAM
+from ultralytics import FastSAM
 
 from mot_toolkit.dl.common import torch_devices
 from mot_toolkit.dl.utils.value_calc import calculate_iou
@@ -15,6 +18,18 @@ device = torch_devices.get_device()
 iou_threshold = 0.4
 
 
+class SamModelType(Enum):
+    SAM_2_1_Tiny = "sam2.1_t.pt"
+    SAM_2_1_Small = "sam2.1_s.pt"
+    SAM_2_1_Base = "sam2.1_b.pt"
+    SAM_2_1_Large = "sam2.1_l.pt"
+    FAST_SAM_S = "FastSAM-s.pt"
+    FAST_SAM_X = "FastSAM-x.pt"
+
+
+model_type: SamModelType = SamModelType.FAST_SAM_X
+
+
 def sam_is_loaded() -> bool:
     global model_sam
 
@@ -25,7 +40,15 @@ def sam_load():
     global model_sam
 
     if model_sam is None:
-        model_sam = SAM("sam2.1_b.pt").to(device)
+        if (
+                model_type == SamModelType.FAST_SAM_S or
+                model_type == SamModelType.FAST_SAM_X
+        ):
+            model_sam = FastSAM(model_type.value)
+        else:
+            model_sam = SAM(model_type.value)
+
+        model_sam.to(device)
 
 
 def sam_predict_xyxy(

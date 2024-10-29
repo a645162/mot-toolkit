@@ -1496,7 +1496,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         logger.info(f"Result Count: {len(result_list)}")
 
         if len(result_list) != 1:
-            logger.warning(f"Error: SAM result count{len(result_list)} != 1")
+            logger.warning(f"Error: SAM result count(len(result_list)) != 1")
             return
 
         result_bbox = result_list[0]
