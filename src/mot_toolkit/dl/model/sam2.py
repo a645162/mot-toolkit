@@ -1,3 +1,5 @@
+import cv2
+
 from ultralytics import SAM
 
 from mot_toolkit.dl.common import torch_devices
@@ -51,6 +53,92 @@ def sam_predict_xyxy(
 
         for i, xy_xy in enumerate(xy_xy_list):
             box: list[float] = [xy_xy[0], xy_xy[1], xy_xy[2], xy_xy[3]]
+
+            iou = calculate_iou(prompt_bbox_tuple, box)
+            logger.info(f"[{i}] IOU: {iou}")
+
+            if iou > iou_threshold:
+                result_list.append(box)
+            else:
+                logger.info(f"[{i}] IOU({iou}) is too low(<{iou_threshold}), skip.")
+
+    return result_list
+
+
+def sam_predict_xyxy_near(
+        image_path,
+        bbox_xyxy: list[float],
+        padding: int = -1,
+) -> list[list[float]]:
+    result_list: list[list[float]] = []
+
+    new_image = cv2.imread(image_path)
+
+    image_width = new_image.shape[1]
+    image_height = new_image.shape[0]
+
+    x1, y1, x2, y2 = bbox_xyxy
+    x, y, w, h = x1, y1, x2, y2
+
+    if padding == -1:
+        padding = max(w, h) // 2
+
+    prompt_bbox_tuple = (x1, y1, x2, y2)
+
+    new_x1 = int(bbox_xyxy[0] - padding)
+    new_y1 = int(bbox_xyxy[1] - padding)
+    new_x2 = int(bbox_xyxy[2] + padding)
+    new_y2 = int(bbox_xyxy[3] + padding)
+
+    padding_left = x - new_x1
+    padding_top = y - new_y1
+
+    new_x1 = max(0, new_x1)
+    new_y1 = max(0, new_y1)
+    new_x2 = min(image_width, new_x2)
+    new_y2 = min(image_height, new_y2)
+
+    new_image = new_image[new_y1:new_y2, new_x1:new_x2]
+
+    new_prompt_bbox_list: list[float] = [
+        padding_left,
+        padding_top,
+        padding_left + w,
+        padding_top + h
+    ]
+
+    if not sam_is_loaded():
+        sam_load()
+
+    global model_sam
+
+    results = model_sam.predict(
+        source=new_image,
+        bboxes=new_prompt_bbox_list,
+    )
+
+    for result in results:
+        logger.info(f"Detected {len(result.masks)} masks(boxes).")
+
+        xy_xy_list = result.boxes.cpu().xyxy.numpy().tolist()
+
+        for i, xy_xy in enumerate(xy_xy_list):
+            predict_x1, predict_y1, predict_x2, predict_y2 = xy_xy
+            predict_x, predict_y, predict_w, predict_h = (
+                predict_x1, predict_y1,
+                predict_x2 - predict_x1,
+                predict_y2 - predict_y1
+            )
+
+            original_x1 = predict_x + new_x1
+            original_y1 = predict_y + new_y1
+            original_x2 = original_x1 + predict_w
+            original_y2 = original_y1 + predict_h
+
+            box: list[float] = [
+                original_x1, original_y1,
+                original_x2, original_y2
+            ]
 
             iou = calculate_iou(prompt_bbox_tuple, box)
             logger.info(f"[{i}] IOU: {iou}")

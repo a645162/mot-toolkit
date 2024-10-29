@@ -1482,10 +1482,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         original_bbox = annotation_object.get_xyxy_list()
         # print(self.current_annotation_object.pic_path)
 
-        result_list = sam2.sam_predict_xyxy(
-            self.current_annotation_object.pic_path,
-            original_bbox
-        )
+        if self.r_object_list_widget.menu_dl_near_mode.isChecked():
+            result_list = sam2.sam_predict_xyxy_near(
+                self.current_annotation_object.pic_path,
+                original_bbox
+            )
+        else:
+            result_list = sam2.sam_predict_xyxy(
+                self.current_annotation_object.pic_path,
+                original_bbox
+            )
 
         logger.info(f"Result Count: {len(result_list)}")
 

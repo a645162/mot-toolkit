@@ -94,6 +94,8 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_object_info)
         select_enable_list.append(self.menu_object_info)
 
+        q_menu.addSeparator()
+
         self.menu_dl_sam2 = \
             QAction(
                 "DL: SAM2",
@@ -101,6 +103,18 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_dl_sam2)
         select_enable_list.append(self.menu_dl_sam2)
+
+        self.menu_dl_near_mode = \
+            QAction(
+                "   Near Mode",
+                q_menu
+            )
+        self.menu_dl_near_mode.setCheckable(True)
+        self.menu_dl_near_mode.setChecked(False)
+        # self.menu_dl_sam2.triggered.connect(
+        #     lambda: self.menu_dl_near_mode.setChecked(self.menu_dl_sam2.isChecked())
+        # )
+        q_menu.addAction(self.menu_dl_near_mode)
 
         q_menu.addSeparator()
 
