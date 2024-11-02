@@ -163,6 +163,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.toolkit_widget.btn_zoom_fit.clicked.connect(
             lambda: self.main_image_view.set_to_fit_scale_factor()
         )
+        self.toolkit_widget.btn_zoom_select.clicked.connect(
+            lambda: self.main_image_view.zoom_select_object()
+        )
 
         def __toolkit_input_zoom_factor():
             current_scale_factor = \
@@ -185,7 +188,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         self.toolkit_widget.btn_center.clicked.connect(
-            self.move_area_to_center
+            lambda: self.main_image_view.move_area_to_center()
         )
 
         self.toolkit_widget.btn_reverse_color.clicked.connect(
@@ -710,10 +713,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         self.__action_frame_opencv_rect()
                         return
                     case Qt.Key.Key_S:
-                        self.move_area_to_center()
+                        self.main_image_view.move_area_to_center()
                         return
                     case Qt.Key.Key_T:
                         self.__action_obj_dl_sam2()
+                        return
+                    case Qt.Key.Key_Z:
+                        self.main_image_view.zoom_select_object()
                         return
 
     def resizeEvent(self, event):
@@ -1947,25 +1953,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.toolkit_widget.update()
 
         threading.Thread(target=update_display_area_thread).start()
-
-    def move_area_to_center(self):
-        # Widget
-        selection_widget: AnnotationWidgetRect | None = \
-            self.main_image_view.selection_widget
-        if selection_widget is None:
-            return
-
-            # annotation_obj:XAnyLabelingRect|None=selection_widget.source
-        # if annotation_obj is None:
-        #     return
-
-        center_x, center_y = selection_widget.center_x, selection_widget.center_y
-
-        start_x = center_x - self.main_image_view.scroll_area.width() / 2
-        start_y = center_y - self.main_image_view.scroll_area.height() / 2
-
-        self.main_image_view.horizontal_pos = start_x
-        self.main_image_view.vertical_pos = start_y
 
     def closeEvent(self, event):
         super().closeEvent(event)

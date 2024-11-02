@@ -370,6 +370,47 @@ class DatasetImageView(ScrollImageView):
         self.slot_try_to_zoom.emit(factor)
         # self.image_view.scale_factor = factor
 
+    def zoom_select_object(self):
+        selected_rect_widget = self.selection_widget
+        if selected_rect_widget is None:
+            return
+
+        parent_width = self.scroll_area.width()
+        parent_height = self.scroll_area.height()
+
+        k = 2 / 3
+
+        target_width = int(parent_width * k)
+        target_height = int(parent_height * k)
+
+        original_width = selected_rect_widget.source.width
+        original_height = selected_rect_widget.source.height
+
+        scale_factor = min(target_width / original_width, target_height / original_height)
+
+        self.slot_try_to_zoom.emit(scale_factor)
+
+        self.move_area_to_center()
+
+    def move_area_to_center(self):
+        # Widget
+        selection_widget: AnnotationWidgetRect | None = \
+            self.selection_widget
+        if selection_widget is None:
+            return
+
+            # annotation_obj:XAnyLabelingRect|None=selection_widget.source
+        # if annotation_obj is None:
+        #     return
+
+        center_x, center_y = selection_widget.center_x, selection_widget.center_y
+
+        start_x = center_x - self.scroll_area.width() / 2
+        start_y = center_y - self.scroll_area.height() / 2
+
+        self.horizontal_pos = start_x
+        self.vertical_pos = start_y
+
     def try_to_reverse_color(self):
         self.reverse_color = not self.reverse_color
 
