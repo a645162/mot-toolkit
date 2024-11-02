@@ -9,7 +9,7 @@ from mot_toolkit.dl.common import torch_devices
 from mot_toolkit.dl.utils.value_calc import calculate_iou
 from mot_toolkit.utils.logs import get_logger
 
-model_sam: SAM | None = None
+model_sam: SAM | FastSAM | None = None
 
 logger = get_logger()
 
@@ -33,7 +33,16 @@ model_type: SamModelType = SamModelType.FAST_SAM_X
 def sam_is_loaded() -> bool:
     global model_sam
 
-    return model_sam is not None
+    if model_sam is not None:
+        return True
+
+    if (
+            isinstance(model_sam, SAM) or
+            isinstance(model_sam, FastSAM)
+    ):
+        return True
+
+    return False
 
 
 def sam_load():
