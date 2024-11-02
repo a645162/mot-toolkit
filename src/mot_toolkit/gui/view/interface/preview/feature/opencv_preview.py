@@ -3,6 +3,7 @@ import os
 from typing import List
 
 import cv2
+from PySide6.QtCore import Qt
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -274,6 +275,21 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
+
+    def keyPressEvent(self, event):
+        super().keyPressEvent(event)
+
+        match event.modifiers():
+            case Qt.KeyboardModifier.NoModifier:
+                match event.key():
+                    case Qt.Key.Key_Escape:
+                        self.reject()
+                    case Qt.Key.Key_Q:
+                        self.reject()
+                    case Qt.Key.Key_Enter:
+                        self.accept()
+            case _:
+                pass
 
     def set_current_frame(self):
         if self.current_frame_index == -1:

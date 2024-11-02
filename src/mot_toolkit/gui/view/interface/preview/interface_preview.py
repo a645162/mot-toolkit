@@ -675,7 +675,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 pass
 
             case Qt.KeyboardModifier.ControlModifier:
-                pass
+                match key:
+                    case Qt.Key.Key_Q:
+                        self.__action_file_list_show_video()
+                        return
 
             case Qt.KeyboardModifier.AltModifier:
                 # Alt
