@@ -30,6 +30,8 @@ class XAnyLabelingRect(RectDataAnnotation):
 
     description: str = ""
 
+    annotation_file: "XAnyLabelingAnnotation | None" = None
+
     def __init__(self, label: str = ""):
         super().__init__(label)
 
@@ -68,6 +70,8 @@ class XAnyLabelingAnnotation(AnnotationFile):
     image_data = None
     image_height = 0
     image_width = 0
+
+    annotation_directory: "XAnyLabelingAnnotationDirectory | None" = None
 
     def __init__(self, label: str = ""):
         super().__init__(label)
@@ -230,6 +234,8 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
             if item_shape_type == "rectangle":
                 current_rect_annotation = XAnyLabelingRect(item_label)
+
+                current_rect_annotation.annotation_file = self
 
                 data.update(shape_item)
 
@@ -738,6 +744,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                     json_path=json_file,
                     index=i
                 )
+
+            annotation.annotation_directory = self
 
             annotation.slot_modified.connect(self.slot_modified)
 
