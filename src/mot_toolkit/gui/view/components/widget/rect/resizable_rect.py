@@ -19,10 +19,10 @@ class ResizableRect(QWidget):
 
     label: str = ""
 
-    ori_x: int = 0
-    ori_y: int = 0
-    ori_w: int = 0
-    ori_h: int = 0
+    ori_x: float = 0
+    ori_y: float = 0
+    ori_w: float = 0
+    ori_h: float = 0
 
     uuid: str = ""
 
@@ -364,8 +364,8 @@ class ResizableRect(QWidget):
         return self.x()
 
     @now_x.setter
-    def now_x(self, value):
-        self.ori_x = int(value / self.scale_factor)
+    def now_x(self, value: float):
+        self.ori_x = value / self.scale_factor
 
         self.update()
 
@@ -374,8 +374,8 @@ class ResizableRect(QWidget):
         return self.y()
 
     @now_y.setter
-    def now_y(self, value):
-        self.ori_y = int(value / self.scale_factor)
+    def now_y(self, value: float):
+        self.ori_y = value / self.scale_factor
 
         self.update()
 
@@ -384,8 +384,8 @@ class ResizableRect(QWidget):
         return self.width()
 
     @now_width.setter
-    def now_width(self, value):
-        self.ori_w = int(value / self.scale_factor)
+    def now_width(self, value: float):
+        self.ori_w = value / self.scale_factor
 
         self.update()
 
@@ -394,8 +394,8 @@ class ResizableRect(QWidget):
         return self.height()
 
     @now_height.setter
-    def now_height(self, value):
-        self.ori_h = int(value / self.scale_factor)
+    def now_height(self, value: float):
+        self.ori_h = value / self.scale_factor
 
         self.update()
 
@@ -519,86 +519,86 @@ class ResizableRect(QWidget):
         self.update()
 
     @property
-    def x1_original(self) -> int:
+    def x1_original(self) -> float:
         return self.ori_x
 
     @x1_original.setter
-    def x1_original(self, value: int):
+    def x1_original(self, value: float):
         self.ori_x = value
 
         self.update()
 
     @property
-    def y1_original(self) -> int:
+    def y1_original(self) -> float:
         return self.ori_y
 
     @y1_original.setter
-    def y1_original(self, value: int):
+    def y1_original(self, value: float):
         self.ori_y = value
 
         self.update()
 
     @property
-    def width_original(self) -> int:
+    def width_original(self) -> float:
         return self.ori_w
 
     @width_original.setter
-    def width_original(self, value: int):
+    def width_original(self, value: float):
         self.ori_w = value
 
         self.update()
 
     @property
-    def height_original(self) -> int:
+    def height_original(self) -> float:
         return self.ori_h
 
     @height_original.setter
-    def height_original(self, value: int):
+    def height_original(self, value: float):
         self.ori_h = value
 
         self.update()
 
     @property
-    def x2_original(self) -> int:
+    def x2_original(self) -> float:
         return self.ori_x + self.ori_w
 
     @property
-    def y2_original(self) -> int:
+    def y2_original(self) -> float:
         return self.ori_y + self.ori_h
 
     @property
-    def center_x(self) -> int:
-        return self.now_x + self.now_width // 2
+    def center_x(self) -> float:
+        return self.now_x + self.now_width / 2
 
     @center_x.setter
-    def center_x(self, value: int):
-        self.now_x = value - self.now_width // 2
+    def center_x(self, value: float):
+        self.now_x = value - self.now_width / 2
 
     @property
-    def center_y(self) -> int:
-        return self.now_y + self.now_height // 2
+    def center_y(self) -> float:
+        return self.now_y + self.now_height / 2
 
     @center_y.setter
-    def center_y(self, value: int):
-        self.now_y = value - self.now_height // 2
+    def center_y(self, value: float):
+        self.now_y = value - self.now_height / 2
 
     @property
-    def center_x_original(self) -> int:
-        return self.ori_x + self.ori_w // 2
+    def center_x_original(self) -> float:
+        return self.ori_x + self.ori_w / 2
 
     @center_x_original.setter
-    def center_x_original(self, value: int):
-        self.ori_x = value - self.ori_w // 2
+    def center_x_original(self, value: float):
+        self.ori_x = value - self.ori_w / 2
 
         self.update()
 
     @property
-    def center_y_original(self) -> int:
-        return self.ori_y + self.ori_h // 2
+    def center_y_original(self) -> float:
+        return self.ori_y + self.ori_h / 2
 
     @center_y_original.setter
-    def center_y_original(self, value: int):
-        self.ori_y = value - self.ori_h // 2
+    def center_y_original(self, value: float):
+        self.ori_y = value - self.ori_h / 2
 
         self.update()
 
@@ -612,10 +612,24 @@ class ResizableRect(QWidget):
         if scale_factor == 0:
             scale_factor = self.scale_factor
 
-        new_x = int(self.ori_x * scale_factor)
-        new_y = int(self.ori_y * scale_factor)
-        new_w = int(self.ori_w * scale_factor)
-        new_h = int(self.ori_h * scale_factor)
+        new_x = self.ori_x * scale_factor
+        new_y = self.ori_y * scale_factor
+        new_w = self.ori_w * scale_factor
+        new_h = self.ori_h * scale_factor
+
+        round_count = 0
+
+        new_x, new_y, new_w, new_h = (
+            round(new_x, round_count),
+            round(new_y, round_count),
+            round(new_w, round_count),
+            round(new_h, round_count)
+        )
+
+        new_x, new_y, new_w, new_h = map(
+            int,
+            (new_x, new_y, new_w, new_h)
+        )
 
         return QRect(new_x, new_y, new_w, new_h)
 
