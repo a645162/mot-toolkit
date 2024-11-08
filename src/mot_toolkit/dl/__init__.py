@@ -30,11 +30,25 @@ except Exception:
     pass
 
 try:
-    from mot_toolkit.dl.common.torch_devices import get_device
+    from mot_toolkit.dl.common.torch_devices import (
+        get_device,
+        get_device_index,
+        get_device_name,
+        is_amd_rocm_device
+    )
 
     device = get_device()
 
     logger.info(f"Torch Device: {device}")
+    if str(device.type) == "cuda":
+        device_index = get_device_index(device)
+        logger.info(f"Device Index: {device_index}")
+
+        device_name = get_device_name(device)
+        logger.info(f"Device Name: {device_name}")
+
+        is_amd = is_amd_rocm_device(device)
+        logger.info(f"Is AMD ROCm Device: {is_amd}")
 except Exception:
     logger.info("Cannot get device!")
 

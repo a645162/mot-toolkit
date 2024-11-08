@@ -1,4 +1,5 @@
 from enum import Enum
+import os
 
 import cv2
 
@@ -16,6 +17,12 @@ logger = get_logger()
 device = torch_devices.get_device()
 
 iou_threshold = 0.4
+
+# Try to fix AMD Gpu error
+if torch_devices.is_amd_rocm_device(device=device):
+    logger.info("AMD ROCm device detected.")
+    os.environ["TORCH_BLAS_PREFER_HIPBLASLT"] = "0"
+    os.environ["DISABLE_ADDMM_CUDA_LT"] = "1"
 
 
 class SamModelType(Enum):

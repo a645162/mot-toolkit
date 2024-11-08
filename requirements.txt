@@ -2,9 +2,10 @@ loguru
 
 tqdm
 
-pyside6
-opencv-python
 numpy<2.0.0
+opencv-python
+
+pyside6
 
 chardet
 

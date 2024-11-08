@@ -1,4 +1,7 @@
 import os
+import platform
+
+import torch
 
 from mot_toolkit.utils.logs import get_logger
 
@@ -10,9 +13,6 @@ def get_recommended_device():
     获取推荐的设备
     :return:
     """
-    import torch
-    import platform
-
     logger.info("Checking device...")
 
     if 'Darwin' in platform.system():
@@ -58,6 +58,55 @@ def get_device():
     return get_recommended_device()
 
 
+def get_device_index(device: torch.device):
+    """
+    Get device index
+    :param device:
+    :return:
+    """
+    if str(device.type) == "cuda":
+        return device.index
+
+    return -1
+
+
+def get_device_name(device: torch.device | int):
+    """
+    Get device name
+    :param device:
+    :return:
+    """
+    try:
+        if isinstance(device, int):
+            return torch.cuda.get_device_name(device)
+        if device.type == "cuda":
+            return torch.cuda.get_device_name(device.index)
+    except Exception:
+        pass
+
+    return device.type
+
+
+def is_amd_rocm_device(device):
+    """
+    Check if the device is AMD ROCm device
+    :param device:
+    :return:
+    """
+    name = get_device_name(device)
+
+    keywords = ["gfx", "AMD"]
+
+    for keyword in keywords:
+        if keyword.strip().lower() in name.strip().lower():
+            return True
+
+    return False
+
+
 if __name__ == '__main__':
     device = get_device()
+
     print("Device:", device)
+    print("Device Type:", device.type)
+    print("Is AMD ROCm Device:", is_amd_rocm_device(device))
