@@ -359,6 +359,11 @@ class ResizableRect(QWidget):
 
             self.modify()
 
+    @staticmethod
+    def __size_round(value: float) -> float:
+        round_count = 2
+        return round(value, round_count)
+
     @property
     def now_x(self) -> int:
         return self.x()

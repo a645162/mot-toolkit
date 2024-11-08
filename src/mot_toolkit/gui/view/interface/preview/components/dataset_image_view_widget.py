@@ -388,6 +388,8 @@ class DatasetImageView(ScrollImageView):
 
         scale_factor = min(target_width / original_width, target_height / original_height)
 
+        scale_factor = min(scale_factor, 5)
+
         self.slot_try_to_zoom.emit(scale_factor)
 
         self.move_area_to_center()
