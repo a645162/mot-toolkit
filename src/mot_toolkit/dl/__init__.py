@@ -34,6 +34,8 @@ try:
         get_device,
         get_device_index,
         get_device_name,
+        is_cpu_device,
+        is_nvidia_device,
         is_amd_rocm_device
     )
 
@@ -42,13 +44,19 @@ try:
     logger.info(f"Torch Device: {device}")
     if str(device.type) == "cuda":
         device_index = get_device_index(device)
-        logger.info(f"Device Index: {device_index}")
+        logger.info(f"  Device Index: {device_index}")
 
         device_name = get_device_name(device)
-        logger.info(f"Device Name: {device_name}")
+        logger.info(f"  Device Name: {device_name}")
+
+        is_cpu = is_cpu_device(device)
+        logger.info(f"  CPU Backend: {is_cpu}")
+
+        is_nvidia = is_nvidia_device(device)
+        logger.info(f"  NVIDIA Backend: {is_nvidia}")
 
         is_amd = is_amd_rocm_device(device)
-        logger.info(f"Is AMD ROCm Device: {is_amd}")
+        logger.info(f"  AMD ROCm Backend: {is_amd}")
 except Exception:
     logger.info("Cannot get device!")
 

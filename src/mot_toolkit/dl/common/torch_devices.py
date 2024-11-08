@@ -87,6 +87,22 @@ def get_device_name(device: torch.device | int):
     return device.type
 
 
+def is_cpu_device(device: torch.device):
+    return str(device.type) == "cpu"
+
+
+def is_nvidia_device(device: torch.device):
+    name = get_device_name(device)
+
+    keywords = ["gtx", "rtx", "tesla", "NVIDIA"]
+
+    for keyword in keywords:
+        if keyword.strip().lower() in name.strip().lower():
+            return True
+
+    return False
+
+
 def is_amd_rocm_device(device):
     """
     Check if the device is AMD ROCm device
