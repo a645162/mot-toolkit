@@ -183,8 +183,28 @@ def get_linux_vga_device():
     if sys.platform != "linux":
         return "Unknown"
 
+    keywords = [
+        "VGA",
+        "3D",
+
+        "NVIDIA",
+        "GTX",
+        "RTX",
+        "Tesla",
+        "Quadro",
+        "GeForce",
+
+        "Radeon",
+        "GCN",
+        "Vega",
+        "Navi",
+        "ATI"
+    ]
+
+    filter = "|".join(keywords)
+
     try:
-        command = "lspci | grep VGA"
+        command = f"lspci | grep -E '{filter}'"
         output = subprocess.check_output(command, shell=True)
         output = output.decode("utf-8").strip()
 
@@ -201,3 +221,7 @@ if __name__ == '__main__':
     print("Device:", device)
     print("Device Type:", device.type)
     print("Is AMD ROCm Device:", is_amd_rocm_device(device))
+
+    if sys.platform == "linux":
+        print("VGA Device:")
+        print(get_linux_vga_device())

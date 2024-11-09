@@ -21,10 +21,12 @@ iou_threshold = 0.4
 # Try to fix AMD Gpu error
 if torch_devices.is_amd_rocm_device(device=device):
     logger.info("AMD ROCm device detected.")
+    # https://github.com/pytorch/pytorch/issues/138067
     os.environ["TORCH_BLAS_PREFER_HIPBLASLT"] = "0"
     os.environ["DISABLE_ADDMM_CUDA_LT"] = "1"
 
 
+# https://docs.ultralytics.com/zh/models/sam-2/#segment-everything
 class SamModelType(Enum):
     SAM_2_1_Tiny = "sam2.1_t.pt"
     SAM_2_1_Small = "sam2.1_s.pt"
