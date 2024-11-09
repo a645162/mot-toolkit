@@ -78,6 +78,8 @@ try:
             try:
                 vga_device_str = get_linux_vga_device()
                 vga_device_lines = vga_device_str.split("\n")
+                if len(vga_device_lines) > 0:
+                    logger.info("VGA Device:")
                 for line in vga_device_lines:
                     logger.info(f"  - {line}")
             except Exception:
