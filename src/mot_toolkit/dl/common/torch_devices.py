@@ -1,5 +1,7 @@
 import os
 import platform
+import subprocess
+import sys
 
 import torch
 
@@ -103,6 +105,14 @@ def is_nvidia_device(device: torch.device):
     return False
 
 
+def get_nvidia_version() -> str:
+    command = "nvidia-smi --version"
+    output = subprocess.check_output(command, shell=True)
+    output = output.decode("utf-8").strip()
+
+    return output
+
+
 def is_amd_rocm_device(device):
     """
     Check if the device is AMD ROCm device
@@ -120,8 +130,73 @@ def is_amd_rocm_device(device):
     return False
 
 
+def get_cpu_name() -> str:
+    system = platform.system()
+    if system == "Windows":
+        try:
+            result = subprocess.run(
+                ['wmic', 'cpu', 'get', 'Name'],
+                capture_output=True, text=True, check=True
+            )
+            output = result.stdout.strip().split('\n')
+            output = [
+                line.strip()
+                for line in output
+                if line.strip() != "" and line.strip() != "Name"
+            ]
+            return output[0].strip()
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    elif system == "Linux":
+        try:
+            with open('/proc/cpuinfo', 'r') as f:
+                lines = f.readlines()
+            for line in lines:
+                if "model name" in line:
+                    return line.split(':')[1].strip()
+            return ""
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    elif system == "Darwin":  # macOS
+        try:
+            result = subprocess.run(
+                ['sysctl', 'machdep.cpu.brand_string'],
+                capture_output=True, text=True, check=True
+            )
+            output = result.stdout.strip().split(':')
+            return output[1].strip()
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    else:
+        print(f"Unsupported system: {system}")
+        return ""
+
+
+def get_linux_vga_device():
+    """
+    Get VGA device on Linux
+    :return:
+    """
+    if sys.platform != "linux":
+        return "Unknown"
+
+    try:
+        command = "lspci | grep VGA"
+        output = subprocess.check_output(command, shell=True)
+        output = output.decode("utf-8").strip()
+
+        return output
+    except Exception:
+        return "Unknown"
+
+
 if __name__ == '__main__':
     device = get_device()
+
+    print("CPU Name:", get_cpu_name())
 
     print("Device:", device)
     print("Device Type:", device.type)

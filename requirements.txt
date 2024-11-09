@@ -11,3 +11,4 @@ pyside6
 chardet
 
 pygame
+psutil
