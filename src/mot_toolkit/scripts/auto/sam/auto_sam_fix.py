@@ -54,7 +54,7 @@ def handle_dataset(dataset_dir_path):
         video_dir_path_list.append(video_dir_path)
 
     # For debug only
-    video_dir_path_list = video_dir_path_list[:1]
+    # video_dir_path_list = video_dir_path_list[:1]
 
     with multiprocessing.Pool(processes=process_count) as pool:
         pool.map(handle_sequence, video_dir_path_list)
