@@ -54,25 +54,38 @@ def sam_is_loaded() -> bool:
     return False
 
 
-def sam_load() -> SAM | FastSAM | None:
-    global model_sam
+def sam_load(
+        target_device=None,
+        global_mode=True
+) -> SAM | FastSAM | None:
+    model: SAM | FastSAM | None = None
 
-    if model_sam is None:
+    if global_mode:
+        global model_sam
+        model = model_sam
+
+    if model is None:
         if (
                 model_type == SamModelType.FAST_SAM_S or
                 model_type == SamModelType.FAST_SAM_X
         ):
-            model_sam = FastSAM(model_type.value)
+            model = FastSAM(model_type.value)
         else:
-            model_sam = SAM(model_type.value)
+            model = SAM(model_type.value)
 
-        model_sam.to(device)
+        if target_device is not None:
+            model.to(target_device)
+        else:
+            model.to(device)
 
-    return model_sam
+    if global_mode:
+        model_sam = model
+
+    return model
 
 
 def sam_predict_xyxy(
-        image_path,
+        source,
         bbox_xyxy: list[float],
         model: SAM | FastSAM = None
 ) -> list[list[float]]:
@@ -88,7 +101,7 @@ def sam_predict_xyxy(
         model = model_sam
 
     results = model.predict(
-        source=image_path,
+        source=source,
         bboxes=bbox_xyxy,
     )
 

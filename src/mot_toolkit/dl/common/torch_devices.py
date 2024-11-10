@@ -2,6 +2,7 @@ import os
 import platform
 import subprocess
 import sys
+from time import sleep as time_sleep
 
 import torch
 
@@ -173,6 +174,27 @@ def get_cpu_name() -> str:
     else:
         print(f"Unsupported system: {system}")
         return ""
+
+
+def wait_gpu_memory(
+        memory_size: str = '10GiB',
+        time_interval: int = 2
+) -> torch.device | None:
+    try:
+        device = get_recommended_device()
+        if not is_nvidia_device(device):
+            return None
+
+        import nvitop
+        devices = nvitop.select_devices(
+            min_count=1,
+            min_free_memory=memory_size
+        )
+
+        while not devices:
+            time_sleep(time_interval)
+    except Exception:
+        pass
 
 
 def get_linux_vga_device():

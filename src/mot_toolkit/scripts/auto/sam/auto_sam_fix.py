@@ -2,12 +2,18 @@ import os
 import multiprocessing
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
-from mot_toolkit.dl.model.sam2 import sam_predict_xyxy
+from mot_toolkit.dl.common.torch_devices import wait_gpu_memory
+from mot_toolkit.dl.model import sam2
 
-process_count = 4
+process_count = 12
 
+memory_per_process = 2.5
+total_memory = 24
+process_count = min(
+    process_count,
+    int(total_memory / memory_per_process)
+)
 
-# sam_predict_xyxy()
 
 def handle_sequence(sequence_dir_path):
     annotation_directory = XAnyLabelingAnnotationDirectory()
@@ -16,6 +22,16 @@ def handle_sequence(sequence_dir_path):
     annotation_directory.sort_path(group_directory=True)
 
     annotation_directory.load_json_files()
+
+    device = wait_gpu_memory(
+        memory_size='3GiB',
+        time_interval=2
+    )
+
+    model = sam2.sam_load(
+        target_device=device,
+        global_mode=False
+    )
 
     for annotation_file_obj in annotation_directory.annotation_file:
         for rect_obj in annotation_file_obj.rect_annotation_list:
@@ -27,7 +43,11 @@ def handle_sequence(sequence_dir_path):
                 x1, y1, x2, y2
             ]
             image_path = annotation_file_obj.pic_path
-            result = sam_predict_xyxy(image_path, bbox_xyxy)
+            result = sam2.sam_predict_xyxy(
+                source=image_path,
+                bbox_xyxy=bbox_xyxy,
+                model=model
+            )
             if len(result) > 0:
                 result = result[0]
 
@@ -63,5 +83,4 @@ def handle_dataset(dataset_dir_path):
 if __name__ == '__main__':
     multiprocessing.set_start_method('spawn')
 
-    dataset_dir_path = "/mnt/d/Datasets/MOT-Datasets/FVessel/FVessel_LabelMe_GT"
-    handle_dataset(dataset_dir_path)
+    handle_dataset("/mnt/d/Datasets/MOT-Datasets/FVessel/FVessel_LabelMe_GT")
