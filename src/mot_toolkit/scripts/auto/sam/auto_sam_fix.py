@@ -4,7 +4,7 @@ import multiprocessing
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 from mot_toolkit.dl.model.sam2 import sam_predict_xyxy
 
-process_count = 24
+process_count = 4
 
 
 # sam_predict_xyxy()
@@ -40,7 +40,7 @@ def handle_sequence(sequence_dir_path):
 
         annotation_file_obj.modifying()
 
-    # annotation_directory.save_json_files()
+    annotation_directory.save_json_files()
 
 
 def handle_dataset(dataset_dir_path):
