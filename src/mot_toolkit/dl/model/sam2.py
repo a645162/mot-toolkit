@@ -54,7 +54,7 @@ def sam_is_loaded() -> bool:
     return False
 
 
-def sam_load():
+def sam_load() -> SAM | FastSAM | None:
     global model_sam
 
     if model_sam is None:
@@ -68,21 +68,26 @@ def sam_load():
 
         model_sam.to(device)
 
+    return model_sam
+
 
 def sam_predict_xyxy(
         image_path,
         bbox_xyxy: list[float],
+        model: SAM | FastSAM = None
 ) -> list[list[float]]:
     result_list: list[list[float]] = []
 
     prompt_bbox_tuple = (bbox_xyxy[0], bbox_xyxy[1], bbox_xyxy[2], bbox_xyxy[3])
 
-    if not sam_is_loaded():
-        sam_load()
+    if model is None:
+        if not sam_is_loaded():
+            sam_load()
 
-    global model_sam
+        global model_sam
+        model = model_sam
 
-    results = model_sam.predict(
+    results = model.predict(
         source=image_path,
         bboxes=bbox_xyxy,
     )
