@@ -1374,7 +1374,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.r_object_list_widget.selection_index = -1
 
-        self.__update_object_list_widget()
+        # self.__update_object_list_widget()
+        # self.__update_label_class_list()
+        self.update_annotation_object_display()
 
     def __action_obj_del_subsequent_target(self):
         reply = QMessageBox.question(
