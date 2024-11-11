@@ -2,3 +2,6 @@ torch
 torchvision
 
 ultralytics>=8.3.0
+
+# Only for NVIDIA GPU
+nvitop

@@ -16,15 +16,15 @@ logger = get_logger()
 
 device = torch_devices.get_device()
 
-iou_threshold = 0.4
-
 # Try to fix AMD Gpu error
 if torch_devices.is_amd_rocm_device(device=device):
     logger.info("AMD ROCm device detected.")
+    # https://github.com/pytorch/pytorch/issues/138067
     os.environ["TORCH_BLAS_PREFER_HIPBLASLT"] = "0"
     os.environ["DISABLE_ADDMM_CUDA_LT"] = "1"
 
 
+# https://docs.ultralytics.com/zh/models/sam-2/#segment-everything
 class SamModelType(Enum):
     SAM_2_1_Tiny = "sam2.1_t.pt"
     SAM_2_1_Small = "sam2.1_s.pt"
@@ -52,36 +52,55 @@ def sam_is_loaded() -> bool:
     return False
 
 
-def sam_load():
-    global model_sam
+def sam_load(
+        target_device=None,
+        global_mode=True
+) -> SAM | FastSAM | None:
+    model: SAM | FastSAM | None = None
 
-    if model_sam is None:
+    if global_mode:
+        global model_sam
+        model = model_sam
+
+    if model is None:
         if (
                 model_type == SamModelType.FAST_SAM_S or
                 model_type == SamModelType.FAST_SAM_X
         ):
-            model_sam = FastSAM(model_type.value)
+            model = FastSAM(model_type.value)
         else:
-            model_sam = SAM(model_type.value)
+            model = SAM(model_type.value)
 
-        model_sam.to(device)
+        if target_device is not None:
+            model.to(target_device)
+        else:
+            model.to(device)
+
+    if global_mode:
+        model_sam = model
+
+    return model
 
 
 def sam_predict_xyxy(
-        image_path,
+        source,
         bbox_xyxy: list[float],
+        iou_threshold: float = 0.4,
+        model: SAM | FastSAM = None
 ) -> list[list[float]]:
     result_list: list[list[float]] = []
 
     prompt_bbox_tuple = (bbox_xyxy[0], bbox_xyxy[1], bbox_xyxy[2], bbox_xyxy[3])
 
-    if not sam_is_loaded():
-        sam_load()
+    if model is None:
+        if not sam_is_loaded():
+            sam_load()
 
-    global model_sam
+        global model_sam
+        model = model_sam
 
-    results = model_sam.predict(
-        source=image_path,
+    results = model.predict(
+        source=source,
         bboxes=bbox_xyxy,
     )
 
@@ -108,6 +127,8 @@ def sam_predict_xyxy_near(
         image_path,
         bbox_xyxy: list[float],
         padding: int = -1,
+        iou_threshold: float = 0.4,
+        model: SAM | FastSAM = None
 ) -> list[list[float]]:
     result_list: list[list[float]] = []
 
@@ -146,12 +167,15 @@ def sam_predict_xyxy_near(
         padding_top + h
     ]
 
-    if not sam_is_loaded():
-        sam_load()
+    if model is None:
+        if not sam_is_loaded():
+            sam_load()
 
-    global model_sam
+        global model_sam
 
-    results = model_sam.predict(
+        model = model_sam
+
+    results = model.predict(
         source=new_image,
         bboxes=new_prompt_bbox_list,
     )

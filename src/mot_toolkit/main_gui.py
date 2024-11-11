@@ -1,5 +1,7 @@
 import sys
 
+from mot_toolkit.utils.cli.print_info import print_info
+
 sys.path.append("..")
 
 from mot_toolkit.utils.logs import get_logger
@@ -12,6 +14,8 @@ from mot_toolkit.gui.view.main_window import init_main_window
 
 
 def main():
+    print_info()
+
     logger.info("Start to initialize the Main Window")
     init_main_window()
 

@@ -459,7 +459,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     continue
 
                 # Draw Text
-                text = f"{i + 1}/{file_count}"
+                text = f"Frame: {i + 1}/{file_count}, Object Count: {annotation.annotation_count}"
                 cv2.putText(
                     image,
                     text,

@@ -66,7 +66,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
     rect_annotation_list: List[XAnyLabelingRect]
 
-    image_path = ""
+    image_name = ""
     image_data = None
     image_height = 0
     image_width = 0
@@ -115,7 +115,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
         for other_shape_dict in self.other_shape_dict_list:
             result_dict["shapes"].append(other_shape_dict)
 
-        result_dict["imagePath"] = self.image_path
+        result_dict["imagePath"] = self.image_name
         result_dict["imageData"] = self.image_data
         result_dict["imageHeight"] = self.image_height
         result_dict["imageWidth"] = self.image_width
@@ -213,7 +213,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.version = data.get("version", "")
         self.flags = data.get("flags", {})
 
-        self.image_path = data.get("imagePath", "")
+        self.image_name = data.get("imagePath", "")
         self.image_data = data.get("imageData", None)
         self.image_height = data.get("imageHeight", 0)
         self.image_width = data.get("imageWidth", 0)
@@ -932,6 +932,42 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             interval_list.append(interval)
 
         return interval_list
+
+    @property
+    def file_count(self) -> int:
+        return len(self.annotation_file)
+
+    @property
+    def first_file_index(self) -> int:
+        index = -1
+
+        for file_obj in self.annotation_file:
+            try:
+                file_name = file_obj.file_name_no_extension
+                current_file_index = int(file_name)
+
+                if index == -1 or current_file_index < index:
+                    index = current_file_index
+            except Exception:
+                pass
+
+        return index
+
+    @property
+    def last_file_index(self) -> int:
+        index = -1
+
+        for file_obj in self.annotation_file:
+            try:
+                file_name = file_obj.file_name_no_extension
+                current_file_index = int(file_name)
+
+                if index == -1 or current_file_index > index:
+                    index = current_file_index
+            except Exception:
+                pass
+
+        return index
 
     def fix_bugs(self) -> bool:
         modified = False

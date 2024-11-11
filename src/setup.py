@@ -42,6 +42,7 @@ setup(
     entry_points={
         "console_scripts": [
             "mot-toolkit = mot_toolkit.main_gui:main",
+            "mot-toolkit-tools = mot_toolkit.tools:main",
         ],
     },
 )

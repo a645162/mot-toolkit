@@ -1,5 +1,8 @@
 import os
 import platform
+import subprocess
+import sys
+from time import sleep as time_sleep
 
 import torch
 
@@ -87,6 +90,30 @@ def get_device_name(device: torch.device | int):
     return device.type
 
 
+def is_cpu_device(device: torch.device):
+    return str(device.type) == "cpu"
+
+
+def is_nvidia_device(device: torch.device):
+    name = get_device_name(device)
+
+    keywords = ["gtx", "rtx", "tesla", "NVIDIA"]
+
+    for keyword in keywords:
+        if keyword.strip().lower() in name.strip().lower():
+            return True
+
+    return False
+
+
+def get_nvidia_version() -> str:
+    command = "nvidia-smi --version"
+    output = subprocess.check_output(command, shell=True)
+    output = output.decode("utf-8").strip()
+
+    return output
+
+
 def is_amd_rocm_device(device):
     """
     Check if the device is AMD ROCm device
@@ -104,9 +131,119 @@ def is_amd_rocm_device(device):
     return False
 
 
+def get_cpu_name() -> str:
+    system = platform.system()
+    if system == "Windows":
+        try:
+            result = subprocess.run(
+                ['wmic', 'cpu', 'get', 'Name'],
+                capture_output=True, text=True, check=True
+            )
+            output = result.stdout.strip().split('\n')
+            output = [
+                line.strip()
+                for line in output
+                if line.strip() != "" and line.strip() != "Name"
+            ]
+            return output[0].strip()
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    elif system == "Linux":
+        try:
+            with open('/proc/cpuinfo', 'r') as f:
+                lines = f.readlines()
+            for line in lines:
+                if "model name" in line:
+                    return line.split(':')[1].strip()
+            return ""
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    elif system == "Darwin":  # macOS
+        try:
+            result = subprocess.run(
+                ['sysctl', 'machdep.cpu.brand_string'],
+                capture_output=True, text=True, check=True
+            )
+            output = result.stdout.strip().split(':')
+            return output[1].strip()
+        except Exception as e:
+            print(f"Error: {e}")
+            return ""
+    else:
+        print(f"Unsupported system: {system}")
+        return ""
+
+
+def wait_gpu_memory(
+        memory_size: str = '10GiB',
+        time_interval: int = 2
+) -> torch.device | None:
+    try:
+        device = get_recommended_device()
+        if not is_nvidia_device(device):
+            return None
+
+        import nvitop
+        devices = nvitop.select_devices(
+            min_count=1,
+            min_free_memory=memory_size
+        )
+
+        while not devices:
+            time_sleep(time_interval)
+    except Exception:
+        pass
+
+
+def get_linux_vga_device():
+    """
+    Get VGA device on Linux
+    :return:
+    """
+    if sys.platform != "linux":
+        return "Unknown"
+
+    keywords = [
+        "VGA",
+        "3D",
+
+        "NVIDIA",
+        "GTX",
+        "RTX",
+        "Tesla",
+        "Quadro",
+        "GeForce",
+
+        "Radeon",
+        "GCN",
+        "Vega",
+        "Navi",
+        "ATI"
+    ]
+
+    filter = "|".join(keywords)
+
+    try:
+        command = f"lspci | grep -E '{filter}'"
+        output = subprocess.check_output(command, shell=True)
+        output = output.decode("utf-8").strip()
+
+        return output
+    except Exception:
+        return "Unknown"
+
+
 if __name__ == '__main__':
     device = get_device()
+
+    print("CPU Name:", get_cpu_name())
 
     print("Device:", device)
     print("Device Type:", device.type)
     print("Is AMD ROCm Device:", is_amd_rocm_device(device))
+
+    if sys.platform == "linux":
+        print("VGA Device:")
+        print(get_linux_vga_device())

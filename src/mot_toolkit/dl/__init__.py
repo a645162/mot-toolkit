@@ -1,3 +1,5 @@
+import sys
+
 from mot_toolkit.utils.logs import get_logger
 
 support_torch = False
@@ -10,13 +12,13 @@ logger.info("Start Load Init Deep Learning Module")
 try:
     import torch
 
-    logger.info(f"torch version: {torch.__version__}")
+    logger.info(f"PyTorch version: {torch.__version__}")
 
     support_torch = True
 except ImportError:
-    logger.info("No torch found!")
+    logger.info("No PyTorch found!")
 except AttributeError:
-    logger.info("Cannot get torch version!")
+    logger.info("Cannot get PyTorch version!")
 
 try:
     import ultralytics
@@ -31,24 +33,57 @@ except Exception:
 
 try:
     from mot_toolkit.dl.common.torch_devices import (
+        get_cpu_name,
         get_device,
         get_device_index,
         get_device_name,
-        is_amd_rocm_device
+        is_cpu_device,
+        is_nvidia_device,
+        get_nvidia_version,
+        is_amd_rocm_device,
+        get_linux_vga_device
     )
+
+    cpu_name = get_cpu_name()
+    logger.info(f"CPU: {cpu_name}")
 
     device = get_device()
 
     logger.info(f"Torch Device: {device}")
     if str(device.type) == "cuda":
         device_index = get_device_index(device)
-        logger.info(f"Device Index: {device_index}")
+        logger.info(f"  Device Index: {device_index}")
 
         device_name = get_device_name(device)
-        logger.info(f"Device Name: {device_name}")
+        logger.info(f"  Device Name: {device_name}")
+
+        is_cpu = is_cpu_device(device)
+        logger.info(f"  CPU Backend: {is_cpu}")
+
+        is_nvidia = is_nvidia_device(device)
+        logger.info(f"  NVIDIA Backend: {is_nvidia}")
+        if is_nvidia:
+            try:
+                nvidia_version_str = get_nvidia_version()
+                nvidia_version_lines = nvidia_version_str.split("\n")
+                for line in nvidia_version_lines:
+                    logger.info(f"    - {line}")
+            except Exception:
+                logger.info("Cannot get NVIDIA version!")
 
         is_amd = is_amd_rocm_device(device)
-        logger.info(f"Is AMD ROCm Device: {is_amd}")
+        logger.info(f"  AMD ROCm Backend: {is_amd}")
+
+        if sys.platform == "linux":
+            try:
+                vga_device_str = get_linux_vga_device()
+                vga_device_lines = vga_device_str.split("\n")
+                if len(vga_device_lines) > 0:
+                    logger.info("VGA Device:")
+                for line in vga_device_lines:
+                    logger.info(f"  - {line}")
+            except Exception:
+                logger.info("Cannot get VGA device!")
 except Exception:
     logger.info("Cannot get device!")
 

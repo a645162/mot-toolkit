@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="export_frame_with_box" type="PythonConfigurationType" factoryName="Python" folderName="Tools" nameIsGenerated="true">
+  <configuration default="false" name="export_frame_with_box" type="PythonConfigurationType" factoryName="Python" folderName="Export" nameIsGenerated="true">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
