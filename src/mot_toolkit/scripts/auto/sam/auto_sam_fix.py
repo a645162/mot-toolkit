@@ -5,14 +5,9 @@ from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 from mot_toolkit.dl.common.torch_devices import wait_gpu_memory
 from mot_toolkit.dl.model import sam2
 
-process_count = 12
+from mot_toolkit.utils.logs import get_logger
 
-memory_per_process = 2.5
-total_memory = 24
-process_count = min(
-    process_count,
-    int(total_memory / memory_per_process)
-)
+logger = get_logger()
 
 
 def handle_sequence(sequence_dir_path):
@@ -63,7 +58,10 @@ def handle_sequence(sequence_dir_path):
     annotation_directory.save_json_files()
 
 
-def handle_dataset(dataset_dir_path):
+def handle_dataset(
+        dataset_dir_path: str,
+        process_count: int = 1
+):
     video_list = os.listdir(dataset_dir_path)
     video_dir_path_list = []
     for video_name in video_list:
@@ -80,7 +78,23 @@ def handle_dataset(dataset_dir_path):
         pool.map(handle_sequence, video_dir_path_list)
 
 
-if __name__ == '__main__':
+def sam_fix(
+        dataset_dir_path: str | list[str],
+        process_count: int = 1
+):
     multiprocessing.set_start_method('spawn')
 
-    handle_dataset("/mnt/d/Datasets/MOT-Datasets/FVessel/FVessel_LabelMe_GT")
+    if isinstance(dataset_dir_path, str):
+        dataset_dir_path = [dataset_dir_path]
+
+    for dataset_dir in dataset_dir_path:
+
+        if not os.path.isdir(dataset_dir):
+            logger.error(f"Dataset directory {dataset_dir} does not exist.")
+            return
+
+        handle_dataset(dataset_dir, process_count)
+
+
+if __name__ == '__main__':
+    sam_fix("/mnt/d/Datasets/MOT-Datasets/FVessel/FVessel_LabelMe_GT")

@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="stat_count" type="PythonConfigurationType" factoryName="Python" folderName="Statistics" nameIsGenerated="true">
+  <configuration default="false" name="auto_sam_fix" type="PythonConfigurationType" factoryName="Python" folderName="Auto" nameIsGenerated="true">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -8,12 +8,12 @@
       <env name="PYTHONUNBUFFERED" value="1" />
     </envs>
     <option name="SDK_HOME" value="" />
-    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/mot_toolkit/scripts" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/src/mot_toolkit/scripts/auto/sam" />
     <option name="IS_MODULE_SDK" value="true" />
     <option name="ADD_CONTENT_ROOTS" value="true" />
     <option name="ADD_SOURCE_ROOTS" value="true" />
     <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/mot_toolkit/scripts/stat_count.py" />
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/src/mot_toolkit/scripts/auto/sam/auto_sam_fix.py" />
     <option name="PARAMETERS" value="" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
