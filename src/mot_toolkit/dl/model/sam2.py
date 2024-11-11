@@ -16,8 +16,6 @@ logger = get_logger()
 
 device = torch_devices.get_device()
 
-iou_threshold = 0.4
-
 # Try to fix AMD Gpu error
 if torch_devices.is_amd_rocm_device(device=device):
     logger.info("AMD ROCm device detected.")
@@ -87,6 +85,7 @@ def sam_load(
 def sam_predict_xyxy(
         source,
         bbox_xyxy: list[float],
+        iou_threshold: float = 0.4,
         model: SAM | FastSAM = None
 ) -> list[list[float]]:
     result_list: list[list[float]] = []
@@ -128,6 +127,8 @@ def sam_predict_xyxy_near(
         image_path,
         bbox_xyxy: list[float],
         padding: int = -1,
+        iou_threshold: float = 0.4,
+        model: SAM | FastSAM = None
 ) -> list[list[float]]:
     result_list: list[list[float]] = []
 
@@ -166,12 +167,15 @@ def sam_predict_xyxy_near(
         padding_top + h
     ]
 
-    if not sam_is_loaded():
-        sam_load()
+    if model is None:
+        if not sam_is_loaded():
+            sam_load()
 
-    global model_sam
+        global model_sam
 
-    results = model_sam.predict(
+        model = model_sam
+
+    results = model.predict(
         source=new_image,
         bboxes=new_prompt_bbox_list,
     )

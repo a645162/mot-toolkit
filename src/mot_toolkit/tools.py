@@ -12,6 +12,7 @@ def get_opts():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dir', type=str, default='.', help='Directory')
     parser.add_argument('--process', type=int, default=1, help='Work Process Count')
+    parser.add_argument('--iou', type=float, default=0.9, help='IOU Threshold')
 
     parser.add_argument('--sam', action='store_true', help='Segment Anything Model')
     parser.add_argument('--sam_model', type=str, default='sam', help='Segment Anything Model')
@@ -34,9 +35,12 @@ def sam(opts):
     except Exception:
         pass
 
+    iou=opts.iou
+
     sam_fix(
         dataset_dir_path=dir_path,
-        process_count=process_count
+        process_count=process_count,
+        iou_threshold=iou
     )
 
 

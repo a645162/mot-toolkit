@@ -10,7 +10,10 @@ from mot_toolkit.utils.logs import get_logger
 logger = get_logger()
 
 
-def handle_sequence(sequence_dir_path):
+def handle_sequence(
+        sequence_dir_path: str,
+        iou_threshold: float = 0.9
+):
     annotation_directory = XAnyLabelingAnnotationDirectory()
     annotation_directory.dir_path = sequence_dir_path
     annotation_directory.walk_dir(recursive=False)
@@ -41,6 +44,7 @@ def handle_sequence(sequence_dir_path):
             result = sam2.sam_predict_xyxy(
                 source=image_path,
                 bbox_xyxy=bbox_xyxy,
+                iou_threshold=iou_threshold,
                 model=model
             )
             if len(result) > 0:
@@ -60,27 +64,30 @@ def handle_sequence(sequence_dir_path):
 
 def handle_dataset(
         dataset_dir_path: str,
-        process_count: int = 1
+        process_count: int = 1,
+        iou_threshold: float = 0.9
 ):
     video_list = os.listdir(dataset_dir_path)
-    video_dir_path_list = []
+
+    params_list = []
     for video_name in video_list:
         video_dir_path = os.path.join(dataset_dir_path, video_name)
         if not os.path.isdir(video_dir_path):
             continue
 
-        video_dir_path_list.append(video_dir_path)
+        params_list.append((video_dir_path, iou_threshold))
 
     # For debug only
     # video_dir_path_list = video_dir_path_list[:1]
 
     with multiprocessing.Pool(processes=process_count) as pool:
-        pool.map(handle_sequence, video_dir_path_list)
+        pool.map(handle_sequence, params_list)
 
 
 def sam_fix(
         dataset_dir_path: str | list[str],
-        process_count: int = 1
+        process_count: int = 1,
+        iou_threshold: float = 0.9
 ):
     multiprocessing.set_start_method('spawn')
 
@@ -93,7 +100,7 @@ def sam_fix(
             logger.error(f"Dataset directory {dataset_dir} does not exist.")
             return
 
-        handle_dataset(dataset_dir, process_count)
+        handle_dataset(dataset_dir, process_count, iou_threshold)
 
 
 if __name__ == '__main__':
