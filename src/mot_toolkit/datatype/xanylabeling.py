@@ -933,6 +933,42 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return interval_list
 
+    @property
+    def file_count(self) -> int:
+        return len(self.annotation_file)
+
+    @property
+    def first_file_index(self) -> int:
+        index = -1
+
+        for file_obj in self.annotation_file:
+            try:
+                file_name = file_obj.file_name_no_extension
+                current_file_index = int(file_name)
+
+                if index == -1 or current_file_index < index:
+                    index = current_file_index
+            except Exception:
+                pass
+
+        return index
+
+    @property
+    def last_file_index(self) -> int:
+        index = -1
+
+        for file_obj in self.annotation_file:
+            try:
+                file_name = file_obj.file_name_no_extension
+                current_file_index = int(file_name)
+
+                if index == -1 or current_file_index > index:
+                    index = current_file_index
+            except Exception:
+                pass
+
+        return index
+
     def fix_bugs(self) -> bool:
         modified = False
         for annotation_obj in self.annotation_file:

@@ -795,16 +795,23 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.only_file_name = self.annotation_directory.can_only_file_name
 
-        self.__update_label_list()
+        self.__update_label_class_list()
         self.__update_file_list()
 
-    def __update_label_list(self):
+    def __update_label_class_list(self):
         # Update Label List
+        self.annotation_directory.update_label_list()
+
+        current_selection_text = self.r_label_class_list_widget.selection_text
+
         self.r_label_class_list_widget.list_widget.clear()
         for label_name in self.annotation_directory.label_list:
             self.r_label_class_list_widget.list_widget.addItem(label_name)
         self.r_label_class_list_widget.list_widget.addItem("Disable Filter")
         self.r_label_class_list_widget.update()
+
+        if current_selection_text != "":
+            self.r_label_class_list_widget.list_widget.try_to_select_text(current_selection_text)
 
     def __update_file_list(self):
         # Update File List
@@ -1341,6 +1348,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             start_index=file_index
         )
 
+        # self.__update_object_list_widget()
+        # self.__update_label_class_list()
+        self.update_annotation_object_display()
+
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
             self,
@@ -1399,7 +1410,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.r_object_list_widget.selection_index = -1
 
-        self.__update_object_list_widget()
+        # self.__update_object_list_widget()
+        # self.__update_label_class_list()
+        self.update_annotation_object_display()
 
     def __action_obj_del_between_target(self):
         dialog = DialogInput2Int(
@@ -1437,7 +1450,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             end_index=frame_end
         )
 
-        self.__update_object_list_widget()
+        # self.__update_object_list_widget()
+        # self.__update_label_class_list()
+        self.update_annotation_object_display()
 
     def get_selection_object(self) -> XAnyLabelingRect | None:
         file_index = self.get_current_file_truly_index()
@@ -1794,7 +1809,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def update_annotation_object_display(self):
         self.annotation_directory.update_label_list()
-        self.__update_label_list()
+        self.__update_label_class_list()
         self.__update_object_list_widget()
         self.main_image_view.init_annotation_widget()
 

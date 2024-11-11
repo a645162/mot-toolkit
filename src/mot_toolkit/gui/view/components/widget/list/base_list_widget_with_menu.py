@@ -127,6 +127,15 @@ class BaseListWidgetWithMenu(QListWidget):
 
         return index_list
 
+    def try_to_select_text(self, text: str) -> bool:
+        for i in range(self.count()):
+            item = self.item(i)
+            if item.text() == text:
+                self.setCurrentRow(i)
+                return True
+
+        return False
+
     def clear(self):
         super().clear()
 
