@@ -1029,6 +1029,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.main_image_view.set_selection_rect_index(index)
 
+        if self.menu_settings_auto_center.isChecked():
+            self.main_image_view.move_area_to_center()
+
     def __slot_selection_changed(self, index):
         self.r_object_list_widget.selection_index = index
 
