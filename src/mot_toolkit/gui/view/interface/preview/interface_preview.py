@@ -607,6 +607,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         self.menu_settings.addAction(self.menu_settings_auto_select_same_tag)
 
+        self.menu_settings_auto_center = \
+            QAction(
+                "Auto center object", self.menu_settings
+            )
+        self.menu_settings_auto_center.setCheckable(True)
+        self.menu_settings_auto_center.setChecked(program_settings.preview_auto_center)
+        self.menu_settings_auto_center.triggered.connect(
+            lambda: setattr(
+                program_settings, "preview_auto_center",
+                self.menu_settings_auto_center.isChecked()
+            )
+        )
+        self.menu_settings.addAction(self.menu_settings_auto_center)
+
     def __init_menu_help(self):
         # Help Menu
         self.menu_help = self.menu.addMenu("Help")
@@ -982,6 +996,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.__update_object_list_widget()
         self.update_detail_info()
+
+        if self.menu_settings_auto_center.isChecked():
+            self.main_image_view.move_area_to_center()
 
     def __slot_previous_image(self):
         self.next_previous_image(is_next=False)
