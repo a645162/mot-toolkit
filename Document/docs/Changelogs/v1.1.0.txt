@@ -1,0 +1,6 @@
+v1.1.0
+====================
+1. Fix some bugs
+2. feat(DL): Support Deep Learning
+3. feat(DL): Support SAM2(Segment Anything Model)
+4. feat(DL): Support AMD GPU(AMD ROCm on Linux)
