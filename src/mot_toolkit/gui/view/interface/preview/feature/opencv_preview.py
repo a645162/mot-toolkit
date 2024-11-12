@@ -16,6 +16,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QColor
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
+
+from mot_toolkit.gui.view.components.widget.combination.directory_select_widget import DirectorySelectWidget
 from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
 from mot_toolkit.gui.view.components.window.base_q_main_window import BaseQMainWindow
 
@@ -254,8 +256,16 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
 
         now = datetime.datetime.now()
         formatted_time = now.strftime("%Y-%m-%d-%H-%M-%S")
-        self.video_path_widget.file_path = f"{formatted_time}.mp4"
+        self.video_path_widget.file_path = f"Output/{formatted_time}.mp4"
         self.video_path_widget.filter = "MP4 Video (*.mp4);;AVI Video (*.avi);;All Files (*)"
+
+        self.output_frame_checkbox = QCheckBox('Output Frame')
+        group_output_layout.addWidget(self.output_frame_checkbox)
+        self.output_frame_checkbox.setChecked(False)
+
+        self.frame_path_widget = DirectorySelectWidget()
+        self.frame_path_widget.directory_path = f"Output/{formatted_time}_frames"
+        group_output_layout.addWidget(self.frame_path_widget)
 
         # Control Buttons
         control_button_widget = QWidget()
@@ -363,6 +373,20 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
 
             output_video = self.output_video_checkbox.isChecked()
             video_path = self.video_path_widget.get_file_path()
+            if output_video:
+                parent_dir = os.path.dirname(video_path)
+                if not os.path.exists(parent_dir):
+                    os.makedirs(parent_dir)
+                if not os.path.isdir(parent_dir):
+                    output_video = False
+
+            output_frame_checkbox = self.output_frame_checkbox.isChecked()
+            frame_save_dir_path = self.frame_path_widget.get_directory_path()
+            if output_frame_checkbox:
+                if not os.path.exists(frame_save_dir_path):
+                    os.makedirs(frame_save_dir_path)
+                if not os.path.isdir(frame_save_dir_path):
+                    output_frame_checkbox = False
         except ValueError:
             QMessageBox.critical(self, 'Error', 'Invalid input')
             return
@@ -479,6 +503,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                             int(image_height * scale_ratio)
                         )
                     )
+
+                if output_frame_checkbox:
+                    image_name = annotation.pic_file_name_no_extension + ".jpg"
+                    save_path = os.path.join(frame_save_dir_path, image_name)
+                    cv2.imwrite(save_path, image)
 
                 if output_video and video_out is not None:
                     video_out.write(image)

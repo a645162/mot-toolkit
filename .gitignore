@@ -7,6 +7,8 @@ uv.lock
 *.avi
 *.mp4
 
+/Output/
+
 /Test/
 
 /.venv/
