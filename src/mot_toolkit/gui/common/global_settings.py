@@ -65,6 +65,21 @@ class ProgramSettings:
         )
 
     @property
+    def preview_auto_center(self) -> bool:
+        return bool(self.settings.value(
+            "preview/auto_center",
+            False,
+            type=bool
+        ))
+
+    @preview_auto_center.setter
+    def preview_auto_center(self, value: bool):
+        self.settings.setValue(
+            "preview/auto_center",
+            value
+        )
+
+    @property
     def menu_rect_show_box(self) -> bool:
         return bool(self.settings.value(
             "rect/show_box",

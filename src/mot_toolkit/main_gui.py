@@ -13,6 +13,11 @@ logger.info("Start Load Init MainWindow Package")
 from mot_toolkit.gui.view.main_window import init_main_window
 
 
+def test():
+    logger.info("Test Passed!")
+    exit(0)
+
+
 def main():
     print_info()
 

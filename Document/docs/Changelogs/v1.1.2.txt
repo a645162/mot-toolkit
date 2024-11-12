@@ -1,0 +1,5 @@
+v1.1.2
+====================
+1. feat(Preview): Support Auto Center Selection
+2. feat(OpenCV Preview): Support Save Frame to Directory
+3. fix(CLI): Fix directly run py from terminal
