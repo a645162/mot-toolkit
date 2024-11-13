@@ -27,6 +27,8 @@ def get_opts():
         help='Segment Anything Model pt file name'
     )
 
+    parser.add_argument('-y', action='store_true', help='Auto Confirm')
+
     return parser.parse_args()
 
 
@@ -83,6 +85,18 @@ def sam(opts):
             logger.error(f"No valid json file found in {task_config_path}")
             return
 
+        logger.info(f"Dir: {dir_path}")
+        logger.info(f"Process: {process_count}")
+        logger.info(f"IOU: {iou}")
+        logger.info(f"Model: {model_name}")
+
+        logger.info(f"Task Config List({len(json_path_list)}):")
+        for json_path in json_path_list:
+            logger.info(f"  {json_path}")
+
+        if not opts.y:
+            input(f"Press Enter to continue...")
+
         sam_fix_with_config_dir(
             dataset_dir_path=dir_path,
             process_count=process_count,
@@ -92,6 +106,14 @@ def sam(opts):
         )
 
     else:
+        logger.info(f"Dir: {dir_path}")
+        logger.info(f"Process: {process_count}")
+        logger.info(f"IOU: {iou}")
+        logger.info(f"Model: {model_name}")
+
+        if not opts.y:
+            input(f"Press Enter to continue...")
+
         sam_fix(
             dataset_dir_path=dir_path,
             process_count=process_count,

@@ -39,13 +39,13 @@ def get_sam_model_list() -> list[str]:
 
 
 def get_sam_model_by_name(
-        model_name: str = "FastSAM-x.pt"
+        model_name: str = ""
 ) -> SamModelType:
     for model in SamModelType:
         if model.value == model_name:
             return model
 
-    return SamModelType.FAST_SAM_X
+    return SamModelType.SAM_2_1_Large
 
 
 def sam_is_loaded() -> bool:

@@ -89,12 +89,13 @@ class ExportSamTaskWindow(QDialog):
         layout.addWidget(self.file_path_widget)
         self.file_path_widget.filter = "JSON Files (*.json)"
         json_name_no_ext = self.json_name.split(".")[0]
-        default_path = (
+        default_file_name = (
             f"{self.dataset_name}"
             f"_{self.sequence_name}"
             f"_{json_name_no_ext}"
             f"_{self.target_label}.json"
         )
+        default_path = os.path.join("Output", "task", default_file_name)
         self.file_path_widget.set_file_path(default_path)
 
         self.save_button = QPushButton("Save")
@@ -114,6 +115,11 @@ class ExportSamTaskWindow(QDialog):
             logger.info(f"Save SAM Task: {save_path}")
             try:
                 self.save_config(save_path)
+
+                QMessageBox.information(
+                    self, "Success",
+                    "Save SAM Task Success.\n" + save_path
+                )
 
                 self.accept()
             except Exception as e:

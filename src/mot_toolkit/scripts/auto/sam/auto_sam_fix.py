@@ -11,6 +11,15 @@ from mot_toolkit.utils.logs import get_logger
 logger = get_logger()
 
 
+def set_process_start_mode():
+    try:
+        logger.info("Try to set start multiprocessing method to spawn.")
+        multiprocessing.set_start_method('spawn')
+        logger.info("Set start multiprocessing method to spawn.")
+    except Exception as e:
+        logger.error(e)
+
+
 def handle_sequence(
         sequence_dir_path: str,
         iou_threshold: float = 0.9,
@@ -43,11 +52,13 @@ def handle_sequence(
 
     previous_file_obj: XAnyLabelingAnnotation | None = None
     for annotation_file_obj in annotation_directory.annotation_file:
-        if first_file_name:
-            first_file_index = os.path.split(first_file_name)[0]
+        if len(first_file_name) > 0:
+            if first_file_name.endswith(".json") or first_file_name.endswith(".jpg"):
+                first_file_name = os.path.splitext(first_file_name)[0]
+
             current_file_name = annotation_file_obj.file_name_no_extension
 
-            first_file_index = int(first_file_index)
+            first_file_index = int(first_file_name)
             current_file_index = int(current_file_name)
 
             if current_file_index < first_file_index:
@@ -145,7 +156,7 @@ def handle_dataset(
     # video_dir_path_list = video_dir_path_list[:1]
 
     with multiprocessing.Pool(processes=process_count) as pool:
-        pool.map(handle_sequence, params_list)
+        pool.starmap(handle_sequence, params_list)
 
 
 def sam_fix(
@@ -154,7 +165,7 @@ def sam_fix(
         iou_threshold: float = 0.9,
         model_name: str = ''
 ):
-    multiprocessing.set_start_method('spawn')
+    set_process_start_mode()
 
     if isinstance(dataset_dir_path, str):
         dataset_dir_path = [dataset_dir_path]
@@ -217,12 +228,16 @@ def sam_fix_with_config_dir(
         dataset_dir_path: str | list[str],
         process_count: int = 1,
         iou_threshold: float = 0.9,
-        config_path_list: list[str] = None,
+        config_path_list: list[str] | str | None = None,
         model_name: str = ''
 ):
     if config_path_list is None:
         logger.error("No valid config directory path.")
         return
+    if isinstance(config_path_list, str):
+        config_path_list = [config_path_list]
+
+    set_process_start_mode()
 
     params_list = []
     for config_path in config_path_list:
@@ -241,8 +256,17 @@ def sam_fix_with_config_dir(
             params_list.append(param)
 
     with multiprocessing.Pool(processes=process_count) as pool:
-        pool.map(handle_sequence, params_list)
+        pool.starmap(handle_sequence, params_list)
 
 
 if __name__ == '__main__':
-    sam_fix("/mnt/d/Datasets/MOT-Datasets/FVessel/FVessel_LabelMe_GT")
+    # sam_fix("/mnt/d/Datasets/Sea-MOT-Datasets/SAM/FVessel_LabelMe_GT")
+
+    sam_fix_with_config_dir(
+        dataset_dir_path="/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe/test",
+        iou_threshold=0.4,
+        config_path_list="/home/konghaomin/Prj/LCF/mot-toolkit/Output/task/BV11S4y1r7re-3XfhLO8Kj40qgTJN_00000000-00003450_00000417_4.json",
+        model_name=""
+    )
+
+    print("Done!")
