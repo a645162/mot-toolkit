@@ -41,6 +41,7 @@ from mot_toolkit.gui.view.interface. \
 from mot_toolkit.gui.view.interface.preview.components. \
     option.dialog_brightness_contrast import DialogBrightnessContrast
 from mot_toolkit.gui.view.interface.preview.feature.opencv_preview import OpenCVPreviewOptionWindow
+from mot_toolkit.gui.view.interface.preview.feature.task.export_sam_task import ExportSamTaskWindow
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -677,6 +678,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_copy_position)
         self.r_object_list_widget.menu_dl_sam2 \
             .triggered.connect(self.__action_obj_dl_sam2)
+        self.r_object_list_widget.menu_dl_export_task \
+            .triggered.connect(self.__action_obj_dl_export_task)
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -701,7 +704,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 # Alt
                 match key:
                     case Qt.Key.Key_1:
-                        self.action_group_frame_display_type_radio_original.setChecked(True)
+                        self.action_group_frame_display_type_radio_original.setChecked(
+                            True
+                        )
                         self.__action_frame_display_type_changed()
                         return
                     case Qt.Key.Key_2:
@@ -1587,6 +1592,28 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         annotation_file = self.get_current_file_object()
         annotation_file.modifying()
 
+    def __action_obj_dl_export_task(self):
+        pic_path = self.current_annotation_object.pic_path
+
+        parent_dir_path = os.path.dirname(pic_path)
+        sequence_name = os.path.basename(parent_dir_path)
+
+        parent_dir_path = os.path.dirname(parent_dir_path)
+        dataset_name = os.path.basename(parent_dir_path)
+
+        json_name = os.path.basename(
+            self.current_annotation_object.file_path
+        )
+        target_label = self.get_selection_object().label
+
+        export_window = ExportSamTaskWindow(
+            dataset_name=dataset_name,
+            sequence_name=sequence_name,
+            json_name=json_name,
+            target_label=target_label,
+        )
+        export_window.exec()
+
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
 
@@ -1607,7 +1634,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             case ImageDisplayType.Original:
                 # Original Image
                 logger.info("Original Image")
-                self.main_image_view.image_view.image_display_type = ImageDisplayType.Original
+                self.main_image_view.image_view.image_display_type = (
+                    ImageDisplayType.Original
+                )
             case ImageDisplayType.Outline:
                 # Outline Image
                 logger.info("Outline Image")
