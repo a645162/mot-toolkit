@@ -12,7 +12,8 @@ logger = get_logger()
 
 def handle_sequence(
         sequence_dir_path: str,
-        iou_threshold: float = 0.9
+        iou_threshold: float = 0.9,
+        model_name: str = ''
 ):
     annotation_directory = XAnyLabelingAnnotationDirectory()
     annotation_directory.dir_path = sequence_dir_path
@@ -28,7 +29,8 @@ def handle_sequence(
 
     model = sam2.sam_load(
         target_device=device,
-        global_mode=False
+        global_mode=False,
+        model_name=model_name
     )
 
     for annotation_file_obj in annotation_directory.annotation_file:
@@ -65,7 +67,8 @@ def handle_sequence(
 def handle_dataset(
         dataset_dir_path: str,
         process_count: int = 1,
-        iou_threshold: float = 0.9
+        iou_threshold: float = 0.9,
+        model_name: str = ''
 ):
     video_list = os.listdir(dataset_dir_path)
 
@@ -75,7 +78,7 @@ def handle_dataset(
         if not os.path.isdir(video_dir_path):
             continue
 
-        params_list.append((video_dir_path, iou_threshold))
+        params_list.append((video_dir_path, iou_threshold, model_name))
 
     # For debug only
     # video_dir_path_list = video_dir_path_list[:1]
@@ -87,7 +90,8 @@ def handle_dataset(
 def sam_fix(
         dataset_dir_path: str | list[str],
         process_count: int = 1,
-        iou_threshold: float = 0.9
+        iou_threshold: float = 0.9,
+        model_name: str = ''
 ):
     multiprocessing.set_start_method('spawn')
 
@@ -100,7 +104,12 @@ def sam_fix(
             logger.error(f"Dataset directory {dataset_dir} does not exist.")
             return
 
-        handle_dataset(dataset_dir, process_count, iou_threshold)
+        handle_dataset(
+            dataset_dir_path=dataset_dir,
+            process_count=process_count,
+            iou_threshold=iou_threshold,
+            model_name=model_name
+        )
 
 
 if __name__ == '__main__':

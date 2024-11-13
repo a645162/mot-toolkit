@@ -15,7 +15,10 @@ def get_opts():
     parser.add_argument('--iou', type=float, default=0.9, help='IOU Threshold')
 
     parser.add_argument('--sam', action='store_true', help='Segment Anything Model')
-    parser.add_argument('--sam_model', type=str, default='sam', help='Segment Anything Model')
+    parser.add_argument(
+        '--sam_model', type=str, default='',
+        help='Segment Anything Model pt file name'
+    )
 
     return parser.parse_args()
 
@@ -35,12 +38,24 @@ def sam(opts):
     except Exception:
         pass
 
-    iou=opts.iou
+    iou = 0.9
+    model_name = ""
+
+    try:
+        iou = opts.iou
+    except Exception as e:
+        logger.error(e)
+
+    try:
+        model_name = opts.sam_model
+    except Exception as e:
+        logger.error(e)
 
     sam_fix(
         dataset_dir_path=dir_path,
         process_count=process_count,
-        iou_threshold=iou
+        iou_threshold=iou,
+        model_name=model_name
     )
 
 

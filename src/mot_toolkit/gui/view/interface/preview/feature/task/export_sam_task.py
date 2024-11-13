@@ -12,12 +12,17 @@ Info List:
 
 """
 
+import os
+import json
+
 from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
-    QLabel, QPushButton, QMessageBox,
+    QLabel, QPushButton, QComboBox, QCheckBox,
+    QMessageBox
 )
 
+from mot_toolkit.dl.model.sam2 import get_sam_model_list
 from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
 from mot_toolkit.utils.logs import get_logger
 
@@ -31,14 +36,14 @@ class ExportSamTaskWindow(QDialog):
             sequence_name: str,
             json_name: str,
             target_label: str,
-            task_type: str = "FastSAM",
+            sam_model: str = "FastSAM-x.pt",
             parent=None,
     ):
         super().__init__(parent)
 
         self.dataset_name = dataset_name
         self.sequence_name = sequence_name
-        self.task_type = task_type
+        self.sam_model = sam_model
         self.json_name = json_name
         self.target_label = target_label
 
@@ -61,17 +66,39 @@ class ExportSamTaskWindow(QDialog):
 
         layout.addWidget(QLabel(f"Object Label: {self.target_label}"))
 
-        layout.addWidget(QLabel(f"Task Type: {self.task_type}"))
+        # Copy From Previous Frame
+        self.checkbox_copy_previous = QCheckBox("Copy From Previous Frame")
+        layout.addWidget(self.checkbox_copy_previous)
+
+        layout.addWidget(QLabel(f"Model Type:"))
+        sam_model_list = get_sam_model_list()
+        self.model_type_combobox = QComboBox()
+        self.model_type_combobox.addItems(sam_model_list)
+        layout.addWidget(self.model_type_combobox)
+        # Set Current Text
+        if self.sam_model in sam_model_list:
+            self.model_type_combobox.setCurrentText(self.sam_model)
+        else:
+            logger.warning(f"Invalid SAM Model Type: {self.sam_model}")
+            self.model_type_combobox.setCurrentText(sam_model_list[0])
 
         self.file_path_widget = FileSaveWidget(
             title="Please select the save path",
             parent=self
         )
-        self.file_path_widget.filter = "JSON Files (*.json)"
         layout.addWidget(self.file_path_widget)
+        self.file_path_widget.filter = "JSON Files (*.json)"
+        json_name_no_ext = self.json_name.split(".")[0]
+        default_path = (
+            f"{self.dataset_name}"
+            f"_{self.sequence_name}"
+            f"_{json_name_no_ext}"
+            f"_{self.target_label}.json"
+        )
+        self.file_path_widget.set_file_path(default_path)
 
         self.save_button = QPushButton("Save")
-        self.save_button.clicked.connect(self.save_task)
+        self.save_button.clicked.connect(self.on_click_button_save)
         layout.addWidget(self.save_button)
 
         self.cancel_button = QPushButton("Cancel")
@@ -80,14 +107,39 @@ class ExportSamTaskWindow(QDialog):
 
         self.setLayout(layout)
 
-    def save_task(self):
+    def on_click_button_save(self):
         save_path = self.file_path_widget.get_file_path()
 
         if save_path:
-            print(f"Save: {save_path}")
-            self.accept()
+            logger.info(f"Save SAM Task: {save_path}")
+            try:
+                self.save_config(save_path)
+
+                self.accept()
+            except Exception as e:
+                logger.error(f"Save SAM Task Error: {e}")
+                QMessageBox.critical(self, "Error", f"Save SAM Task Error: {e}")
         else:
             QMessageBox.warning(self, "Error", "Please select a valid save path.")
+
+    def save_config(self, save_path: str):
+        parent_dir = os.path.dirname(save_path)
+        if not os.path.exists(parent_dir):
+            logger.info(f"Create Directory: {parent_dir}")
+            os.makedirs(parent_dir, exist_ok=True)
+
+        data_dict = {
+            "dataset_name": self.dataset_name,
+            "sequence_name": self.sequence_name,
+            "json_name": self.json_name,
+            "target_label": self.target_label,
+            "sam_model": self.model_type_combobox.currentText(),
+            "copy_previous": self.checkbox_copy_previous.isChecked(),
+        }
+
+        json_text = json.dumps(data_dict, indent=4)
+        with open(save_path, "w") as f:
+            f.write(json_text)
 
 
 if __name__ == "__main__":
@@ -101,7 +153,6 @@ if __name__ == "__main__":
         sequence_name="Sequence1",
         json_name="Frame001",
         target_label="Label1",
-        task_type="SAM Model 1",
     )
     window.show()
 
