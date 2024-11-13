@@ -984,6 +984,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         else:
             label_text = self.r_label_class_list_widget.selection_text
 
+            if len(label_text) == 0:
+                return
+
+            if label_text not in self.annotation_directory.label_obj_list_dict:
+                return
+
             self.current_file_list = \
                 self.annotation_directory.label_obj_list_dict[label_text]
 
