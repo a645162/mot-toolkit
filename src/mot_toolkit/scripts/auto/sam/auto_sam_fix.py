@@ -62,6 +62,7 @@ def handle_sequence(
             current_file_index = int(current_file_name)
 
             if current_file_index < first_file_index:
+                previous_file_obj = annotation_file_obj
                 continue
 
         for rect_obj in annotation_file_obj.rect_annotation_list:
@@ -70,6 +71,7 @@ def handle_sequence(
                     continue
 
             if copy_previous and previous_file_obj is not None:
+                found = False
                 for previous_rect_obj in previous_file_obj.rect_annotation_list:
                     if rect_obj.label == previous_rect_obj.label:
                         rect_obj.x1 = previous_rect_obj.x1
@@ -77,7 +79,22 @@ def handle_sequence(
                         rect_obj.x2 = previous_rect_obj.x2
                         rect_obj.y2 = previous_rect_obj.y2
 
+                        logger.info(
+                            f"Copy previous "
+                            f"{previous_file_obj.file_name_no_extension}"
+                            f" to "
+                            f"{annotation_file_obj.file_name_no_extension}"
+                        )
+
+                        found = True
+
                         break
+                if not found:
+                    logger.warning(
+                        f"Previous file "
+                        f"{previous_file_obj.file_name_no_extension} "
+                        f"does not have object {rect_obj.label}"
+                    )
 
             x1 = float(rect_obj.x1)
             y1 = float(rect_obj.y1)
@@ -100,10 +117,12 @@ def handle_sequence(
                 rect_obj.y1 = result[1]
                 rect_obj.x2 = result[2]
                 rect_obj.y2 = result[3]
+
+                annotation_file_obj.modifying()
+                # annotation_file_obj.save()
             else:
                 print("No result for", f"Object:{rect_obj.label}", image_path)
 
-        annotation_file_obj.modifying()
         previous_file_obj = annotation_file_obj
 
     annotation_directory.save_json_files()
