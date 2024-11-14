@@ -943,6 +943,14 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return interval_list
 
+    def linear_interpolation(
+            self,
+            start_index: int | str = -1,
+            end_index: int | str = -1,
+            label: str = "",
+    ) -> int:
+        return 0
+
     @property
     def file_count(self) -> int:
         return len(self.annotation_file)

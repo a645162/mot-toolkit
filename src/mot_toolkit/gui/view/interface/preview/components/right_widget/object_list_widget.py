@@ -40,6 +40,14 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_copy_subsequent)
         select_enable_list.append(self.menu_copy_subsequent)
 
+        self.menu_linear_interpolation = \
+            QAction(
+                "Linear Interpolation",
+                q_menu
+            )
+        q_menu.addAction(self.menu_linear_interpolation)
+        select_enable_list.append(self.menu_linear_interpolation)
+
         q_menu.addSeparator()
 
         self.menu_operate_del = \

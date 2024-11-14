@@ -666,6 +666,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Obj List
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
+        self.r_object_list_widget.menu_linear_interpolation \
+            .triggered.connect(self.__action_obj_linear_interpolation)
 
         self.r_object_list_widget.menu_operate_del \
             .triggered.connect(self.__action_obj_del_target)
@@ -1382,6 +1384,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_object_list_widget()
         # self.__update_label_class_list()
         self.update_annotation_object_display()
+
+    def __action_obj_linear_interpolation(self):
+        pass
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
