@@ -709,14 +709,17 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         :param multi_thread: Whether to use multiple threads. Default is True.
         :param start_index: The starting index of the files to process. If -1, starts from the beginning.
         :param end_index: The ending index of the files to process. If -1, processes until the end.
+
+        By the way, first one is start_index, last one is end_index.
+
         """
         if start_index == -1:
             start_index = 0
         if end_index == -1 or end_index > len(self.annotation_file):
-            end_index = len(self.annotation_file)
+            end_index = len(self.annotation_file) - 1
 
-        file_obj_list = self.annotation_file[start_index:end_index]
-        file_index_list = range(start_index, end_index)
+        file_obj_list = self.annotation_file[start_index:end_index + 1]
+        file_index_list = range(start_index, end_index + 1)
 
         def work_function(file_obj: XAnyLabelingAnnotation, index: int):
             file_obj.pause_emit = True

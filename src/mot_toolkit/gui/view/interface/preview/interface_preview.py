@@ -1100,7 +1100,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.annotation_directory.do_for_each_file(
                 func=restore_before,
-                end_index=file_index
+                end_index=file_index - 1
             )
 
             self.__update_object_list_widget()
@@ -1202,7 +1202,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.annotation_directory.do_for_each_file(
                 func=save_before,
-                end_index=file_index
+                end_index=file_index - 1
             )
 
         return have_saved
@@ -1386,7 +1386,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.update_annotation_object_display()
 
     def __action_obj_linear_interpolation(self):
-        label = self.current_annotation_object.label
+        label_index = self.r_object_list_widget.selection_index
+        if label_index == -1:
+            return
+        label = self.current_annotation_object.rect_annotation_list[label_index].label
 
         if label == "":
             QMessageBox.critical(
@@ -1396,9 +1399,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
             return
 
+        current_frame_index = 0
+        try:
+            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+        except Exception:
+            pass
+
         dialog = DialogInput2Int(
-            default_value1=0,
-            default_value2=0,
+            default_value1=current_frame_index,
+            default_value2=current_frame_index,
             label1="Start Frame:",
             label2="End Frame:",
             min_value=0,
@@ -1421,6 +1430,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         start_file_obj = self.annotation_directory.get_file_by_frame_number(frame_start)
         end_file_obj = self.annotation_directory.get_file_by_frame_number(frame_end)
+
+        logger.info(
+            f"Linear Interpolation: "
+            f"{start_file_obj.file_name_no_extension}"
+            f" to "
+            f"{end_file_obj.file_name_no_extension}"
+        )
 
         if start_file_obj is None or end_file_obj is None:
             QMessageBox.critical(
@@ -1463,10 +1479,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.update_annotation_object_display()
 
     def __action_obj_del_subsequent_target(self):
+        index = self.r_object_list_widget.selection_index
+        label = self.current_annotation_object.rect_annotation_list[index].label
+
         reply = QMessageBox.question(
             self,
             "Warning",
-            "Are you sure you want to del subsequent target?",
+            f"Are you sure you want to del subsequent target({label})?\n\n"
+            f"Not include current frame.",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
@@ -1478,9 +1498,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return
 
-        index = self.r_object_list_widget.selection_index
         logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
-        label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
         # self.current_annotation_object.del_by_label(label)
@@ -1491,7 +1509,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #     annotation_obj.del_by_label(label)
         self.annotation_directory.do_for_each_file(
             func=lambda annotation_obj, i: annotation_obj.del_by_label(label) if i >= file_index else None,
-            start_index=file_index
+            start_index=file_index + 1
         )
 
         self.r_object_list_widget.selection_index = -1
@@ -1516,11 +1534,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        index = self.r_object_list_widget.selection_index
+        label = self.current_annotation_object.rect_annotation_list[index].label
+
+        ret = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want to del target({label})?\n\n"
+            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}"
+            f"※Include start and end frame!!!",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+
         frame_start, frame_end = dialog.get_integers()
 
-        index = self.r_object_list_widget.selection_index
         logger.info(f"[{index}]Delete the target in range({frame_start}~{frame_end})")
-        label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
         # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
