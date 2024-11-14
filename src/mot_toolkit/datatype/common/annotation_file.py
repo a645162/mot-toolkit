@@ -38,6 +38,8 @@ class AnnotationFile(QObject):
 
     have_error: bool = False
 
+    pause_emit: bool = False
+
     def __init__(self, label: str = ""):
         super().__init__()
 
@@ -139,7 +141,8 @@ class AnnotationFile(QObject):
 
     def modifying(self):
         self.is_modified = True
-        self.slot_modified.emit(self.index)
+        if not self.pause_emit:
+            self.slot_modified.emit(self.index)
 
     def reload(self) -> bool:
         if not self.is_modified:
@@ -154,7 +157,8 @@ class AnnotationFile(QObject):
             return False
 
         self.is_modified = False
-        self.slot_modified.emit(self.index)
+        if not self.pause_emit:
+            self.slot_modified.emit(self.index)
         return True
 
     def __eq__(self, other):

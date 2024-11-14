@@ -262,7 +262,8 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 logger.info(f"Unknown shape type: {item_label}({item_shape_type}) in {self.file_path}")
 
         self.is_modified = False
-        self.slot_modified.emit(self.index)
+        if not self.pause_emit:
+            self.slot_modified.emit(self.index)
 
         return True
 
@@ -709,15 +710,24 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         file_obj_list = self.annotation_file[start_index:end_index]
         file_index_list = range(start_index, end_index)
 
+        def work_function(file_obj: XAnyLabelingAnnotation, index: int):
+            file_obj.pause_emit = True
+            func(file_obj, index)
+            file_obj.pause_emit = False
+
         if multi_thread:
             # Multi-thread processing using ThreadPoolExecutor
             workers_count = cpu_count if cpu_count > 1 else 1
+
             with ThreadPoolExecutor(max_workers=workers_count) as executor:
                 # Use map to apply the function to each file in the specified range
-                executor.map(func, file_obj_list, file_index_list)
+                executor.map(work_function, file_obj_list, file_index_list)
 
                 # Wait for all tasks to complete
                 executor.shutdown(wait=True)
+
+            if len(file_obj_list) > 0:
+                self.slot_modified.emit(-1)
         else:
             # Single-threaded processing
             for index in file_index_list:
