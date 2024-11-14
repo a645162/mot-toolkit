@@ -1386,7 +1386,55 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.update_annotation_object_display()
 
     def __action_obj_linear_interpolation(self):
-        pass
+        label = self.current_annotation_object.label
+
+        if label == "":
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Please select a target."
+            )
+            return
+
+        dialog = DialogInput2Int(
+            default_value1=0,
+            default_value2=0,
+            label1="Start Frame:",
+            label2="End Frame:",
+            min_value=0,
+            max_value=len(self.annotation_directory.annotation_file) - 1,
+            title="Linear Interpolation",
+            parent=self
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        frame_start, frame_end = dialog.get_integers()
+        if frame_start >= frame_end:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Start frame must be less than end frame."
+            )
+            return
+
+        start_file_obj = self.annotation_directory.get_file_by_frame_number(frame_start)
+        end_file_obj = self.annotation_directory.get_file_by_frame_number(frame_end)
+
+        if start_file_obj is None or end_file_obj is None:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Start frame or end frame not found."
+            )
+            return
+
+        self.annotation_directory.linear_interpolation(
+            start=start_file_obj,
+            end=end_file_obj,
+            label=label
+        )
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(

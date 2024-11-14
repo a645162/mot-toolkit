@@ -16,6 +16,7 @@ from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
 from mot_toolkit.datatype.common.rect_data_annotation import (
     RectDataAnnotation
 )
+from mot_toolkit.datatype.math.interpolate import liner_interpolate_position
 from mot_toolkit.parser.json_parser import parse_json_to_dict
 
 from mot_toolkit.utils.logs import get_logger
@@ -379,6 +380,13 @@ class XAnyLabelingAnnotation(AnnotationFile):
         target_name_annotation_list.extend(self.get_target_name_rect_annotation_list(target_name))
 
         return target_name_annotation_list
+
+    def get_rect_by_label(self, label: str) -> XAnyLabelingRect | None:
+        for rect_item in self.rect_annotation_list:
+            if rect_item.label == label:
+                return rect_item
+
+        return None
 
     def add_or_update_rect(self, rect_item: XAnyLabelingRect):
         self.modifying()
@@ -943,12 +951,114 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return interval_list
 
+    def get_file_by_frame_number(self, frame_number: int) -> XAnyLabelingAnnotation | None:
+        for annotation_obj in self.annotation_file:
+            try:
+                current_frame_number = int(annotation_obj.file_name_no_extension)
+                if current_frame_number == frame_number:
+                    return annotation_obj
+            except Exception:
+                pass
+
+        return None
+
     def linear_interpolation(
             self,
-            start_index: int | str = -1,
-            end_index: int | str = -1,
-            label: str = "",
+            start: int | str | XAnyLabelingAnnotation = -1,
+            end: int | str | XAnyLabelingAnnotation = -1,
+            label: str | list[str] | None = None,
     ) -> int:
+        # Check Start Object Type
+        if isinstance(start, str):
+            file_name = start
+            start = self.get_file_object_by_file_name(file_name)
+        if isinstance(start, int):
+            file_index = start
+            if 0 <= file_index < len(self.annotation_file):
+                start = self.annotation_file[file_index]
+        if not isinstance(start, XAnyLabelingAnnotation):
+            logger.error(f"Invalid Start: {start}")
+            return -1
+
+        # Check End Object Type
+        if isinstance(end, str):
+            file_name = end
+            end = self.get_file_object_by_file_name(file_name)
+        if isinstance(end, int):
+            file_index = end
+            if 0 <= file_index < len(self.annotation_file):
+                end = self.annotation_file[file_index]
+        if not isinstance(end, XAnyLabelingAnnotation):
+            logger.error(f"Invalid End: {end}")
+            return -1
+
+        start_index = start.index + 1
+        end_index = end.index - 1
+        count = end_index - start_index + 1
+
+        label_list = []
+        if label is None:
+            label_list.extend(self.label_list)
+        else:
+            if isinstance(label, str):
+                label_list.append(label)
+            if isinstance(label, list):
+                label_list.extend(label)
+
+        for label in label_list:
+            start_rect: RectDataAnnotation | None = \
+                start.get_rect_by_label(label)
+            end_rect: RectDataAnnotation | None = \
+                end.get_rect_by_label(label)
+
+            if start_rect is None or end_rect is None:
+                continue
+
+            def linear_operation(annotation_obj: XAnyLabelingAnnotation, index: int):
+                current_rect: RectDataAnnotation | None = \
+                    annotation_obj.get_rect_by_label(label)
+                if current_rect is None:
+                    return
+
+                current_index = index - start_index
+
+                current_rect.x1 = \
+                    liner_interpolate_position(
+                        start_pos=start_rect.x1,
+                        end_pos=end_rect.x1,
+                        total_count=count,
+                        index=current_index
+                    )
+                current_rect.y1 = \
+                    liner_interpolate_position(
+                        start_pos=start_rect.y1,
+                        end_pos=end_rect.y1,
+                        total_count=count,
+                        index=current_index
+                    )
+                current_rect.x2 = \
+                    liner_interpolate_position(
+                        start_pos=start_rect.x2,
+                        end_pos=end_rect.x2,
+                        total_count=count,
+                        index=current_index
+                    )
+                current_rect.y2 = \
+                    liner_interpolate_position(
+                        start_pos=start_rect.y2,
+                        end_pos=end_rect.y2,
+                        total_count=count,
+                        index=current_index
+                    )
+
+                annotation_obj.modifying()
+
+            self.do_for_each_file(
+                func=linear_operation,
+                start_index=start_index,
+                end_index=end_index
+            )
+
         return 0
 
     @property
