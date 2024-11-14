@@ -70,6 +70,9 @@ class ExportSamTaskWindow(QDialog):
         self.checkbox_copy_previous = QCheckBox("Copy From Previous Frame")
         layout.addWidget(self.checkbox_copy_previous)
 
+        self.checkbox_stop_early = QCheckBox("Stop Early")
+        layout.addWidget(self.checkbox_stop_early)
+
         layout.addWidget(QLabel(f"Model Type:"))
         sam_model_list = get_sam_model_list()
         self.model_type_combobox = QComboBox()
@@ -141,6 +144,7 @@ class ExportSamTaskWindow(QDialog):
             "target_label": self.target_label,
             "sam_model": self.model_type_combobox.currentText(),
             "copy_previous": self.checkbox_copy_previous.isChecked(),
+            "stop_early": self.checkbox_stop_early.isChecked(),
         }
 
         json_text = json.dumps(data_dict, indent=4)

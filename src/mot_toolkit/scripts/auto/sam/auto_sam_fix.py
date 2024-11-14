@@ -2,6 +2,7 @@ import os
 import multiprocessing
 import json
 
+from mot_toolkit.config.program_path import path_project
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory, XAnyLabelingAnnotation
 from mot_toolkit.dl.common.torch_devices import wait_gpu_memory
 from mot_toolkit.dl.model import sam2
@@ -26,11 +27,17 @@ def handle_sequence(
         model_name: str = '',
         first_file_name: str = "",
         label_list: list[str] = None,
-        copy_previous: bool = False
+        copy_previous: bool = False,
+        stop_early: bool = False
 ):
     first_file_name = first_file_name.strip()
     if label_list is None:
         label_list = []
+
+    stop_early = (
+            stop_early and
+            len(label_list) > 0
+    )
 
     annotation_directory = XAnyLabelingAnnotationDirectory()
     annotation_directory.dir_path = sequence_dir_path
@@ -68,6 +75,8 @@ def handle_sequence(
         for rect_obj in annotation_file_obj.rect_annotation_list:
             if len(label_list) > 0:
                 if rect_obj.label not in label_list:
+                    if stop_early:
+                        break
                     continue
 
             if copy_previous and previous_file_obj is not None:
@@ -134,7 +143,8 @@ def generate_param_tuple(
         model_name: str = '',
         first_file_name: str = "",
         label_list: list[str] = None,
-        copy_previous: bool = False
+        copy_previous: bool = False,
+        stop_early: bool = False
 ):
     return (
         sequence_dir_path,
@@ -142,7 +152,8 @@ def generate_param_tuple(
         model_name,
         first_file_name,
         label_list,
-        copy_previous
+        copy_previous,
+        stop_early
     )
 
 
@@ -167,7 +178,8 @@ def handle_dataset(
                 model_name=model_name,
                 first_file_name="",
                 label_list=[],
-                copy_previous=False
+                copy_previous=False,
+                stop_early=False
             )
         )
 
@@ -218,12 +230,13 @@ def sam_fix_with_config(
 
     json_dict = json.loads(json_text)
 
-    dataset_name: str = json_dict["dataset_name"]
-    sequence_name: str = json_dict["sequence_name"]
-    json_name: str = json_dict["json_name"]
-    target_label: str = json_dict["target_label"]
-    sam_model: str = json_dict["sam_model"]
-    copy_previous: bool = json_dict["copy_previous"]
+    dataset_name = json_dict.get("dataset_name", "")
+    sequence_name = json_dict.get("sequence_name", "")
+    json_name = json_dict.get("json_name", "")
+    target_label = json_dict.get("target_label", "")
+    sam_model = json_dict.get("sam_model", "")
+    copy_previous = json_dict.get("copy_previous", False)
+    early_stop = json_dict.get("stop_early", False)
 
     if model_name:
         sam_model = model_name
@@ -239,7 +252,8 @@ def sam_fix_with_config(
         model_name=sam_model,
         first_file_name=json_name,
         label_list=[target_label],
-        copy_previous=copy_previous
+        copy_previous=copy_previous,
+        stop_early=early_stop
     )
 
 
@@ -254,7 +268,17 @@ def sam_fix_with_config_dir(
         logger.error("No valid config directory path.")
         return
     if isinstance(config_path_list, str):
-        config_path_list = [config_path_list]
+        config_path = config_path_list
+        config_path_list = []
+
+        if os.path.isdir(config_path):
+            for root, dirs, files in os.walk(config_path):
+                for file in files:
+                    if file.endswith('.json'):
+                        json_path = os.path.join(root, file)
+                        config_path_list.append(json_path)
+        elif os.path.isfile(config_path):
+            config_path_list = [config_path_list]
 
     set_process_start_mode()
 
@@ -282,9 +306,9 @@ if __name__ == '__main__':
     # sam_fix("/mnt/d/Datasets/Sea-MOT-Datasets/SAM/FVessel_LabelMe_GT")
 
     sam_fix_with_config_dir(
-        dataset_dir_path="/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe/test",
-        iou_threshold=0.4,
-        config_path_list="/home/konghaomin/Prj/LCF/mot-toolkit/Output/task/BV11S4y1r7re-3XfhLO8Kj40qgTJN_00000000-00003450_00000417_4.json",
+        dataset_dir_path=r"H:\Datasets\TrackShipOnlineVideo\LabelMe\sea_video_20240313_part1\Onboard",
+        iou_threshold=0.5,
+        config_path_list=os.path.join(path_project, "Output", "task"),
         model_name=""
     )
 
