@@ -1,0 +1,5 @@
+v1.2.0
+====================
+1. fix(X-Anylabeling): Enhance batch operation performance
+2. feat(Preview): Support jump to file
+3. feat(Preview): Support quick linear interpolation

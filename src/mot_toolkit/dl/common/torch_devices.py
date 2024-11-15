@@ -131,6 +131,38 @@ def is_amd_rocm_device(device):
     return False
 
 
+def torch_is_hip_version() -> bool:
+    import torch
+
+    torch_install_dir = os.path.dirname(torch.__file__)
+
+    lib_dir = os.path.join(torch_install_dir, 'lib')
+    lib_list = os.listdir(lib_dir)
+
+    hip_count = 0
+    roc_count = 0
+    amd_count = 0
+
+    for lib_name in lib_list:
+        if 'hip' in lib_name:
+            hip_count += 1
+        if 'roc' in lib_name:
+            roc_count += 1
+        if 'amd' in lib_name:
+            amd_count += 1
+
+    logger.info(f"hip_count: {hip_count}, roc_count: {roc_count}, amd_count: {amd_count}")
+
+    if (
+            hip_count > 3 and
+            roc_count > 3 and
+            amd_count > 3
+    ):
+        return True
+
+    return False
+
+
 def get_cpu_name() -> str:
     system = platform.system()
     if system == "Windows":
@@ -243,6 +275,7 @@ if __name__ == '__main__':
     print("Device:", device)
     print("Device Type:", device.type)
     print("Is AMD ROCm Device:", is_amd_rocm_device(device))
+    print("Is HIP version PyTorch:", torch_is_hip_version())
 
     if sys.platform == "linux":
         print("VGA Device:")

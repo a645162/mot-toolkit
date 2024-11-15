@@ -40,6 +40,22 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_copy_subsequent)
         select_enable_list.append(self.menu_copy_subsequent)
 
+        self.menu_linear_interpolation = \
+            QAction(
+                "Linear Interpolation",
+                q_menu
+            )
+        q_menu.addAction(self.menu_linear_interpolation)
+        select_enable_list.append(self.menu_linear_interpolation)
+
+        self.menu_linear_interpolation_previous = \
+            QAction(
+                "Linear Interpolation (Previous)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_linear_interpolation_previous)
+        select_enable_list.append(self.menu_linear_interpolation_previous)
+
         q_menu.addSeparator()
 
         self.menu_operate_del = \
@@ -115,6 +131,14 @@ class ObjectListWidget(ListWithTitleWidget):
         #     lambda: self.menu_dl_near_mode.setChecked(self.menu_dl_sam2.isChecked())
         # )
         q_menu.addAction(self.menu_dl_near_mode)
+
+        self.menu_dl_export_task = \
+            QAction(
+                "DL: Export Task",
+                q_menu
+            )
+        q_menu.addAction(self.menu_dl_export_task)
+        select_enable_list.append(self.menu_dl_export_task)
 
         q_menu.addSeparator()
 

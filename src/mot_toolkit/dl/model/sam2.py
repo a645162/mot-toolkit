@@ -34,7 +34,18 @@ class SamModelType(Enum):
     FAST_SAM_X = "FastSAM-x.pt"
 
 
-model_type: SamModelType = SamModelType.FAST_SAM_X
+def get_sam_model_list() -> list[str]:
+    return [model.value for model in SamModelType]
+
+
+def get_sam_model_by_name(
+        model_name: str = ""
+) -> SamModelType:
+    for model in SamModelType:
+        if model.value == model_name:
+            return model
+
+    return SamModelType.SAM_2_1_Large
 
 
 def sam_is_loaded() -> bool:
@@ -54,13 +65,16 @@ def sam_is_loaded() -> bool:
 
 def sam_load(
         target_device=None,
-        global_mode=True
+        global_mode=True,
+        model_name: str = ""
 ) -> SAM | FastSAM | None:
     model: SAM | FastSAM | None = None
 
     if global_mode:
         global model_sam
         model = model_sam
+
+    model_type: SamModelType = get_sam_model_by_name(model_name)
 
     if model is None:
         if (
@@ -212,3 +226,11 @@ def sam_predict_xyxy_near(
                 logger.info(f"[{i}] IOU({iou}) is too low(<{iou_threshold}), skip.")
 
     return result_list
+
+
+if __name__ == "__main__":
+    # Print Model List
+    model_list = get_sam_model_list()
+    for model_name in model_list:
+        model_type = get_sam_model_by_name(model_name)
+        print(model_type.value)

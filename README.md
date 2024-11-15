@@ -151,7 +151,7 @@ The installation script `install.py` for `torch` is only support `Linux`+`NVIDIA
 
 ### AMD GPU
 
-If you use AMD GPU(Linux), please manually install `PyTorch` and `Rocm`.
+If you use AMD GPU(Linux), please manually install `PyTorch` and `ROCm`.
 
 ### DirectML on Windows
 

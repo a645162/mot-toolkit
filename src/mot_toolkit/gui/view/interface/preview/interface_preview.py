@@ -28,6 +28,8 @@ from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
     GamepadMonitor, GamepadButtonKey
 )
 from mot_toolkit.gui.view.components. \
+    dialog.dialog_input_1_int import DialogInput1Int
+from mot_toolkit.gui.view.components. \
     dialog.dialog_input_2_int import DialogInput2Int
 from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
@@ -41,6 +43,7 @@ from mot_toolkit.gui.view.interface. \
 from mot_toolkit.gui.view.interface.preview.components. \
     option.dialog_brightness_contrast import DialogBrightnessContrast
 from mot_toolkit.gui.view.interface.preview.feature.opencv_preview import OpenCVPreviewOptionWindow
+from mot_toolkit.gui.view.interface.preview.feature.task.export_sam_task import ExportSamTaskWindow
 from mot_toolkit.gui.view.interface. \
     software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
@@ -661,10 +664,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_file_list_widget.menu_show_in_explorer.triggered.connect(
             self.__action_file_list_show_in_explorer
         )
+        self.r_file_list_widget.menu_jump_to \
+            .triggered.connect(self.__action_obj_jump_to)
 
         # Obj List
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
+        self.r_object_list_widget.menu_linear_interpolation \
+            .triggered.connect(self.__action_obj_linear_interpolation)
+        self.r_object_list_widget.menu_linear_interpolation_previous \
+            .triggered.connect(self.__action_obj_linear_interpolation_previous)
 
         self.r_object_list_widget.menu_operate_del \
             .triggered.connect(self.__action_obj_del_target)
@@ -677,6 +686,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_copy_position)
         self.r_object_list_widget.menu_dl_sam2 \
             .triggered.connect(self.__action_obj_dl_sam2)
+        self.r_object_list_widget.menu_dl_export_task \
+            .triggered.connect(self.__action_obj_dl_export_task)
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -701,7 +712,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 # Alt
                 match key:
                     case Qt.Key.Key_1:
-                        self.action_group_frame_display_type_radio_original.setChecked(True)
+                        self.action_group_frame_display_type_radio_original.setChecked(
+                            True
+                        )
                         self.__action_frame_display_type_changed()
                         return
                     case Qt.Key.Key_2:
@@ -734,6 +747,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         return
                     case Qt.Key.Key_Z:
                         self.main_image_view.zoom_select_object()
+                        return
+                    case Qt.Key.Key_I:
+                        self.__action_obj_linear_interpolation_previous()
+                        return
+                    case Qt.Key.Key_O:
+                        self.__action_obj_restore_first_rect()
                         return
 
     def resizeEvent(self, event):
@@ -979,6 +998,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         else:
             label_text = self.r_label_class_list_widget.selection_text
 
+            if len(label_text) == 0:
+                return
+
+            if label_text not in self.annotation_directory.label_obj_list_dict:
+                return
+
             self.current_file_list = \
                 self.annotation_directory.label_obj_list_dict[label_text]
 
@@ -1087,7 +1112,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.annotation_directory.do_for_each_file(
                 func=restore_before,
-                end_index=file_index
+                end_index=file_index - 1
             )
 
             self.__update_object_list_widget()
@@ -1189,7 +1214,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.annotation_directory.do_for_each_file(
                 func=save_before,
-                end_index=file_index
+                end_index=file_index - 1
             )
 
         return have_saved
@@ -1372,6 +1397,145 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
+    def linear_interpolation(self, start_frame, end_frame):
+        label_index = self.r_object_list_widget.selection_index
+        if label_index == -1:
+            return
+        label = self.current_annotation_object.rect_annotation_list[label_index].label
+
+        if label == "":
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Please select a target."
+            )
+            return
+
+        frame_start, frame_end = int(start_frame), int(end_frame)
+        if frame_start >= frame_end:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Start frame must be less than end frame."
+            )
+            return
+
+        start_file_obj = self.annotation_directory.get_file_by_frame_number(frame_start)
+        end_file_obj = self.annotation_directory.get_file_by_frame_number(frame_end)
+
+        reply = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want to linear interpolation?\n\n"
+            f"Start Frame: {start_file_obj.file_name_no_extension}\n"
+            f"End Frame: {end_file_obj.file_name_no_extension}",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        logger.info(
+            f"Linear Interpolation: "
+            f"{start_file_obj.file_name_no_extension}"
+            f" to "
+            f"{end_file_obj.file_name_no_extension}"
+        )
+
+        if start_file_obj is None or end_file_obj is None:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Start frame or end frame not found."
+            )
+            return
+
+        self.annotation_directory.linear_interpolation(
+            start=start_file_obj,
+            end=end_file_obj,
+            label=label
+        )
+
+    def __action_obj_linear_interpolation(self):
+        current_frame_index = 0
+        try:
+            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+        except Exception:
+            pass
+
+        dialog = DialogInput2Int(
+            default_value1=current_frame_index,
+            default_value2=current_frame_index,
+            label1="Start Frame:",
+            label2="End Frame:",
+            min_value=0,
+            max_value=len(self.annotation_directory.annotation_file) - 1,
+            title="Linear Interpolation",
+            parent=self
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+    def __action_obj_linear_interpolation_previous(self):
+        current_frame_index = 0
+        try:
+            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+        except Exception:
+            pass
+
+        previous_frame_index = current_frame_index - self.jump_file_count
+
+        if previous_frame_index < 0:
+            previous_frame_index = 0
+
+        self.linear_interpolation(
+            start_frame=previous_frame_index,
+            end_frame=current_frame_index
+        )
+
+    def __action_obj_restore_first_rect(self):
+        label_index = self.r_object_list_widget.selection_index
+        if label_index == -1:
+            return
+        label = self.current_annotation_object.rect_annotation_list[label_index].label
+        if label == "":
+            return
+
+        # Find First File Obj
+        first_rect_obj = None
+
+        for file_obj in self.current_file_list:
+            is_found = False
+
+            for rect_obj in file_obj.rect_annotation_list:
+                if rect_obj.label == label:
+                    first_rect_obj = rect_obj
+
+                    logger.info(f"Restore First Rect({label}): {file_obj.file_name_no_extension}")
+
+                    is_found = True
+                    break
+
+            if is_found:
+                break
+
+        if first_rect_obj is None:
+            return
+
+        rect_widget = self.main_image_view.selection_widget
+
+        if rect_widget is None:
+            return
+
+        logger.info(f"- Restore Width: {first_rect_obj.width} Height: {first_rect_obj.height}")
+
+        rect_widget.width_original = first_rect_obj.width
+        rect_widget.height_original = first_rect_obj.height
+
+        self.main_image_view.move_annotation_to_mouse_position()
+
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
             self,
@@ -1399,10 +1563,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.update_annotation_object_display()
 
     def __action_obj_del_subsequent_target(self):
+        index = self.r_object_list_widget.selection_index
+        label = self.current_annotation_object.rect_annotation_list[index].label
+
         reply = QMessageBox.question(
             self,
             "Warning",
-            "Are you sure you want to del subsequent target?",
+            f"Are you sure you want to del subsequent target({label})?\n\n"
+            f"Include current frame.",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
@@ -1414,9 +1582,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return
 
-        index = self.r_object_list_widget.selection_index
         logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
-        label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
         # self.current_annotation_object.del_by_label(label)
@@ -1452,11 +1618,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        index = self.r_object_list_widget.selection_index
+        label = self.current_annotation_object.rect_annotation_list[index].label
+
+        ret = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want to del target({label})?\n\n"
+            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}"
+            f"※Include start and end frame!!!",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+
         frame_start, frame_end = dialog.get_integers()
 
-        index = self.r_object_list_widget.selection_index
         logger.info(f"[{index}]Delete the target in range({frame_start}~{frame_end})")
-        label = self.current_annotation_object.rect_annotation_list[index].label
         logger.info(f"Delete Label:{label}")
 
         # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
@@ -1587,8 +1766,68 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         annotation_file = self.get_current_file_object()
         annotation_file.modifying()
 
+    def __action_obj_dl_export_task(self):
+        pic_path = self.current_annotation_object.pic_path
+
+        parent_dir_path = os.path.dirname(pic_path)
+        sequence_name = os.path.basename(parent_dir_path)
+
+        parent_dir_path = os.path.dirname(parent_dir_path)
+        dataset_name = os.path.basename(parent_dir_path)
+
+        json_name = os.path.basename(
+            self.current_annotation_object.file_path
+        )
+        target_label = self.get_selection_object().label
+
+        export_window = ExportSamTaskWindow(
+            dataset_name=dataset_name,
+            sequence_name=sequence_name,
+            json_name=json_name,
+            target_label=target_label,
+        )
+        export_window.exec()
+
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
+
+    def __action_obj_jump_to(self):
+        if len(self.current_file_list) == 0:
+            return
+        try:
+            first_int = int(self.current_file_list[0].file_name_no_extension)
+            last_int = int(self.current_file_list[-1].file_name_no_extension)
+        except Exception:
+            return
+
+        dialog = DialogInput1Int(
+            default_value=0,
+            label="Jump to Frame:",
+            min_value=first_int,
+            max_value=last_int,
+            title="Jump to Frame",
+            parent=self
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        frame_index = dialog.get_integer()
+
+        new_index = -1
+        for i, file_obj in enumerate(self.current_file_list):
+            try:
+                index = int(file_obj.file_name_no_extension)
+                if index == frame_index:
+                    new_index = i
+                    break
+            except:
+                pass
+
+        if new_index != -1:
+            self.r_file_list_widget.selection_index = new_index
+        else:
+            QMessageBox.critical(self, "Error", "Frame index not found.")
 
     def __action_frame_display_type_changed(self):
         if self.action_group_frame_display_type_radio_original.isChecked():
@@ -1607,7 +1846,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             case ImageDisplayType.Original:
                 # Original Image
                 logger.info("Original Image")
-                self.main_image_view.image_view.image_display_type = ImageDisplayType.Original
+                self.main_image_view.image_view.image_display_type = (
+                    ImageDisplayType.Original
+                )
             case ImageDisplayType.Outline:
                 # Outline Image
                 logger.info("Outline Image")
