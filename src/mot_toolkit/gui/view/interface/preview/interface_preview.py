@@ -668,6 +668,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_copy_subsequent_target)
         self.r_object_list_widget.menu_linear_interpolation \
             .triggered.connect(self.__action_obj_linear_interpolation)
+        self.r_object_list_widget.menu_linear_interpolation_previous \
+            .triggered.connect(self.__action_obj_linear_interpolation_previous)
 
         self.r_object_list_widget.menu_operate_del \
             .triggered.connect(self.__action_obj_del_target)
@@ -741,6 +743,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         return
                     case Qt.Key.Key_Z:
                         self.main_image_view.zoom_select_object()
+                        return
+                    case Qt.Key.Key_I:
+                        self.__action_obj_linear_interpolation_previous()
+                        return
+                    case Qt.Key.Key_O:
                         return
 
     def resizeEvent(self, event):
@@ -1385,7 +1392,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
-    def __action_obj_linear_interpolation(self):
+    def linear_interpolation(self, start_frame, end_frame):
         label_index = self.r_object_list_widget.selection_index
         if label_index == -1:
             return
@@ -1399,27 +1406,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
             return
 
-        current_frame_index = 0
-        try:
-            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
-        except Exception:
-            pass
-
-        dialog = DialogInput2Int(
-            default_value1=current_frame_index,
-            default_value2=current_frame_index,
-            label1="Start Frame:",
-            label2="End Frame:",
-            min_value=0,
-            max_value=len(self.annotation_directory.annotation_file) - 1,
-            title="Linear Interpolation",
-            parent=self
-        )
-
-        if dialog.exec() != QDialog.DialogCode.Accepted:
-            return
-
-        frame_start, frame_end = dialog.get_integers()
+        frame_start, frame_end = int(start_frame), int(end_frame)
         if frame_start >= frame_end:
             QMessageBox.critical(
                 self,
@@ -1430,6 +1417,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         start_file_obj = self.annotation_directory.get_file_by_frame_number(frame_start)
         end_file_obj = self.annotation_directory.get_file_by_frame_number(frame_end)
+
+        reply = QMessageBox.question(
+            self,
+            "Warning",
+            f"Are you sure you want to linear interpolation?\n\n"
+            f"Start Frame: {start_file_obj.file_name_no_extension}\n"
+            f"End Frame: {end_file_obj.file_name_no_extension}",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
 
         logger.info(
             f"Linear Interpolation: "
@@ -1450,6 +1450,44 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             start=start_file_obj,
             end=end_file_obj,
             label=label
+        )
+
+    def __action_obj_linear_interpolation(self):
+        current_frame_index = 0
+        try:
+            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+        except Exception:
+            pass
+
+        dialog = DialogInput2Int(
+            default_value1=current_frame_index,
+            default_value2=current_frame_index,
+            label1="Start Frame:",
+            label2="End Frame:",
+            min_value=0,
+            max_value=len(self.annotation_directory.annotation_file) - 1,
+            title="Linear Interpolation",
+            parent=self
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+    def __action_obj_linear_interpolation_previous(self):
+        current_frame_index = 0
+        try:
+            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+        except Exception:
+            pass
+
+        previous_frame_index = current_frame_index - self.jump_file_count
+
+        if previous_frame_index < 0:
+            previous_frame_index = 0
+
+        self.linear_interpolation(
+            start_frame=previous_frame_index,
+            end_frame=current_frame_index
         )
 
     def __action_obj_del_target(self):

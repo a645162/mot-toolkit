@@ -48,6 +48,14 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_linear_interpolation)
         select_enable_list.append(self.menu_linear_interpolation)
 
+        self.menu_linear_interpolation_previous = \
+            QAction(
+                "Linear Interpolation (Previous)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_linear_interpolation_previous)
+        select_enable_list.append(self.menu_linear_interpolation_previous)
+
         q_menu.addSeparator()
 
         self.menu_operate_del = \
