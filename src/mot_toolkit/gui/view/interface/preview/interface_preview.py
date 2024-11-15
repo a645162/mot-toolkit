@@ -1486,7 +1486,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self,
             "Warning",
             f"Are you sure you want to del subsequent target({label})?\n\n"
-            f"Not include current frame.",
+            f"Include current frame.",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
@@ -1509,7 +1509,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #     annotation_obj.del_by_label(label)
         self.annotation_directory.do_for_each_file(
             func=lambda annotation_obj, i: annotation_obj.del_by_label(label) if i >= file_index else None,
-            start_index=file_index + 1
+            start_index=file_index
         )
 
         self.r_object_list_widget.selection_index = -1

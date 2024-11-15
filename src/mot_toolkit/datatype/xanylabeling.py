@@ -722,8 +722,15 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         file_index_list = range(start_index, end_index + 1)
 
         def work_function(file_obj: XAnyLabelingAnnotation, index: int):
+            # Pause Emit Signal
             file_obj.pause_emit = True
-            func(file_obj, index)
+
+            try:
+                func(file_obj, index)
+            except Exception as e:
+                logger.error(f"Error in do_for_each_file: {e}")
+
+            # Resume Emit Signal
             file_obj.pause_emit = False
 
         if multi_thread:

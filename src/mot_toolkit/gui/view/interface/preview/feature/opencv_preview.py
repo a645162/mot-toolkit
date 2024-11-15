@@ -306,7 +306,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
             return
         if self.frame_index_min <= self.current_frame_index <= self.frame_index_max:
             self.start_edit.setText(str(self.current_frame_index))
-            self.end_edit.setText(str(self.current_frame_index))
+            # self.end_edit.setText(str(self.current_frame_index))
 
     def restore_range(self):
         self.start_edit.setText(str(self.frame_index_min))

@@ -277,8 +277,11 @@ def sam_fix_with_config_dir(
                     if file.endswith('.json'):
                         json_path = os.path.join(root, file)
                         config_path_list.append(json_path)
-        elif os.path.isfile(config_path):
+        elif os.path.isfile(config_path) and config_path.endswith('.json'):
             config_path_list = [config_path_list]
+        else:
+            logger.error(f"Config file {config_path} does not exist.")
+            return
 
     set_process_start_mode()
 
