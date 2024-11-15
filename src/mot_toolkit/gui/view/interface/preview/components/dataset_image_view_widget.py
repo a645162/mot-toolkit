@@ -112,11 +112,11 @@ class DatasetImageView(ScrollImageView):
                         self.resize_annotation_by_previous(move=True)
                         return
                     case Qt.Key.Key_C:
-                        self.__move_annotation_to_mouse_position()
+                        self.move_annotation_to_mouse_position()
                         return
                     case Qt.Key.Key_V:
                         self.resize_annotation_by_previous(move=False)
-                        self.__move_annotation_to_mouse_position()
+                        self.move_annotation_to_mouse_position()
                         return
                     case Qt.Key.Key_H:
                         self.show_box = not self.show_box
@@ -476,7 +476,7 @@ class DatasetImageView(ScrollImageView):
         for rect_widget in self.annotation_widget_rect_list:
             rect_widget.only_show_selected = value
 
-    def __move_annotation_to_mouse_position(self):
+    def move_annotation_to_mouse_position(self):
         # Get Mouse Position
         mouse_pos = self.image_view.mapFromGlobal(QCursor.pos())
 

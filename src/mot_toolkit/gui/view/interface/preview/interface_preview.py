@@ -28,6 +28,8 @@ from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
     GamepadMonitor, GamepadButtonKey
 )
 from mot_toolkit.gui.view.components. \
+    dialog.dialog_input_1_int import DialogInput1Int
+from mot_toolkit.gui.view.components. \
     dialog.dialog_input_2_int import DialogInput2Int
 from mot_toolkit.gui.view.components. \
     menu.menu_item_radio import MenuItemRadio
@@ -662,6 +664,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_file_list_widget.menu_show_in_explorer.triggered.connect(
             self.__action_file_list_show_in_explorer
         )
+        self.r_file_list_widget.menu_jump_to \
+            .triggered.connect(self.__action_obj_jump_to)
 
         # Obj List
         self.r_object_list_widget.menu_copy_subsequent \
@@ -748,6 +752,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         self.__action_obj_linear_interpolation_previous()
                         return
                     case Qt.Key.Key_O:
+                        self.__action_obj_restore_first_rect()
                         return
 
     def resizeEvent(self, event):
@@ -1490,6 +1495,47 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             end_frame=current_frame_index
         )
 
+    def __action_obj_restore_first_rect(self):
+        label_index = self.r_object_list_widget.selection_index
+        if label_index == -1:
+            return
+        label = self.current_annotation_object.rect_annotation_list[label_index].label
+        if label == "":
+            return
+
+        # Find First File Obj
+        first_rect_obj = None
+
+        for file_obj in self.current_file_list:
+            is_found = False
+
+            for rect_obj in file_obj.rect_annotation_list:
+                if rect_obj.label == label:
+                    first_rect_obj = rect_obj
+
+                    logger.info(f"Restore First Rect({label}): {file_obj.file_name_no_extension}")
+
+                    is_found = True
+                    break
+
+            if is_found:
+                break
+
+        if first_rect_obj is None:
+            return
+
+        rect_widget = self.main_image_view.selection_widget
+
+        if rect_widget is None:
+            return
+
+        logger.info(f"- Restore Width: {first_rect_obj.width} Height: {first_rect_obj.height}")
+
+        rect_widget.width_original = first_rect_obj.width
+        rect_widget.height_original = first_rect_obj.height
+
+        self.main_image_view.move_annotation_to_mouse_position()
+
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
             self,
@@ -1744,6 +1790,44 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
+
+    def __action_obj_jump_to(self):
+        if len(self.current_file_list) == 0:
+            return
+        try:
+            first_int = int(self.current_file_list[0].file_name_no_extension)
+            last_int = int(self.current_file_list[-1].file_name_no_extension)
+        except Exception:
+            return
+
+        dialog = DialogInput1Int(
+            default_value=0,
+            label="Jump to Frame:",
+            min_value=first_int,
+            max_value=last_int,
+            title="Jump to Frame",
+            parent=self
+        )
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        frame_index = dialog.get_integer()
+
+        new_index = -1
+        for i, file_obj in enumerate(self.current_file_list):
+            try:
+                index = int(file_obj.file_name_no_extension)
+                if index == frame_index:
+                    new_index = i
+                    break
+            except:
+                pass
+
+        if new_index != -1:
+            self.r_file_list_widget.selection_index = new_index
+        else:
+            QMessageBox.critical(self, "Error", "Frame index not found.")
 
     def __action_frame_display_type_changed(self):
         if self.action_group_frame_display_type_radio_original.isChecked():

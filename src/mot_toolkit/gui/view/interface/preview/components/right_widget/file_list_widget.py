@@ -54,3 +54,12 @@ class FileListWidget(ListWithTitleWidget):
             QAction("Show in Explorer", self)
         q_menu.addAction(self.menu_show_in_explorer)
         select_enable_list.append(self.menu_show_in_explorer)
+
+        q_menu.addSeparator()
+
+        self.menu_jump_to = \
+            QAction(
+                "Jump to",
+                q_menu
+            )
+        q_menu.addAction(self.menu_jump_to)

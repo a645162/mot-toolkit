@@ -58,6 +58,12 @@ class DialogInput2Int(QDialog):
             QSizePolicy.Policy.Minimum
         )
 
+        if self.range1 is not None:
+            label1 += f" ({self.range1[0]} - {self.range1[1]})"
+
+        if self.range2 is not None:
+            label2 += f" ({self.range2[0]} - {self.range2[1]})"
+
         self.label1 = QLabel(label1, self)
         self.label1.setSizePolicy(
             QSizePolicy.Policy.Minimum,
@@ -92,12 +98,12 @@ class DialogInput2Int(QDialog):
         self.okButton = QPushButton("OK", self.control_button_widget)
         # Red color
         self.okButton.setStyleSheet("background-color: red")
-        self.okButton.clicked.connect(self.__on_ok_clicked)
+        self.okButton.clicked.connect(self.accept)
         self.control_button_layout.addWidget(self.okButton)
 
         self.setLayout(self.main_layout)
 
-    def __on_ok_clicked(self):
+    def accept(self):
         # 获取输入框的文本并转换为整数
         try:
             value1 = int(self.lineEdit1.text())
@@ -124,7 +130,7 @@ class DialogInput2Int(QDialog):
             self.input2 = value2
 
             # 关闭对话框，并返回QDialog.Accepted
-            self.accept()
+            super().accept()
         except ValueError:
             # 如果输入不是整数，则弹出错误消息
             QMessageBox.warning(self, "Invalid Input", "Please enter valid integers.")
