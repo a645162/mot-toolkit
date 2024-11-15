@@ -194,7 +194,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
         with open(save_path, "w") as f:
             f.write(self.to_json_string())
 
-        print("Save Json File Successfully: " + save_path)
+        logger.info("Save Json File Successfully: " + save_path)
 
     def save(self) -> bool:
         if not super().save():
