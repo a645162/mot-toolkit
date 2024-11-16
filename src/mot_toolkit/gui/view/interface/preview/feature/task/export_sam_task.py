@@ -30,6 +30,9 @@ logger = get_logger()
 
 
 class ExportSamTaskWindow(QDialog):
+    frame_start = -1
+    frame_end = -1
+
     def __init__(
             self,
             dataset_name: str,
@@ -62,9 +65,20 @@ class ExportSamTaskWindow(QDialog):
         layout.addWidget(QLabel(f"Dataset Name/Video Name: {self.dataset_name}"))
         layout.addWidget(QLabel(f"Sequence Name: {self.sequence_name}"))
 
-        layout.addWidget(QLabel(f"Annotation Json: {self.json_name}"))
+        layout.addWidget(QLabel(f"Annotation Json:"))
+        self.line_edit_json_name = QLabel(self.json_name)
+        layout.addWidget(self.line_edit_json_name)
 
-        layout.addWidget(QLabel(f"Object Label: {self.target_label}"))
+        layout.addWidget(QLabel(f"Object Label:"))
+        self.line_edit_target_label = QLabel(self.target_label)
+        layout.addWidget(self.line_edit_target_label)
+
+        layout.addWidget(QLabel(f"Frame Start:"))
+        self.line_edit_frame_start = QLabel(str(self.frame_start))
+        layout.addWidget(self.line_edit_frame_start)
+        layout.addWidget(QLabel(f"Frame End:"))
+        self.line_edit_frame_end = QLabel(str(self.frame_end))
+        layout.addWidget(self.line_edit_frame_end)
 
         # Copy From Previous Frame
         self.checkbox_copy_previous = QCheckBox("Copy From Previous Frame")
@@ -117,6 +131,14 @@ class ExportSamTaskWindow(QDialog):
         if save_path:
             logger.info(f"Save SAM Task: {save_path}")
             try:
+                self.json_name = self.line_edit_json_name.text()
+                self.target_label = self.line_edit_target_label.text()
+                try:
+                    self.frame_start = int(self.line_edit_frame_start.text())
+                    self.frame_end = int(self.line_edit_frame_end.text())
+                except ValueError:
+                    raise ValueError("Frame Start and Frame End must be integers.")
+
                 self.save_config(save_path)
 
                 QMessageBox.information(
@@ -141,6 +163,8 @@ class ExportSamTaskWindow(QDialog):
             "dataset_name": self.dataset_name,
             "sequence_name": self.sequence_name,
             "json_name": self.json_name,
+            "start_frame_index": self.frame_start,
+            "end_frame_index": self.frame_end,
             "target_label": self.target_label,
             "sam_model": self.model_type_combobox.currentText(),
             "copy_previous": self.checkbox_copy_previous.isChecked(),

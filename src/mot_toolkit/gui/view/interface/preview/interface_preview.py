@@ -754,6 +754,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     case Qt.Key.Key_O:
                         self.__action_obj_restore_first_rect()
                         return
+                    case Qt.Key.Key_F:
+                        self.__action_obj_restore_previous_rect()
+                        return
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -1573,6 +1576,42 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.main_image_view.move_annotation_to_mouse_position()
 
+    def __action_obj_restore_previous_rect(self):
+        label_index = self.r_object_list_widget.selection_index
+        if label_index == -1:
+            return
+        label = self.current_annotation_object.rect_annotation_list[label_index].label
+        if label == "":
+            return
+
+        # Find Previous File Object
+        current_file_index = self.r_file_list_widget.selection_index
+        previous_file_index = current_file_index - self.jump_file_count
+        if previous_file_index < 0:
+            previous_file_index = 0
+        previous_file_obj = self.current_file_list[previous_file_index]
+
+        # Find Previous Rect Object
+        previous_rect_obj = None
+        for rect_obj in previous_file_obj.rect_annotation_list:
+            if rect_obj.label == label:
+                previous_rect_obj = rect_obj
+                break
+        if previous_rect_obj is None:
+            return
+
+        rect_widget = self.main_image_view.selection_widget
+
+        if rect_widget is None:
+            return
+
+        logger.info(f"- Restore Width: {previous_rect_obj.width} Height: {previous_rect_obj.height}")
+
+        rect_widget.width_original = previous_rect_obj.width
+        rect_widget.height_original = previous_rect_obj.height
+
+        self.main_image_view.move_annotation_to_mouse_position()
+
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
             self,
@@ -1662,7 +1701,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self,
             "Warning",
             f"Are you sure you want to del target({label})?\n\n"
-            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}"
+            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}\n"
             f"※Include start and end frame!!!",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
