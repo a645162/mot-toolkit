@@ -1610,7 +1610,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         rect_widget.width_original = previous_rect_obj.width
         rect_widget.height_original = previous_rect_obj.height
 
-        self.main_image_view.move_annotation_to_mouse_position()
+        # self.main_image_view.move_annotation_to_mouse_position()
+        rect_widget.x1_original = previous_rect_obj.x1
+        rect_widget.y1_original = previous_rect_obj.y1
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
