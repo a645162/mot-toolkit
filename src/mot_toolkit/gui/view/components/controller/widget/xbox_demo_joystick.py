@@ -1,7 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtCore import Qt, QPoint, QRect
-from PySide6.QtGui import QPainter, QPen, QColor
+from PySide6.QtGui import QPainter, QPen
 
 
 class XBoxDemoJoystick(QWidget):

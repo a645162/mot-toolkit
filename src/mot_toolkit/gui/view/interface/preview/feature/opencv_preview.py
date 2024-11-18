@@ -1,6 +1,6 @@
 import datetime
 import os
-from typing import List
+from typing import List, Union
 
 import cv2
 from PySide6.QtCore import Qt
@@ -45,9 +45,9 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
             current_frame: int = -1,
             start_frame: int = 0,
             end_frame: int = 1,
-            unselected_color: tuple | QColor = (0, 255, 0),
-            selected_color: tuple | QColor = (0, 255, 255),
-            text_color: tuple | QColor = (0, 0, 255),
+            unselected_color: Union[tuple, QColor] = (0, 255, 0),
+            selected_color: Union[tuple, QColor] = (0, 255, 255),
+            text_color: Union[tuple, QColor] = (0, 0, 255),
             thickness: int = 2,
             selection_label: str = "",
             color_dict: dict = None,
@@ -289,17 +289,18 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
 
-        match event.modifiers():
-            case Qt.KeyboardModifier.NoModifier:
-                match event.key():
-                    case Qt.Key.Key_Escape:
-                        self.reject()
-                    case Qt.Key.Key_Q:
-                        self.reject()
-                    case Qt.Key.Key_Enter:
-                        self.accept()
-            case _:
-                pass
+        modifiers = event.modifiers()
+        key = event.key()
+
+        if modifiers == Qt.KeyboardModifier.NoModifier:
+            if key == Qt.Key.Key_Escape:
+                self.reject()
+            if key == Qt.Key.Key_Q:
+                self.reject()
+            if key == Qt.Key.Key_Enter:
+                self.accept()
+        else:
+            pass
 
     def set_current_frame(self):
         if self.current_frame_index == -1:

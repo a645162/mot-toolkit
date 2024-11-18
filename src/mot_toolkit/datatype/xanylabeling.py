@@ -1,5 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor
-from typing import List, Callable, Any
+from typing import List, Callable, Any, Optional, Union
 import json
 import os.path
 
@@ -194,13 +194,16 @@ class XAnyLabelingAnnotation(AnnotationFile):
         with open(save_path, "w") as f:
             f.write(self.to_json_string())
 
-        print("Save Json File Successfully: " + save_path)
+        logger.info("Save Json File Successfully: " + save_path)
 
     def save(self) -> bool:
         if not super().save():
             return False
 
         self.save_json(self.file_path)
+
+        # Update Original Dict
+        self.ori_dict = self.to_dict()
 
         return True
 
@@ -381,7 +384,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return target_name_annotation_list
 
-    def get_rect_by_label(self, label: str) -> XAnyLabelingRect | None:
+    def get_rect_by_label(self, label: str) -> Optional[XAnyLabelingRect]:
         for rect_item in self.rect_annotation_list:
             if rect_item.label == label:
                 return rect_item
@@ -426,7 +429,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return True
 
-    def get_cv_mat(self) -> np.ndarray | None:
+    def get_cv_mat(self) -> Optional[np.ndarray]:
         if len(self.pic_path) == 0:
             return None
 
@@ -440,14 +443,14 @@ class XAnyLabelingAnnotation(AnnotationFile):
     def get_cv_mat_with_box(
             self,
             with_text=True,
-            color: tuple | QColor = (0, 255, 0),
-            text_color: tuple | QColor = (0, 0, 255),
+            color: Union[tuple, QColor] = (0, 255, 0),
+            text_color: Union[tuple, QColor] = (0, 0, 255),
             thickness: int = 2,
             center_point_trajectory: dict = None,
             draw_trajectory: bool = False,
             trajectory_line_mode: bool = True,
             selection_label: str = "",
-            selection_color: tuple | QColor = (0, 255, 255),
+            selection_color: Union[tuple, QColor] = (0, 255, 255),
             not_found_return_none: bool = False,
             only_selection_box: bool = False,
             crop_selection: bool = False,
@@ -456,7 +459,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
             crop_padding: int = 50,
             crop_min_size: int = 1000,
             color_dict: dict = None
-    ) -> np.ndarray | None:
+    ) -> Optional[np.ndarray]:
         if center_point_trajectory is None:
             center_point_trajectory = {}
         if color_dict is None:
@@ -864,7 +867,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     def last_file(self) -> XAnyLabelingAnnotation:
         return self.annotation_file[-1] if len(self.annotation_file) > 0 else None
 
-    def get_file_object_by_file_name(self, file_name: str) -> XAnyLabelingAnnotation | None:
+    def get_file_object_by_file_name(self, file_name: str) -> Optional[XAnyLabelingAnnotation]:
         for annotation_obj in self.annotation_file:
             if annotation_obj.file_name == file_name:
                 return annotation_obj
@@ -961,7 +964,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return interval_list
 
-    def get_file_by_frame_number(self, frame_number: int) -> XAnyLabelingAnnotation | None:
+    def get_file_by_frame_number(self, frame_number: int) -> Optional[XAnyLabelingAnnotation]:
         for annotation_obj in self.annotation_file:
             try:
                 current_frame_number = int(annotation_obj.file_name_no_extension)
@@ -974,9 +977,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     def linear_interpolation(
             self,
-            start: int | str | XAnyLabelingAnnotation = -1,
-            end: int | str | XAnyLabelingAnnotation = -1,
-            label: str | list[str] | None = None,
+            start: Union[int, str, XAnyLabelingAnnotation] = -1,
+            end: Union[int, str, XAnyLabelingAnnotation] = -1,
+            label: Union[str, List[str], None] = None,
     ) -> int:
         # Check Start Object Type
         if isinstance(start, str):
@@ -1016,16 +1019,16 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                 label_list.extend(label)
 
         for label in label_list:
-            start_rect: RectDataAnnotation | None = \
+            start_rect: Optional[RectDataAnnotation] = \
                 start.get_rect_by_label(label)
-            end_rect: RectDataAnnotation | None = \
+            end_rect: Optional[RectDataAnnotation] = \
                 end.get_rect_by_label(label)
 
             if start_rect is None or end_rect is None:
                 continue
 
             def linear_operation(annotation_obj: XAnyLabelingAnnotation, index: int):
-                current_rect: RectDataAnnotation | None = \
+                current_rect: Optional[RectDataAnnotation] = \
                     annotation_obj.get_rect_by_label(label)
                 if current_rect is None:
                     return

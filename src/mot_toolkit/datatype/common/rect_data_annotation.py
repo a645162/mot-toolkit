@@ -1,3 +1,5 @@
+from typing import List
+
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 
 
@@ -163,7 +165,7 @@ class RectDataAnnotation(ObjectAnnotation):
     def get_xyxy_tuple(self) -> tuple:
         return self.x1, self.y1, self.x2, self.y2
 
-    def get_xyxy_list(self) -> list[float]:
+    def get_xyxy_list(self) -> List[float]:
         return [self.x1, self.y1, self.x2, self.y2]
 
     def set_by_position_and_size(

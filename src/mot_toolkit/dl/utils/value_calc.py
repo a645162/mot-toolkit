@@ -1,4 +1,7 @@
-def calculate_iou(box1: tuple | list[float], box2: tuple | list[float]) -> float:
+from typing import Union, List
+
+
+def calculate_iou(box1: Union[tuple, List[float]], box2: Union[tuple, List[float]]) -> float:
     # 解构边界框的坐标
     b1_x1, b1_y1, b1_x2, b1_y2 = box1
     b2_x1, b2_y1, b2_x2, b2_y2 = box2

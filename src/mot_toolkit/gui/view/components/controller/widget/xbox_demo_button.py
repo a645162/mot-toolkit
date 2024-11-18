@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QPushButton, QGridLayout
+from PySide6.QtWidgets import QApplication, QWidget, QGridLayout
 
 from mot_toolkit.gui.view.components.controller. \
     widget.xbox_demo_color_button import XBoxDemoColorButton

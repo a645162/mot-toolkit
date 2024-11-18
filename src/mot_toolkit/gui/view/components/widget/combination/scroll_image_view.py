@@ -115,36 +115,32 @@ class ScrollImageView(QWidget):
         modifiers = event.modifiers()
         key = event.key()
 
-        match key:
-            case Qt.Key.Key_Control:
-                self.ctrl_pressing = True
-                self.prevent_scroll = True
+        if key == Qt.Key.Key_Control:
+            self.ctrl_pressing = True
+            self.prevent_scroll = True
 
-        match modifiers:
-            case Qt.KeyboardModifier.ControlModifier:
-                self.ctrl_pressing = True
-                self.prevent_scroll = True
+        if modifiers == Qt.KeyboardModifier.ControlModifier:
+            self.ctrl_pressing = True
+            self.prevent_scroll = True
 
-                match key:
-                    case Qt.Key.Key_0:
-                        self.zoom_restore()
-                        return
-                    case Qt.Key.Key_PageUp:
-                        self.zoom_in()
-                        return
-                    case Qt.Key.Key_PageDown:
-                        self.zoom_out()
-                        return
+            if key == Qt.Key.Key_0:
+                self.zoom_restore()
+                return
+            if key == Qt.Key.Key_PageUp:
+                self.zoom_in()
+                return
+            if key == Qt.Key.Key_PageDown:
+                self.zoom_out()
+                return
 
     def keyReleaseEvent(self, event):
         key = event.key()
         # print("Key Released:", key)
 
-        match key:
-            case Qt.Key.Key_Control:
-                self.ctrl_pressing = False
-                self.prevent_scroll = False
-                # print("Control Released")
+        if key == Qt.Key.Key_Control:
+            self.ctrl_pressing = False
+            self.prevent_scroll = False
+            # print("Control Released")
 
         super().keyReleaseEvent(event)
 

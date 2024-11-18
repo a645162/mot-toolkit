@@ -20,7 +20,7 @@ if is_linux():
     window_system = LinuxWindowSystem.detect()
     logger.info(f"Linux Graphic System: {window_system.value}")
 
-logger.info(f"Python " + sys.version)
+logger.info("Python " + sys.version)
 
 logger.info("Start To Load MainWindow Package")
 

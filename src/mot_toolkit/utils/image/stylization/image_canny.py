@@ -3,6 +3,8 @@ import cv2
 import numpy as np
 from PySide6.QtGui import QImage, QPixmap
 
+from mot_toolkit.utils.image.qt_opencv import opencv_to_q_image, q_image_to_opencv
+
 
 def canny_edge_detection(
         image: np.ndarray,

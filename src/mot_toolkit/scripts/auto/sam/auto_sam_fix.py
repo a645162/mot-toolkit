@@ -26,6 +26,8 @@ def handle_sequence(
         iou_threshold: float = 0.9,
         model_name: str = '',
         first_file_name: str = "",
+        start_frame: int = -1,
+        end_frame: int = -1,
         label_list: list[str] = None,
         copy_previous: bool = False,
         stop_early: bool = False
@@ -59,18 +61,28 @@ def handle_sequence(
 
     previous_file_obj: XAnyLabelingAnnotation | None = None
     for annotation_file_obj in annotation_directory.annotation_file:
+        current_file_name = annotation_file_obj.file_name_no_extension
+        current_file_index = int(current_file_name)
+
+        time_to_start = True
+
+        if -1 < end_frame < current_file_index:
+            break
+
         if len(first_file_name) > 0:
             if first_file_name.endswith(".json") or first_file_name.endswith(".jpg"):
                 first_file_name = os.path.splitext(first_file_name)[0]
-
-            current_file_name = annotation_file_obj.file_name_no_extension
-
             first_file_index = int(first_file_name)
-            current_file_index = int(current_file_name)
 
             if current_file_index < first_file_index:
-                previous_file_obj = annotation_file_obj
-                continue
+                time_to_start = False
+
+        if start_frame >= 0 and current_file_index < start_frame:
+            time_to_start = False
+
+        if not time_to_start:
+            previous_file_obj = annotation_file_obj
+            continue
 
         for rect_obj in annotation_file_obj.rect_annotation_list:
             if len(label_list) > 0:
@@ -142,6 +154,8 @@ def generate_param_tuple(
         iou_threshold: float = 0.9,
         model_name: str = '',
         first_file_name: str = "",
+        start_frame: int = -1,
+        end_frame: int = -1,
         label_list: list[str] = None,
         copy_previous: bool = False,
         stop_early: bool = False
@@ -151,6 +165,8 @@ def generate_param_tuple(
         iou_threshold,
         model_name,
         first_file_name,
+        start_frame,
+        end_frame,
         label_list,
         copy_previous,
         stop_early
@@ -233,6 +249,8 @@ def sam_fix_with_config(
     dataset_name = json_dict.get("dataset_name", "")
     sequence_name = json_dict.get("sequence_name", "")
     json_name = json_dict.get("json_name", "")
+    start_frame = json_dict.get("start_frame_index", -1)
+    end_frame = json_dict.get("end_frame_index", -1)
     target_label = json_dict.get("target_label", "")
     sam_model = json_dict.get("sam_model", "")
     copy_previous = json_dict.get("copy_previous", False)
@@ -251,6 +269,8 @@ def sam_fix_with_config(
         iou_threshold=iou_threshold,
         model_name=sam_model,
         first_file_name=json_name,
+        start_frame=start_frame,
+        end_frame=end_frame,
         label_list=[target_label],
         copy_previous=copy_previous,
         stop_early=early_stop
@@ -309,7 +329,7 @@ if __name__ == '__main__':
     # sam_fix("/mnt/d/Datasets/Sea-MOT-Datasets/SAM/FVessel_LabelMe_GT")
 
     sam_fix_with_config_dir(
-        dataset_dir_path=r"H:\Datasets\TrackShipOnlineVideo\LabelMe\sea_video_20240313_part1\Onboard",
+        dataset_dir_path=r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe/sea_video_20240313_part1/Onboard",
         iou_threshold=0.5,
         config_path_list=os.path.join(path_project, "Output", "task"),
         model_name=""
