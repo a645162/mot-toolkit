@@ -1,7 +1,7 @@
 import platform
 import threading
 from enum import Enum
-from typing import List
+from typing import List, Optional
 import os
 import sys
 
@@ -409,9 +409,9 @@ class GamepadMonitor(QWidget):
     __tick_time_interval = 1000
 
     __is_ready: bool = False
-    __wait_thread: threading.Thread | None = None
+    __wait_thread: Optional[threading.Thread] = None
     # Check the controller status (when the controller is disconnected)
-    __status_check_thread: threading.Thread | None = None
+    __status_check_thread: Optional[threading.Thread] = None
 
     __auto_connect: bool = True
 

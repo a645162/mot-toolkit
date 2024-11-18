@@ -19,10 +19,10 @@ from PySide6.QtWidgets import (
     QDialog,
     QVBoxLayout,
     QLabel, QPushButton, QComboBox, QCheckBox,
-    QMessageBox
+    QMessageBox, QLineEdit
 )
 
-from mot_toolkit.dl.model.sam2 import get_sam_model_list
+from mot_toolkit.dl.model.sam_model import get_sam_model_list
 from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
 from mot_toolkit.utils.logs import get_logger
 
@@ -65,19 +65,19 @@ class ExportSamTaskWindow(QDialog):
         layout.addWidget(QLabel(f"Dataset Name/Video Name: {self.dataset_name}"))
         layout.addWidget(QLabel(f"Sequence Name: {self.sequence_name}"))
 
-        layout.addWidget(QLabel(f"Annotation Json:"))
+        layout.addWidget(QLabel("Annotation Json:"))
         self.line_edit_json_name = QLabel(self.json_name)
         layout.addWidget(self.line_edit_json_name)
 
-        layout.addWidget(QLabel(f"Object Label:"))
-        self.line_edit_target_label = QLabel(self.target_label)
+        layout.addWidget(QLabel("Object Label:"))
+        self.line_edit_target_label = QLineEdit(str(self.target_label))
         layout.addWidget(self.line_edit_target_label)
 
-        layout.addWidget(QLabel(f"Frame Start:"))
-        self.line_edit_frame_start = QLabel(str(self.frame_start))
+        layout.addWidget(QLabel("Frame Start:"))
+        self.line_edit_frame_start = QLineEdit(str(self.frame_start))
         layout.addWidget(self.line_edit_frame_start)
-        layout.addWidget(QLabel(f"Frame End:"))
-        self.line_edit_frame_end = QLabel(str(self.frame_end))
+        layout.addWidget(QLabel("Frame End:"))
+        self.line_edit_frame_end = QLineEdit(str(self.frame_end))
         layout.addWidget(self.line_edit_frame_end)
 
         # Copy From Previous Frame
@@ -87,7 +87,7 @@ class ExportSamTaskWindow(QDialog):
         self.checkbox_stop_early = QCheckBox("Stop Early")
         layout.addWidget(self.checkbox_stop_early)
 
-        layout.addWidget(QLabel(f"Model Type:"))
+        layout.addWidget(QLabel("Model Type:"))
         sam_model_list = get_sam_model_list()
         self.model_type_combobox = QComboBox()
         self.model_type_combobox.addItems(sam_model_list)

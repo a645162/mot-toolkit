@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication, QWidget
-from PySide6.QtCore import Qt, QRect
+from PySide6.QtCore import QRect
 from PySide6.QtGui import QPainter, QBrush, QColor
 
 

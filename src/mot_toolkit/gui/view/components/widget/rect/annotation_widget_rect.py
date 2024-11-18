@@ -1,3 +1,5 @@
+from typing import Optional
+
 from PySide6.QtCore import Signal, Qt, QRect
 from PySide6.QtGui import QPainter, QColor
 from PySide6.QtWidgets import QWidget
@@ -74,7 +76,7 @@ class AnnotationWidgetRect(ResizableRect):
 
     activate_theme_name: str = "light"
 
-    source: XAnyLabelingRect | None = None
+    source: Optional[XAnyLabelingRect] = None
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -126,17 +128,18 @@ class AnnotationWidgetRect(ResizableRect):
         return True
 
     def mousePressEvent(self, event):
-        match event.button():
-            case Qt.MouseButton.LeftButton:
-                if not self.is_responsible():
-                    return
-            case Qt.MouseButton.RightButton:
-                if self.resizing:
-                    event.ignore()
-                    return
-                if self.is_responsible():
-                    self.slot_try_to_show_menu.emit(self)
-                    return
+        event_button = event.button()
+
+        if event_button == Qt.MouseButton.LeftButton:
+            if not self.is_responsible():
+                return
+        elif event_button == Qt.MouseButton.RightButton:
+            if self.resizing:
+                event.ignore()
+                return
+            if self.is_responsible():
+                self.slot_try_to_show_menu.emit(self)
+                return
 
         super().mousePressEvent(event)
 

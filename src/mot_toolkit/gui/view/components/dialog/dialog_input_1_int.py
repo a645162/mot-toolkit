@@ -1,3 +1,5 @@
+from typing import Optional, Tuple
+
 from PySide6.QtWidgets import (
     QApplication,
     QWidget, QHBoxLayout, QVBoxLayout,
@@ -9,16 +11,16 @@ from PySide6.QtWidgets import (
 
 class DialogInput1Int(QDialog):
     input_value: int = 0
-    range: tuple[int, int] | None = None
+    range: Optional[Tuple[int, int]] = None
 
     def __init__(
             self,
-            default_value: int | None = None,
-            label: str | None = "Enter an integer:",
-            range: tuple[int, int] | None = None,
-            min_value: int | None = None,
-            max_value: int | None = None,
-            title: str | None = "",
+            default_value: Optional[int] = None,
+            label: Optional[str] = "Enter an integer:",
+            range: Optional[Tuple[int, int]] = None,
+            min_value: Optional[int] = None,
+            max_value: Optional[int] = None,
+            title: Optional[str] = "",
             parent=None
     ):
         super().__init__(parent=parent)

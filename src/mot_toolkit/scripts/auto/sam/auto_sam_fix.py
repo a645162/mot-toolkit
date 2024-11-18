@@ -329,7 +329,7 @@ if __name__ == '__main__':
     # sam_fix("/mnt/d/Datasets/Sea-MOT-Datasets/SAM/FVessel_LabelMe_GT")
 
     sam_fix_with_config_dir(
-        dataset_dir_path=r"H:\Datasets\TrackShipOnlineVideo\LabelMe\sea_video_20240313_part1\Onboard",
+        dataset_dir_path=r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe/sea_video_20240313_part1/Onboard",
         iou_threshold=0.5,
         config_path_list=os.path.join(path_project, "Output", "task"),
         model_name=""

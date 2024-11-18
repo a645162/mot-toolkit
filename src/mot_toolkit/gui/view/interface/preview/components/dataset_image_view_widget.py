@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from PySide6.QtCore import Signal, Qt, QPoint, QRect
 from PySide6.QtGui import QPixmap, QCursor
@@ -86,53 +86,49 @@ class DatasetImageView(ScrollImageView):
         modifiers = event.modifiers()
         key = event.key()
 
-        match modifiers:
-            case Qt.KeyboardModifier.NoModifier:
-                match key:
-                    case Qt.Key.Key_A:
-                        self.slot_previous_image.emit()
-                        return
-                    case Qt.Key.Key_D:
-                        self.slot_next_image.emit()
-                        return
-                    case Qt.Key.Key_Up:
-                        print("Up")
-                        return
+        if modifiers == Qt.KeyboardModifier.NoModifier:
+            if key == Qt.Key.Key_A:
+                self.slot_previous_image.emit()
+                return
+            if key == Qt.Key.Key_D:
+                self.slot_next_image.emit()
+                return
+            if key == Qt.Key.Key_Up:
+                print("Up")
+                return
 
-            case Qt.KeyboardModifier.ControlModifier:
-                match key:
-                    case Qt.Key.Key_S:
-                        self.slot_save.emit()
-                        return
+        if modifiers == Qt.KeyboardModifier.ControlModifier:
+            if key == Qt.Key.Key_S:
+                self.slot_save.emit()
+                return
 
-            case Qt.KeyboardModifier.AltModifier:
-                # Alt
-                match key:
-                    case Qt.Key.Key_R:
-                        self.resize_annotation_by_previous(move=True)
-                        return
-                    case Qt.Key.Key_C:
-                        self.move_annotation_to_mouse_position()
-                        return
-                    case Qt.Key.Key_V:
-                        self.resize_annotation_by_previous(move=False)
-                        self.move_annotation_to_mouse_position()
-                        return
-                    case Qt.Key.Key_H:
-                        self.show_box = not self.show_box
-                        self.slot_property_changed.emit()
-                        return
-                    case Qt.Key.Key_L:
-                        self.show_box_label = not self.show_box_label
-                        self.slot_property_changed.emit()
-                        return
+        if modifiers == Qt.KeyboardModifier.AltModifier:
+            # Alt
+            if key == Qt.Key.Key_R:
+                self.resize_annotation_by_previous(move=True)
+                return
+            if key == Qt.Key.Key_C:
+                self.move_annotation_to_mouse_position()
+                return
+            if key == Qt.Key.Key_V:
+                self.resize_annotation_by_previous(move=False)
+                self.move_annotation_to_mouse_position()
+                return
+            if key == Qt.Key.Key_H:
+                self.show_box = not self.show_box
+                self.slot_property_changed.emit()
+                return
+            if key == Qt.Key.Key_L:
+                self.show_box_label = not self.show_box_label
+                self.slot_property_changed.emit()
+                return
 
         if (
                 modifiers & Qt.KeyboardModifier.AltModifier and
                 modifiers & Qt.KeyboardModifier.ShiftModifier
         ):
             target_pos: QPoint = self.get_mouse_image_position()
-            selected_obj: AnnotationWidgetRect | None = None
+            selected_obj: Optional[AnnotationWidgetRect] = None
 
             for rect_widget_obj in self.annotation_widget_rect_list:
                 if rect_widget_obj.selecting:
@@ -140,44 +136,43 @@ class DatasetImageView(ScrollImageView):
                     break
 
             if selected_obj is not None:
-                match key:
-                    case Qt.Key.Key_W:
-                        # Top
-                        selected_obj.rect_top = target_pos.y()
-                        return
-                    case Qt.Key.Key_A:
-                        # Left
-                        selected_obj.rect_left = target_pos.x()
-                        return
-                    case Qt.Key.Key_S:
-                        # Bottom
-                        selected_obj.rect_bottom = target_pos.y()
-                        return
-                    case Qt.Key.Key_D:
-                        # Right
-                        selected_obj.rect_right = target_pos.x()
-                        return
+                if key == Qt.Key.Key_W:
+                    # Top
+                    selected_obj.rect_top = target_pos.y()
+                    return
+                if key == Qt.Key.Key_A:
+                    # Left
+                    selected_obj.rect_left = target_pos.x()
+                    return
+                if key == Qt.Key.Key_S:
+                    # Bottom
+                    selected_obj.rect_bottom = target_pos.y()
+                    return
+                if key == Qt.Key.Key_D:
+                    # Right
+                    selected_obj.rect_right = target_pos.x()
+                    return
 
-                    case Qt.Key.Key_Q:
-                        # Top + Left
-                        selected_obj.rect_left = target_pos.x()
-                        selected_obj.rect_top = target_pos.y()
-                        return
-                    case Qt.Key.Key_E:
-                        # Top + Right
-                        selected_obj.rect_right = target_pos.x()
-                        selected_obj.rect_top = target_pos.y()
-                        return
-                    case Qt.Key.Key_Z:
-                        # Bottom + Left
-                        selected_obj.rect_left = target_pos.x()
-                        selected_obj.rect_bottom = target_pos.y()
-                        return
-                    case Qt.Key.Key_C:
-                        # Bottom + Right
-                        selected_obj.rect_right = target_pos.x()
-                        selected_obj.rect_bottom = target_pos.y()
-                        return
+                if key == Qt.Key.Key_Q:
+                    # Top + Left
+                    selected_obj.rect_left = target_pos.x()
+                    selected_obj.rect_top = target_pos.y()
+                    return
+                if key == Qt.Key.Key_E:
+                    # Top + Right
+                    selected_obj.rect_right = target_pos.x()
+                    selected_obj.rect_top = target_pos.y()
+                    return
+                if key == Qt.Key.Key_Z:
+                    # Bottom + Left
+                    selected_obj.rect_left = target_pos.x()
+                    selected_obj.rect_bottom = target_pos.y()
+                    return
+                if key == Qt.Key.Key_C:
+                    # Bottom + Right
+                    selected_obj.rect_right = target_pos.x()
+                    selected_obj.rect_bottom = target_pos.y()
+                    return
 
                 return
         super().keyPressEvent(event)
@@ -396,7 +391,7 @@ class DatasetImageView(ScrollImageView):
 
     def move_area_to_center(self):
         # Widget
-        selection_widget: AnnotationWidgetRect | None = \
+        selection_widget: Optional[AnnotationWidgetRect] = \
             self.selection_widget
         if selection_widget is None:
             return
@@ -512,7 +507,7 @@ class DatasetImageView(ScrollImageView):
         ):
             return
 
-        previous_rect_obj: XAnyLabelingRect | None = None
+        previous_rect_obj: Optional[XAnyLabelingRect] = None
         for pre_annotation in self.__previous_annotation_obj.rect_annotation_list:
             if selected_rect_widget.label == pre_annotation.label:
                 previous_rect_obj = pre_annotation
@@ -579,7 +574,7 @@ class DatasetImageView(ScrollImageView):
         self.slot_scroll.emit(self.display_area())
 
     @property
-    def selection_widget(self) -> AnnotationWidgetRect | None:
+    def selection_widget(self) -> Optional[AnnotationWidgetRect]:
         for rect_widget in self.annotation_widget_rect_list:
             if rect_widget.selecting:
                 return rect_widget

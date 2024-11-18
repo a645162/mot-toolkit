@@ -1,5 +1,5 @@
 import sys
-from enum import EnumType
+from enum import Enum
 
 from PySide6.QtCore import Qt, QEvent, Signal, QSize
 from PySide6.QtGui import QPixmap
@@ -20,7 +20,7 @@ from mot_toolkit.utils. \
 )
 
 
-class ImageDisplayType(EnumType):
+class ImageDisplayType(Enum):
     Original = 0
     Outline = 1
     OutlineBinary = 2
@@ -232,28 +232,27 @@ class ImageViewGraphics(QGraphicsView):
         self.image_display = self.image.copy()
 
         if self.image_display_type != ImageDisplayType.Original:
-            match self.image_display_type:
-                case ImageDisplayType.Outline:
-                    # Edge Detection
-                    self.image_display = \
-                        sobel_edge_detection_q_pixmap(self.image_display)
+            if self.image_display_type == ImageDisplayType.Outline:
+                # Edge Detection
+                self.image_display = \
+                    sobel_edge_detection_q_pixmap(self.image_display)
 
-                    # self.image_display= \
-                    #     canny_edge_detection_q_pixmap(self.image_display)
-                case ImageDisplayType.OutlineBinary:
-                    # Edge Detection with Binary Threshold
-                    self.image_display = \
-                        sobel_edge_detection_binary_q_pixmap(
-                            image=self.image_display,
-                            binary_threshold=self.outline_binary_threshold
-                        )
-                case ImageDisplayType.Adjustment:
-                    self.image_display = \
-                        adjust_brightness_contrast_q_pixmap(
-                            image=self.image_display,
-                            brightness=self.image_brightness,
-                            contrast=self.image_contrast
-                        )
+                # self.image_display= \
+                #     canny_edge_detection_q_pixmap(self.image_display)
+            if self.image_display_type == ImageDisplayType.OutlineBinary:
+                # Edge Detection with Binary Threshold
+                self.image_display = \
+                    sobel_edge_detection_binary_q_pixmap(
+                        image=self.image_display,
+                        binary_threshold=self.outline_binary_threshold
+                    )
+            if self.image_display_type == ImageDisplayType.Adjustment:
+                self.image_display = \
+                    adjust_brightness_contrast_q_pixmap(
+                        image=self.image_display,
+                        brightness=self.image_brightness,
+                        contrast=self.image_contrast
+                    )
 
         # Calculate New Size
         # ori_size = self.image.size()

@@ -1,7 +1,8 @@
 from PySide6.QtGui import QColor
+from typing import List, Tuple
 
 
-def generate_unique_q_colors(n: int) -> list[QColor]:
+def generate_unique_q_colors(n: int) -> List[QColor]:
     """
     Generate a list of n unique QColor objects.
 
@@ -28,7 +29,7 @@ def generate_unique_q_colors(n: int) -> list[QColor]:
     return color_list
 
 
-def rgb2bgr(rgb: tuple) -> tuple[int, int, int]:
+def rgb2bgr(rgb: tuple) -> Tuple[int, int, int]:
     """
     Convert an RGB color to BGR.
 
@@ -38,7 +39,7 @@ def rgb2bgr(rgb: tuple) -> tuple[int, int, int]:
     return rgb[2], rgb[1], rgb[0]
 
 
-def qcolor2bgr(color: QColor) -> tuple[int, int, int]:
+def qcolor2bgr(color: QColor) -> Tuple[int, int, int]:
     """
     Convert a QColor object to BGR.
 
@@ -48,7 +49,7 @@ def qcolor2bgr(color: QColor) -> tuple[int, int, int]:
     return rgb2bgr((color.red(), color.green(), color.blue()))
 
 
-def generate_unique_opencv_colors(n: int) -> list[tuple[int, int, int]]:
+def generate_unique_opencv_colors(n: int) -> List[Tuple[int, int, int]]:
     """
     Generate a list of n unique OpenCV colors.
 

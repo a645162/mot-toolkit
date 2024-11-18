@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from PySide6.QtGui import QImage, QPixmap
@@ -53,8 +53,8 @@ def sobel_edge_detection(
 
 def multi_scale_sobel(
         image: np.ndarray,
-        gaussian_kernel_scales: List[int] | None = None,
-        sobel_ksize_scales: List[int] | None = None
+        gaussian_kernel_scales: Optional[List[int]] = None,
+        sobel_ksize_scales: Optional[List[int]] = None
 ) -> np.ndarray:
     if gaussian_kernel_scales is None:
         gaussian_kernel_scales = [3, 5]

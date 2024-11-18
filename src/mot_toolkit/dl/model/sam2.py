@@ -1,16 +1,20 @@
-from enum import Enum
 import os
+from typing import Union, List
 
 import cv2
+
+from mot_toolkit.dl.model.sam_model import get_sam_model_by_name, get_sam_model_list
 
 from ultralytics import SAM
 from ultralytics import FastSAM
 
 from mot_toolkit.dl.common import torch_devices
 from mot_toolkit.dl.utils.value_calc import calculate_iou
+from mot_toolkit.dl.model.sam_model import SamModelType
+
 from mot_toolkit.utils.logs import get_logger
 
-model_sam: SAM | FastSAM | None = None
+model_sam: Union[SAM, FastSAM, None] = None
 
 logger = get_logger()
 
@@ -22,30 +26,6 @@ if torch_devices.is_amd_rocm_device(device=device):
     # https://github.com/pytorch/pytorch/issues/138067
     os.environ["TORCH_BLAS_PREFER_HIPBLASLT"] = "0"
     os.environ["DISABLE_ADDMM_CUDA_LT"] = "1"
-
-
-# https://docs.ultralytics.com/zh/models/sam-2/#segment-everything
-class SamModelType(Enum):
-    SAM_2_1_Tiny = "sam2.1_t.pt"
-    SAM_2_1_Small = "sam2.1_s.pt"
-    SAM_2_1_Base = "sam2.1_b.pt"
-    SAM_2_1_Large = "sam2.1_l.pt"
-    FAST_SAM_S = "FastSAM-s.pt"
-    FAST_SAM_X = "FastSAM-x.pt"
-
-
-def get_sam_model_list() -> list[str]:
-    return [model.value for model in SamModelType]
-
-
-def get_sam_model_by_name(
-        model_name: str = ""
-) -> SamModelType:
-    for model in SamModelType:
-        if model.value == model_name:
-            return model
-
-    return SamModelType.SAM_2_1_Large
 
 
 def sam_is_loaded() -> bool:
@@ -67,8 +47,8 @@ def sam_load(
         target_device=None,
         global_mode=True,
         model_name: str = ""
-) -> SAM | FastSAM | None:
-    model: SAM | FastSAM | None = None
+) -> Union[SAM, FastSAM, None]:
+    model: Union[SAM, FastSAM, None] = None
 
     if global_mode:
         global model_sam
@@ -98,11 +78,11 @@ def sam_load(
 
 def sam_predict_xyxy(
         source,
-        bbox_xyxy: list[float],
+        bbox_xyxy: List[float],
         iou_threshold: float = 0.4,
-        model: SAM | FastSAM = None
-) -> list[list[float]]:
-    result_list: list[list[float]] = []
+        model: Union[SAM, FastSAM] = None
+) -> List[List[float]]:
+    result_list: List[List[float]] = []
 
     prompt_bbox_tuple = (bbox_xyxy[0], bbox_xyxy[1], bbox_xyxy[2], bbox_xyxy[3])
 
@@ -124,7 +104,7 @@ def sam_predict_xyxy(
         xy_xy_list = result.boxes.cpu().xyxy.numpy().tolist()
 
         for i, xy_xy in enumerate(xy_xy_list):
-            box: list[float] = [xy_xy[0], xy_xy[1], xy_xy[2], xy_xy[3]]
+            box: List[float] = [xy_xy[0], xy_xy[1], xy_xy[2], xy_xy[3]]
 
             iou = calculate_iou(prompt_bbox_tuple, box)
             logger.info(f"[{i}] IOU: {iou}")
@@ -139,12 +119,12 @@ def sam_predict_xyxy(
 
 def sam_predict_xyxy_near(
         image_path,
-        bbox_xyxy: list[float],
+        bbox_xyxy: List[float],
         padding: int = -1,
         iou_threshold: float = 0.4,
-        model: SAM | FastSAM = None
-) -> list[list[float]]:
-    result_list: list[list[float]] = []
+        model: Union[SAM, FastSAM] = None
+) -> List[List[float]]:
+    result_list: List[List[float]] = []
 
     new_image = cv2.imread(image_path)
 
@@ -174,7 +154,7 @@ def sam_predict_xyxy_near(
 
     new_image = new_image[new_y1:new_y2, new_x1:new_x2]
 
-    new_prompt_bbox_list: list[float] = [
+    new_prompt_bbox_list: List[float] = [
         padding_left,
         padding_top,
         padding_left + w,
@@ -212,7 +192,7 @@ def sam_predict_xyxy_near(
             original_x2 = original_x1 + predict_w
             original_y2 = original_y1 + predict_h
 
-            box: list[float] = [
+            box: List[float] = [
                 original_x1, original_y1,
                 original_x2, original_y2
             ]

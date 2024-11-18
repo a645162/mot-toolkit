@@ -1,6 +1,8 @@
+from typing import Optional
+
 from mot_toolkit.gui.view.menu.system_menu import SystemMenu
 
-system_menu: SystemMenu | None = None
+system_menu: Optional[SystemMenu] = None
 
 
 def get_system_menu() -> SystemMenu:

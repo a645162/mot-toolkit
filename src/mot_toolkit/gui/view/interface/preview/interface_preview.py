@@ -3,7 +3,7 @@ import os
 import random
 import sys
 import threading
-from typing import List
+from typing import List, Optional
 
 import cv2
 
@@ -698,65 +698,62 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         modifiers = event.modifiers()
         key = event.key()
 
-        match modifiers:
-            case Qt.KeyboardModifier.NoModifier:
-                pass
+        if modifiers == Qt.KeyboardModifier.NoModifier:
+            pass
 
-            case Qt.KeyboardModifier.ControlModifier:
-                match key:
-                    case Qt.Key.Key_Q:
-                        self.__action_file_list_show_video()
-                        return
+        if modifiers == Qt.KeyboardModifier.ControlModifier:
+            if key == Qt.Key.Key_Q:
+                self.__action_file_list_show_video()
+                return
 
-            case Qt.KeyboardModifier.AltModifier:
-                # Alt
-                match key:
-                    case Qt.Key.Key_1:
-                        self.action_group_frame_display_type_radio_original.setChecked(
-                            True
-                        )
-                        self.__action_frame_display_type_changed()
-                        return
-                    case Qt.Key.Key_2:
-                        self.action_group_frame_display_type_radio_outline.setChecked(True)
-                        self.__action_frame_display_type_changed()
-                        return
-                    case Qt.Key.Key_3:
-                        self.action_group_frame_display_type_radio_outline_binary.setChecked(True)
-                        self.__action_frame_display_type_changed()
-                        return
-                    case Qt.Key.Key_4:
-                        self.action_group_frame_display_type_radio_adjustment.setChecked(True)
-                        self.__action_frame_display_type_changed()
-                        return
-                    case Qt.Key.Key_H:
-                        self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
-                        self.__action_frame_show_box()
-                        return
-                    case Qt.Key.Key_Q:
-                        self.__action_frame_opencv_rect_near()
-                        return
-                    case Qt.Key.Key_W:
-                        self.__action_frame_opencv_rect()
-                        return
-                    case Qt.Key.Key_S:
-                        self.main_image_view.move_area_to_center()
-                        return
-                    case Qt.Key.Key_T:
-                        self.__action_obj_dl_sam2()
-                        return
-                    case Qt.Key.Key_Z:
-                        self.main_image_view.zoom_select_object()
-                        return
-                    case Qt.Key.Key_I:
-                        self.__action_obj_linear_interpolation_previous()
-                        return
-                    case Qt.Key.Key_O:
-                        self.__action_obj_restore_first_rect()
-                        return
-                    case Qt.Key.Key_F:
-                        self.__action_obj_restore_previous_rect()
-                        return
+        if modifiers == Qt.KeyboardModifier.AltModifier:
+            # Alt
+            if key == Qt.Key.Key_1:
+                self.action_group_frame_display_type_radio_original.setChecked(
+                    True
+                )
+                self.__action_frame_display_type_changed()
+                return
+            if key == Qt.Key.Key_2:
+                self.action_group_frame_display_type_radio_outline.setChecked(True)
+                self.__action_frame_display_type_changed()
+                return
+            if key == Qt.Key.Key_3:
+                self.action_group_frame_display_type_radio_outline_binary.setChecked(True)
+                self.__action_frame_display_type_changed()
+                return
+            if key == Qt.Key.Key_4:
+                self.action_group_frame_display_type_radio_adjustment.setChecked(True)
+                self.__action_frame_display_type_changed()
+                return
+            if key == Qt.Key.Key_H:
+                self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
+                self.__action_frame_show_box()
+                return
+            if key == Qt.Key.Key_Q:
+                self.__action_frame_opencv_rect_near()
+                return
+            if key == Qt.Key.Key_W:
+                self.__action_frame_opencv_rect()
+                return
+            if key == Qt.Key.Key_S:
+                self.main_image_view.move_area_to_center()
+                return
+            if key == Qt.Key.Key_T:
+                self.__action_obj_dl_sam2()
+                return
+            if key == Qt.Key.Key_Z:
+                self.main_image_view.zoom_select_object()
+                return
+            if key == Qt.Key.Key_I:
+                self.__action_obj_linear_interpolation_previous()
+                return
+            if key == Qt.Key.Key_O:
+                self.__action_obj_restore_first_rect()
+                return
+            if key == Qt.Key.Key_F:
+                self.__action_obj_restore_previous_rect()
+                return
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -785,7 +782,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 )
                 self.__action_frame_show_box()
             elif button == GamepadButtonKey.Y or button == GamepadButtonKey.A:
-                bigger = (button == GamepadButtonKey.A)
+                # bigger = (button == GamepadButtonKey.A)
                 pass
             elif button == GamepadButtonKey.LB or button == GamepadButtonKey.RB:
                 previous_index = self.r_file_list_widget.selection_index
@@ -1339,7 +1336,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         return file_index
 
-    def get_current_file_object(self) -> XAnyLabelingAnnotation | None:
+    def get_current_file_object(self) -> Optional[XAnyLabelingAnnotation]:
         file_index = self.get_current_file_truly_index()
 
         if file_index == -1:
@@ -1733,7 +1730,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
-    def get_selection_object(self) -> XAnyLabelingRect | None:
+    def get_selection_object(self) -> Optional[XAnyLabelingRect]:
         file_index = self.get_current_file_truly_index()
         if file_index == -1:
             return None
@@ -1799,7 +1796,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         logger.info(f"Result Count: {len(result_list)}")
 
         if len(result_list) != 1:
-            logger.warning(f"Error: SAM result count(len(result_list)) != 1")
+            logger.warning(f"Error: SAM result count({len(result_list)}) != 1")
             return
 
         result_bbox = result_list[0]
@@ -1899,7 +1896,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 if index == frame_index:
                     new_index = i
                     break
-            except:
+            except Exception:
                 pass
 
         if new_index != -1:
@@ -1920,27 +1917,26 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self.__action_frame_display_type(ImageDisplayType.Original)
 
     def __action_frame_display_type(self, type: ImageDisplayType):
-        match type:
-            case ImageDisplayType.Original:
-                # Original Image
-                logger.info("Original Image")
-                self.main_image_view.image_view.image_display_type = (
-                    ImageDisplayType.Original
-                )
-            case ImageDisplayType.Outline:
-                # Outline Image
-                logger.info("Outline Image")
-                self.main_image_view.image_view.image_display_type = ImageDisplayType.Outline
-            case ImageDisplayType.OutlineBinary:
-                # Outline Binary Image
-                logger.info("Outline Binary Image")
-                self.main_image_view.image_view.image_display_type = ImageDisplayType.OutlineBinary
-            case ImageDisplayType.Adjustment:
-                # Adjustment Image
-                logger.info("Adjust Image Contrast and Brightness")
-                self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
-            case _:
-                logger.error("Unknown mode")
+        if type == ImageDisplayType.Original:
+            # Original Image
+            logger.info("Original Image")
+            self.main_image_view.image_view.image_display_type = (
+                ImageDisplayType.Original
+            )
+        elif type == ImageDisplayType.Outline:
+            # Outline Image
+            logger.info("Outline Image")
+            self.main_image_view.image_view.image_display_type = ImageDisplayType.Outline
+        elif type == ImageDisplayType.OutlineBinary:
+            # Outline Binary Image
+            logger.info("Outline Binary Image")
+            self.main_image_view.image_view.image_display_type = ImageDisplayType.OutlineBinary
+        elif type == ImageDisplayType.Adjustment:
+            # Adjustment Image
+            logger.info("Adjust Image Contrast and Brightness")
+            self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
+        else:
+            logger.error("Unknown mode")
 
     def __action_frame_fix_all(self):
         ok = QMessageBox.question(
@@ -2272,7 +2268,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.__update_display_area()
 
-    def __update_display_area(self, display_area: tuple | None = None):
+    def __update_display_area(self, display_area: Optional[tuple] = None):
         if display_area is None:
             display_area = self.main_image_view.display_area()
 

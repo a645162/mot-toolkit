@@ -95,7 +95,7 @@ def sam(opts):
             logger.info(f"  {json_path}")
 
         if not opts.y:
-            input(f"Press Enter to continue...")
+            input("Press Enter to continue...")
 
         sam_fix_with_config_dir(
             dataset_dir_path=dir_path,
@@ -112,7 +112,7 @@ def sam(opts):
         logger.info(f"Model: {model_name}")
 
         if not opts.y:
-            input(f"Press Enter to continue...")
+            input("Press Enter to continue...")
 
         sam_fix(
             dataset_dir_path=dir_path,
