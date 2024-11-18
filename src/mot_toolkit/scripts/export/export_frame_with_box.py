@@ -10,6 +10,7 @@ ffmpeg -framerate 30 -i 00000000-00000268_box/%08d.jpg -c:v h264_amf -pix_fmt yu
 
 """
 
+
 def handle_dir(dir_path):
     if not os.path.exists(dir_path):
         return

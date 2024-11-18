@@ -760,7 +760,6 @@ class GamepadMonitor(QWidget):
 
 
 if __name__ == '__main__':
-    import sys
     from PySide6.QtWidgets import QApplication, QWidget
     from PySide6.QtWidgets import (
         QMainWindow,

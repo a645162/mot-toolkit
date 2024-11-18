@@ -763,7 +763,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if self.is_empty():
             return
 
-        __loaded = True
+        self.__loaded = True
 
         # Clear
         self.annotation_file.clear()
