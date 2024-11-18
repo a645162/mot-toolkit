@@ -2,6 +2,8 @@
 
 Multiple Object Tracking (MOT) Toolkit
 
+Lowest Python version: `Python 3.8`
+
 ## Features
 
 - [x] Statistics of the dataset
