@@ -1,0 +1,5 @@
+v1.3.0
+====================
+1. fix(Python): Fix some bugs
+2. fix(Python): Support Python 3.8
+3. fix(JSON): Try to fix json parse error
