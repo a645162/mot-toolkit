@@ -4,7 +4,7 @@ from typing import List
 
 def get_dataset_dir_list(
         dataset_dir_path: str,
-        level: int = 2,
+        depth: int = 2,
         black_list: List[str] = None
 ) -> List[str]:
     if black_list is None:
@@ -33,8 +33,8 @@ def get_dataset_dir_list(
 
             final_dir_list.append(jpeg_dir_name)
 
-    level -= 1
-    while level > 0:
+    depth -= 1
+    while depth > 0:
         new_dir_list: List[str] = []
         for dir_path in final_dir_list:
             new_path = os.path.dirname(dir_path)
@@ -42,7 +42,7 @@ def get_dataset_dir_list(
             new_dir_list.append(new_path)
 
         final_dir_list = new_dir_list
-        level -= 1
+        depth -= 1
 
     # Remove Redundant
     # Will keep sorted order
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     dir_list = get_dataset_dir_list(
         dataset_dir_path=datasets_dir_path,
-        level=2,
+        depth=2,
         black_list=["Task"]
     )
 

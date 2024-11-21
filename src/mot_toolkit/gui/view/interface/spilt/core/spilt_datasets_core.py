@@ -2,11 +2,10 @@ import os
 import json
 from typing import List
 
-from mot_toolkit.config.hardware import io_cpu_count
 from mot_toolkit.datatype.dataset.dataset_spilt import (
     DatasetSpilt, SpiltType
 )
-from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
+from mot_toolkit.gui.view.interface.spilt.core.spilt_dancetrack import SpiltDanceTrack
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -29,52 +28,6 @@ json_dict_example: dict = {
         "path_str_list": []
     },
 }
-
-# DanceTrack is 8
-# MOT Challenge is 6
-file_name_length = 8
-
-
-def handle_dance_track_dir(
-        dataset_dir_obj: DatasetSpilt,
-        output_dir: str
-):
-    print(str(dataset_dir_obj))
-    source_dir = dataset_dir_obj.abs_path
-    target_dir = os.path.join(output_dir, dataset_dir_obj.generate_new_name())
-
-    if not os.path.exists(source_dir):
-        logger.error("Source Dir Not Found: " + source_dir)
-        return
-    if not os.path.exists(target_dir):
-        os.makedirs(target_dir, exist_ok=True)
-
-    annotation_directory = XAnyLabelingAnnotationDirectory()
-    annotation_directory.dir_path = source_dir
-    annotation_directory.walk_dir(recursive=False)
-    annotation_directory.sort_path(group_directory=True)
-
-    annotation_directory.load_json_files()
-
-    for file_obj in annotation_directory.annotation_file:
-        print(file_obj.file_name_no_extension)
-
-
-def output_dance_track(
-        dataset_list: List[DatasetSpilt],
-        output_dir: str
-):
-    logger.info("Output DanceTrack")
-    logger.info("Dataset List Count: " + str(len(dataset_list)))
-    logger.info("Output Dir: " + output_dir)
-
-    process_count = io_cpu_count
-
-    for dataset_obj in dataset_list:
-        handle_dance_track_dir(
-            dataset_dir_obj=dataset_obj,
-            output_dir=output_dir
-        )
 
 
 def spilt_dataset(
@@ -152,29 +105,12 @@ def spilt_dataset(
     os.makedirs(output_yolo_dir, exist_ok=True)
 
     # DanceTrack
-
-    ## Train
-    dance_track_train_dir = os.path.join(output_dance_track_dir, "train")
-    os.makedirs(dance_track_train_dir, exist_ok=True)
-    output_dance_track(
-        dataset_list=dataset_train_list,
-        output_dir=dance_track_train_dir
-    )
-
-    ## Val
-    dance_track_val_dir = os.path.join(output_dance_track_dir, "val")
-    os.makedirs(dance_track_val_dir, exist_ok=True)
-    output_dance_track(
-        dataset_list=dataset_val_list,
-        output_dir=dance_track_val_dir
-    )
-
-    ## Test
-    dance_track_test_dir = os.path.join(output_dance_track_dir, "test")
-    os.makedirs(dance_track_test_dir, exist_ok=True)
-    output_dance_track(
-        dataset_list=dataset_test_list,
-        output_dir=dance_track_test_dir
+    spilt_dance_track = SpiltDanceTrack()
+    spilt_dance_track.output_dance_track(
+        output_dance_track_dir=output_dance_track_dir,
+        dataset_train_list=dataset_train_list,
+        dataset_val_list=dataset_val_list,
+        dataset_test_list=dataset_test_list,
     )
 
     # YOLO

@@ -200,7 +200,7 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
         dir_list = get_dataset_dir_list(
             dataset_dir_path=self.work_directory_path,
-            level=dir_level,
+            depth=dir_level,
             black_list=["Task"]
         )
 
