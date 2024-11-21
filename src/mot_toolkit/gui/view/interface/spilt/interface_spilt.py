@@ -43,6 +43,8 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
     dataset_dir_list: List[DatasetSpilt]
 
+    depth = 2
+
     def __init__(self, work_directory_path: str, parent=None):
         super().__init__(work_directory_path, parent=parent)
         logger.info(f"Spilt Work Directory: {work_directory_path}")
@@ -52,6 +54,8 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
         self.__setup_properties()
         self.__init_ui()
+
+        logger.info(f"Spilt Configure Path: {self.settings_json_path}")
 
     def __setup_properties(self):
         # Set Title
@@ -121,14 +125,51 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         self.control_layout.addWidget(save_button)
 
         # Setting
-        self.v_layout.addWidget(QLabel("Level:"))
-        self.dir_level_lineedit = QLineEdit(parent=self)
-        self.dir_level_lineedit.setText("2")
-        self.v_layout.addWidget(self.dir_level_lineedit)
+        self.v_layout.addWidget(QLabel("Depth:"))
+        self.dir_depth_lineedit = QLineEdit(parent=self)
+        self.dir_depth_lineedit.setText("2")
+        self.v_layout.addWidget(self.dir_depth_lineedit)
+
+        # Connect Menu
+        self.__connect_menu()
+
+    def __connect_menu(self):
+        list_widget_lists: List[SpiltListWidget] = [
+            self.dataset_train_list_widget,
+            self.dataset_val_list_widget,
+            self.dataset_test_list_widget,
+            self.dataset_other_list_widget
+        ]
+
+        for list_widget in list_widget_lists:
+            list_widget.menu_move_to_train.triggered.connect(
+                lambda: self.item_move(
+                    list_widget.selection_text,
+                    SpiltType.TRAIN
+                )
+            )
+            list_widget.menu_move_to_val.triggered.connect(
+                lambda: self.item_move(
+                    list_widget.selection_text,
+                    SpiltType.VAL
+                )
+            )
+            list_widget.menu_move_to_test.triggered.connect(
+                lambda: self.item_move(
+                    list_widget.selection_text,
+                    SpiltType.TEST
+                )
+            )
+            list_widget.menu_move_to_other.triggered.connect(
+                lambda: self.item_move(
+                    list_widget.selection_text,
+                    SpiltType.NONE
+                )
+            )
 
     @property
     def settings_json_path(self) -> str:
-        path = os.path.join(self.work_directory_path, "settings.json")
+        path = os.path.join(self.work_directory_path, "spilt_settings.json")
 
         if not os.path.exists(self.work_directory_path):
             try:
@@ -144,7 +185,7 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
     def reload_data(self):
         if os.path.exists(self.settings_json_path):
-            with open(self.settings_json_path, "r") as f:
+            with open(self.settings_json_path, "r", encoding="utf-8") as f:
                 json_dict: dict = json.load(f)
 
             if len(json_dict.keys()) > 0:
@@ -152,9 +193,10 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 
         dir_level = 2
         try:
-            dir_level = int(self.dir_level_lineedit.text())
+            dir_level = int(self.dir_depth_lineedit.text())
         except Exception as e:
             logger.error(f"Dir Level Error: {e}")
+        self.depth = dir_level
 
         dir_list = get_dataset_dir_list(
             dataset_dir_path=self.work_directory_path,
@@ -282,6 +324,16 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
         self.json_dict["val"].update(val_dict)
         self.json_dict["test"].update(test_dict)
 
+        self.json_dict["depth"] = self.depth
+
+        with open(self.settings_json_path, "w", encoding="utf-8") as f:
+            json.dump(
+                obj=self.json_dict,
+                fp=f,
+                indent=4,
+                ensure_ascii=False
+            )
+
     def __update_list_widget_with_list(
             self,
             list_widget: SpiltListWidget,
@@ -295,6 +347,7 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
             list_widget.list_widget.addItem(text)
 
         list_widget.try_to_select_text(selection_text)
+        list_widget.update()
 
     def update_spilt_list_widget(self):
         (
@@ -320,6 +373,18 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
             list_widget=self.dataset_other_list_widget,
             dataset_obj_list=dataset_obj_list_other
         )
+
+    def item_move(
+            self,
+            rel_path: str,
+            target_spilt_type: SpiltType
+    ):
+        for dataset_obj in self.dataset_dir_list:
+            if dataset_obj.rel_path == rel_path:
+                dataset_obj.spilt_type = target_spilt_type
+                break
+
+        self.update_spilt_list_widget()
 
 
 if __name__ == "__main__":

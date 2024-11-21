@@ -42,33 +42,37 @@ class SpiltListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
-        menu_move_to_train = \
+        self.menu_move_to_train = \
             QAction("Move to Train", self)
         if self.spilt_type == SpiltType.TRAIN:
-            menu_move_to_train.setVisible(False)
-        q_menu.addAction(menu_move_to_train)
-        select_enable_list.append(menu_move_to_train)
+            self.menu_move_to_train.setVisible(False)
+        q_menu.addAction(self.menu_move_to_train)
+        select_enable_list.append(self.menu_move_to_train)
 
-        menu_move_to_val = \
+        self.menu_move_to_val = \
             QAction("Move to Val", self)
         if self.spilt_type == SpiltType.VAL:
-            menu_move_to_val.setVisible(False)
-        q_menu.addAction(menu_move_to_val)
-        select_enable_list.append(menu_move_to_val)
+            self.menu_move_to_val.setVisible(False)
+        q_menu.addAction(self.menu_move_to_val)
+        select_enable_list.append(self.menu_move_to_val)
 
-        menu_move_to_test = \
+        self.menu_move_to_test = \
             QAction("Move to Test", self)
         if self.spilt_type == SpiltType.TEST:
-            menu_move_to_test.setVisible(False)
-        q_menu.addAction(menu_move_to_test)
-        select_enable_list.append(menu_move_to_test)
+            self.menu_move_to_test.setVisible(False)
+        q_menu.addAction(self.menu_move_to_test)
+        select_enable_list.append(self.menu_move_to_test)
 
-        menu_move_to_other = \
+        q_menu.addSeparator()
+
+        self.menu_move_to_other = \
             QAction("Move to Other(Disable)", self)
         if self.spilt_type == SpiltType.NONE:
-            menu_move_to_other.setVisible(False)
-        q_menu.addAction(menu_move_to_other)
-        select_enable_list.append(menu_move_to_other)
+            self.menu_move_to_other.setVisible(False)
+        q_menu.addAction(self.menu_move_to_other)
+        select_enable_list.append(self.menu_move_to_other)
+
+        q_menu.addSeparator()
 
 
 if __name__ == "__main__":

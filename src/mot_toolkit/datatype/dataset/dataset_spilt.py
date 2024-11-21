@@ -20,7 +20,7 @@ class SpiltType(Enum):
         elif self == SpiltType.TEST:
             return "Test"
         elif self == SpiltType.VAL:
-            return "Val"
+            return "Validation"
         else:
             return "Other"
 
@@ -35,16 +35,20 @@ class DatasetSpilt:
 
     __spilt_type: SpiltType
 
+    __depth: int = 2
+
     def __init__(
             self,
             path="",
             base_dir_path="",
-            spilt_type: Optional[SpiltType] = None
+            spilt_type: Optional[SpiltType] = None,
+            depth: int = 2
     ):
         self.current_run_dir = get_current_cmd_dir()
 
         self.base_dir_path = base_dir_path
         self.spilt_type = spilt_type
+        self.depth = depth
 
         self.path = path
 
@@ -89,6 +93,17 @@ class DatasetSpilt:
 
         self.__spilt_type = spilt_type
 
+    @property
+    def depth(self) -> int:
+        return self.__depth
+
+    @depth.setter
+    def depth(self, depth: int):
+        if depth < 1:
+            return
+
+        self.__depth = depth
+
     def get_spilt_type_str(self) -> str:
         return self.spilt_type.value
 
@@ -104,8 +119,11 @@ class DatasetSpilt:
     def to_dict(self) -> dict:
         return {
             "path": self.path,
+            "abs_path": self.abs_path,
+            "rel_path": self.rel_path,
             "base_dir_path": self.base_dir_path,
-            "spilt_type": self.spilt_type.value
+            "spilt_type": self.spilt_type.value,
+            "depth": self.depth
         }
 
     @staticmethod
@@ -116,8 +134,24 @@ class DatasetSpilt:
         return DatasetSpilt(
             path=data.get("path", ""),
             base_dir_path=data.get("base_dir_path", ""),
-            spilt_type=SpiltType(data.get("spilt_type", SpiltType.NONE.value))
+            spilt_type=SpiltType(data.get("spilt_type", SpiltType.NONE.value)),
+            depth=data.get("depth", 2)
         )
+
+    def generate_new_name(self) -> str:
+        current_depth = self.depth - 1
+
+        current_dir = self.abs_path
+        last_1_level_dir_name = os.path.basename(self.abs_path)
+
+        current_name = f"{last_1_level_dir_name}"
+        while current_depth > 0:
+            current_depth -= 1
+            current_dir = os.path.dirname(current_dir)
+            base_name = os.path.basename(current_dir)
+            current_name = f"{base_name}-{current_name}"
+
+        return current_name
 
 
 if __name__ == "__main__":
