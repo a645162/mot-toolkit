@@ -21,9 +21,13 @@ class BilibiliVideo(WebVideo):
 
     @bv.setter
     def bv(self, bv: str):
+        index = bv.rfind("/")
+        if index != -1:
+            bv = bv[index + 1:]
+
         bv = bv.strip()
 
-        if not bv.startswith("BV"):
+        if not bv.upper().startswith("BV"):
             return
 
         self._bv = bv
