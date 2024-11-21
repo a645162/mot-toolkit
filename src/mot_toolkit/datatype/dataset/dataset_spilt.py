@@ -138,11 +138,14 @@ class DatasetSpilt:
             depth=data.get("depth", 2)
         )
 
-    def generate_new_name(self) -> str:
+    def generate_new_name(self, path: str = "") -> str:
+        if len(path) == 0:
+            path = self.abs_path
+
         current_depth = self.depth - 1
 
-        current_dir = self.abs_path
-        last_1_level_dir_name = os.path.basename(self.abs_path)
+        current_dir = path
+        last_1_level_dir_name = os.path.basename(current_dir)
 
         current_name = f"{last_1_level_dir_name}"
         while current_depth > 0:

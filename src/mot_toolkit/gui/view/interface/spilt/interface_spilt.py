@@ -19,7 +19,7 @@ from mot_toolkit.utils.logs import get_logger
 logger = get_logger()
 
 
-class InterFaceSmooth(BaseWorkInterfaceWindow):
+class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     all_dir: List[str]
 
     json_dict: dict = {
@@ -390,7 +390,9 @@ class InterFaceSmooth(BaseWorkInterfaceWindow):
 if __name__ == "__main__":
     app = QApplication([])
 
-    window = InterFaceSmooth(r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe")
+    window = InterFaceDatasetSpilt(
+        work_directory_path=r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    )
     window.show()
 
     app.exec()

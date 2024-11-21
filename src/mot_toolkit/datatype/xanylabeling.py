@@ -1145,7 +1145,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return True
 
-    def to_mot_gt_txt(self) -> str:
+    def to_mot_gt_txt(self, start_index: int = -1) -> str:
         class_list = self.update_label_list()
         if len(class_list) == 0:
             return ""
@@ -1159,6 +1159,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         final_text = ""
 
+        # first_index = self.first_file_index
+
         for class_name in class_list:
 
             class_annotation_obj_list: List[XAnyLabelingAnnotation] = \
@@ -1168,7 +1170,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             for annotation_obj in class_annotation_obj_list:
                 for rect_annotation in annotation_obj.rect_annotation_list:
                     if rect_annotation.label == class_name:
-                        frame = annotation_obj.mot_index
+                        if start_index >= 0:
+                            frame = annotation_obj.index + start_index
+                        else:
+                            frame = annotation_obj.mot_index
                         label = class_name
 
                         x = rect_annotation.x1
