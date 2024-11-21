@@ -705,6 +705,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             if key == Qt.Key.Key_Q:
                 self.__action_file_list_show_video()
                 return
+            if key == Qt.Key.Key_Home:
+                if self.r_file_list_widget.count > 0:
+                    self.r_file_list_widget.selection_index = 0
+                return
+            if key == Qt.Key.Key_End:
+                if self.r_file_list_widget.count > 0:
+                    self.r_file_list_widget.selection_index = \
+                        self.r_file_list_widget.count - 1
+                return
 
         if modifiers == Qt.KeyboardModifier.AltModifier:
             # Alt
@@ -987,6 +996,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         return True
 
     def __label_class_list_item_selection_changed(self):
+        filename_text = self.r_file_list_widget.selection_text
+
         if (
                 self.r_label_class_list_widget.count == 1 or
                 self.r_label_class_list_widget.is_selected_last()
@@ -1012,6 +1023,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.current_file_str_list.append(annotation_obj.file_name_no_extension)
 
         self.update_file_list_widget()
+
+        # Auto select current display file
+        if filename_text:
+            self.r_file_list_widget.try_to_select_text(filename_text)
 
         self.__update_label_class_auto_select()
 
