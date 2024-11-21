@@ -26,6 +26,7 @@ class ObjectListWidget(ListWithTitleWidget):
 
     def __init_menu(self):
         self.list_widget.have_menu = True
+
         q_menu: QMenu = self.list_widget.menu
         select_enable_list: List[QAction] = \
             self.list_widget.select_enable_list

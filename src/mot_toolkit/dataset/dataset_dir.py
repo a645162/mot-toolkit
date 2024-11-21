@@ -4,6 +4,7 @@ from typing import List
 
 def get_dataset_dir_list(
         dataset_dir_path: str,
+        level: int = 2,
         black_list: List[str] = None
 ) -> List[str]:
     if black_list is None:
@@ -20,19 +21,36 @@ def get_dataset_dir_list(
                 break
 
     for jpeg_dir_name in jpeg_dir_path_list:
-        parent_dir_path = os.path.dirname(jpeg_dir_name)
-
-        if parent_dir_path not in final_dir_list:
+        if jpeg_dir_name not in final_dir_list:
             # Black list
             found = False
             for keywords in black_list:
-                if keywords in parent_dir_path:
+                if keywords in jpeg_dir_name:
                     found = True
                     break
             if found:
                 continue
 
-            final_dir_list.append(parent_dir_path)
+            final_dir_list.append(jpeg_dir_name)
+
+    level -= 1
+    while level > 0:
+        new_dir_list: List[str] = []
+        for dir_path in final_dir_list:
+            new_path = os.path.dirname(dir_path)
+
+            new_dir_list.append(new_path)
+
+        final_dir_list = new_dir_list
+        level -= 1
+
+    # Remove Redundant
+    # Will keep sorted order
+    new_path_list: List[str] = []
+    for dir_path in final_dir_list:
+        if dir_path not in new_path_list:
+            new_path_list.append(dir_path)
+    final_dir_list = new_path_list
 
     return final_dir_list
 
@@ -42,6 +60,7 @@ if __name__ == "__main__":
 
     dir_list = get_dataset_dir_list(
         dataset_dir_path=datasets_dir_path,
+        level=2,
         black_list=["Task"]
     )
 

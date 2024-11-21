@@ -14,6 +14,16 @@ class SpiltType(Enum):
     def __str__(self):
         return self.value
 
+    def to_title(self):
+        if self == SpiltType.TRAIN:
+            return "Train"
+        elif self == SpiltType.TEST:
+            return "Test"
+        elif self == SpiltType.VAL:
+            return "Val"
+        else:
+            return "Other"
+
 
 class DatasetSpilt:
     __abs_path: str = ""
