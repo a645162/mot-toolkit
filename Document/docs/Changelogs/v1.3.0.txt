@@ -4,6 +4,8 @@ v1.3.0
 2. fix(Python): Support Python 3.8
 3. fix(JSON): Try to fix json parse error
 4. fix(Preview): Fix preview file list change selection lost issue
-5. feat(Crawler): Try to support crawler for Bilibili
-6. feat(Preview): Add some shortcuts
-7. fix(Dataset): Fix configure file sync issue on Windows
+5. fix(Dataset): Fix configure file sync issue on Windows
+6. feat(Crawler): Try to support crawler for Bilibili
+7. feat(Preview): Add some shortcuts
+8. feat(Dataset): Export to DanceTrack
+9. feat(Finder): Support show in Explorer
