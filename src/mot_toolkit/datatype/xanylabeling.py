@@ -121,6 +121,9 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict["imageHeight"] = self.image_height
         result_dict["imageWidth"] = self.image_width
 
+        if not isinstance(result_dict, dict):
+            logger.error(f"result_dict is not dict: {result_dict}")
+
         return result_dict
 
     def to_yolo_format(self, replace_label_dict: dict = None) -> str:
@@ -171,13 +174,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict = self.to_dict()
 
         # Convert Dict to Json String
-        json_string = \
-            json.dumps(
-                result_dict,
-                sort_keys=False,
-                indent=2,
-                separators=(',', ': ')
-            )
+        try:
+            json_string = \
+                json.dumps(
+                    result_dict,
+                    sort_keys=False,
+                    indent=2,
+                    separators=(',', ': ')
+                )
+        except Exception as e:
+            logger.error(f"Error in to_json_string: {e}")
+            return ""
 
         return json_string.strip() + "\n"
 
@@ -188,11 +195,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         save_path = save_path.strip()
         if len(save_path) == 0:
+            logger.error("No Save Path Provided")
+            return
+
+        json_string = self.to_json_string()
+        if len(json_string.strip()) == 0:
+            logger.error(f"No Json String Generated {save_path}")
             return
 
         # Save to json file
         with open(save_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(json_string)
 
         logger.info("Save Json File Successfully: " + save_path)
 

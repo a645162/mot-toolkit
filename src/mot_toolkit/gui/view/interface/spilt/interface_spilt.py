@@ -134,14 +134,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.__connect_menu()
 
     def __connect_menu(self):
-        list_widget_lists: List[SpiltListWidget] = [
-            self.dataset_train_list_widget,
-            self.dataset_val_list_widget,
-            self.dataset_test_list_widget,
-            self.dataset_other_list_widget
-        ]
-
-        for list_widget in list_widget_lists:
+        def __connect_list_menu(list_widget: SpiltListWidget):
             list_widget.menu_move_to_train.triggered.connect(
                 lambda: self.item_move(
                     list_widget.selection_text,
@@ -166,6 +159,11 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
                     SpiltType.NONE
                 )
             )
+
+        __connect_list_menu(self.dataset_train_list_widget)
+        __connect_list_menu(self.dataset_val_list_widget)
+        __connect_list_menu(self.dataset_test_list_widget)
+        __connect_list_menu(self.dataset_other_list_widget)
 
     @property
     def settings_json_path(self) -> str:
@@ -231,15 +229,15 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         all_path_str_list: List[str] = []
         for dataset_obj in all_dataset_obj_list:
-            rel_path = dataset_obj.rel_path
+            unique_path = dataset_obj.unique_path
 
-            all_path_str_list.append(rel_path)
+            all_path_str_list.append(unique_path)
 
-            if rel_path in train_str_list:
+            if unique_path in train_str_list:
                 dataset_obj.spilt_type = SpiltType.TRAIN
-            elif rel_path in val_str_list:
+            elif unique_path in val_str_list:
                 dataset_obj.spilt_type = SpiltType.VAL
-            elif rel_path in test_str_list:
+            elif unique_path in test_str_list:
                 dataset_obj.spilt_type = SpiltType.TEST
 
         new_dict = {
@@ -262,15 +260,15 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         }
 
         dataset_dict_list: List[dict] = []
-        rel_path_str_list: List[str] = []
+        unique_path_str_list: List[str] = []
 
         for dataset_obj in dataset_obj_list:
             if dataset_obj.is_valid():
                 dataset_dict_list.append(dataset_obj.to_dict())
-                rel_path_str_list.append(dataset_obj.rel_path)
+                unique_path_str_list.append(dataset_obj.unique_path)
 
         final_dict["dataset_list"] = dataset_dict_list
-        final_dict["path_str_list"] = rel_path_str_list
+        final_dict["path_str_list"] = unique_path_str_list
 
         return final_dict
 
@@ -343,7 +341,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         list_widget.list_widget.clear()
 
         for dataset_obj in dataset_obj_list:
-            text = dataset_obj.rel_path
+            text = dataset_obj.unique_path
             list_widget.list_widget.addItem(text)
 
         list_widget.try_to_select_text(selection_text)
@@ -376,11 +374,13 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
     def item_move(
             self,
-            rel_path: str,
+            unique_path: str,
             target_spilt_type: SpiltType
     ):
+        logger.debug(f"Unique Path: {unique_path}, Spilt Type: {target_spilt_type}")
+
         for dataset_obj in self.dataset_dir_list:
-            if dataset_obj.rel_path == rel_path:
+            if dataset_obj.unique_path == unique_path:
                 dataset_obj.spilt_type = target_spilt_type
                 break
 
@@ -390,8 +390,11 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 if __name__ == "__main__":
     app = QApplication([])
 
+    path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    # path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
+
     window = InterFaceDatasetSpilt(
-        work_directory_path=r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+        work_directory_path=path
     )
     window.show()
 

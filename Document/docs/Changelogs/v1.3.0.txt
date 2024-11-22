@@ -6,3 +6,4 @@ v1.3.0
 4. fix(Preview): Fix preview file list change selection lost issue
 5. feat(Crawler): Try to support crawler for Bilibili
 6. feat(Preview): Add some shortcuts
+7. fix(Dataset): Fix configure file sync issue on Windows

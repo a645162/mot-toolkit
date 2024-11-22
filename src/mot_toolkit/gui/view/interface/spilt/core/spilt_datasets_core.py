@@ -118,7 +118,9 @@ def spilt_dataset(
 
 if __name__ == '__main__':
     dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
-    output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/Spilt"
+    output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
+    # dataset_base_dir = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
+    # output_base_dir = r"H:\Datasets\TrackShipOnlineVideo\ShipTrackSpilt"
 
     spilt_dataset(
         dataset_base_dir=dataset_base_dir,

@@ -83,6 +83,15 @@ class DatasetSpilt:
         return self.__rel_path
 
     @property
+    def unique_path(self):
+        rel_path = self.rel_path
+
+        while rel_path.find('\\') != -1:
+            rel_path = rel_path.replace('\\', '/')
+
+        return rel_path.strip()
+
+    @property
     def spilt_type(self) -> SpiltType:
         return self.__spilt_type
 
@@ -121,6 +130,7 @@ class DatasetSpilt:
             "path": self.path,
             "abs_path": self.abs_path,
             "rel_path": self.rel_path,
+            "unique_path": self.unique_path,
             "base_dir_path": self.base_dir_path,
             "spilt_type": self.spilt_type.value,
             "depth": self.depth
