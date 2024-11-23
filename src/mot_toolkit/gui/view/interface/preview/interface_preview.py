@@ -1028,6 +1028,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if filename_text:
             self.r_file_list_widget.try_to_select_text(filename_text)
 
+        if self.r_file_list_widget.selection_index == -1:
+            self.r_file_list_widget.selection_index = 0
+
         self.__update_label_class_auto_select()
 
     def __file_list_item_selection_changed(self):
