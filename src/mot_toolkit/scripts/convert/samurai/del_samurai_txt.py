@@ -13,5 +13,8 @@ for root, dirs, files in os.walk(base_path):
         if file.endswith("_samurai.txt"):
             txt_list.append(os.path.join(root, file))
 
+print(f"Found {len(txt_list)} txt files.")
+input("Press Enter to continue...")
+
 for txt_path in tqdm.tqdm(txt_list):
     os.remove(txt_path)

@@ -1,0 +1,9 @@
+torchvision
+
+pillow
+opencv-python
+
+scikit-learn
+
+mmcv
+mmengine

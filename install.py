@@ -43,6 +43,12 @@ def install_torch():
     print("Install Torch Done!")
 
 
+def install_dataset():
+    os.system("pip install -r r-dataset-requirements.txt")
+
+    print("Install Dataset Done!")
+
+
 def install_labelme():
     os.system("pip install labelme")
 
@@ -52,8 +58,11 @@ def get_options():
 
     parser.add_argument("--dev", "-d", action="store_true", help="Install Dev Dependencies")
     parser.add_argument("--torch", "-t", action="store_true", help="Install Torch Dependencies")
-    parser.add_argument("--crawler", "-c", action="store_true", help="Install Crawler Dependencies")
-    parser.add_argument("--labelme", "-l", action="store_true", help="Install LabelMe")
+
+    parser.add_argument("--crawler", action="store_true", help="Install Crawler Dependencies")
+    parser.add_argument("--dataset", action="store_true", help="Install Dataset Dependencies")
+    parser.add_argument("--labelme", action="store_true", help="Install LabelMe")
+
     parser.add_argument("--all", "-a", action="store_true", help="Install All Dependencies")
 
     return parser.parse_args()
@@ -68,6 +77,8 @@ if __name__ == "__main__":
         install_torch()
     if args.crawler:
         install_crawler()
+    if args.dataset:
+        install_dataset()
     if args.labelme:
         install_labelme()
 
@@ -75,6 +86,7 @@ if __name__ == "__main__":
         install_dep_dev()
         install_torch()
         install_crawler()
+        install_dataset()
         install_labelme()
 
     install_dep()

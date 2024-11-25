@@ -1,3 +1,4 @@
+# Zero Shot samurai based on SAM2
 # https://yangchris11.github.io/samurai/
 
 from typing import List

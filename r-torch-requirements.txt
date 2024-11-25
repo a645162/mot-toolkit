@@ -1,5 +1,6 @@
 torch
 torchvision
+pillow
 
 ultralytics>=8.3.0
 
