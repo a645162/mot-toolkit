@@ -7,6 +7,8 @@ from PySide6.QtCore import QObject
 class AnnotationDirectory(QObject):
     __dir_path: str = ""
 
+    __loaded: bool = False
+
     file_list: List[str]
     file_name_black_list: List[str]
 
@@ -106,7 +108,7 @@ class AnnotationDirectory(QObject):
             recursive: bool = False,
             clear_old: bool = True
     ) -> None:
-        __loaded = True
+        self.__loaded = True
 
         scan_dir_path = scan_dir_path.strip()
         if len(scan_dir_path) == 0:

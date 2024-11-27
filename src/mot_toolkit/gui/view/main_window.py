@@ -4,6 +4,7 @@ from typing import Optional
 
 from mot_toolkit.gui.view.components.widget. \
     basic.link_label import LinkLabel
+from mot_toolkit.gui.view.interface.spilt.interface_spilt import InterFaceDatasetSpilt
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -133,6 +134,12 @@ class MainWindow(QMainWindow):
         self.__button_smooth.clicked.connect(self.__button_smooth_clicked)
         self.v_layout.addWidget(self.__button_smooth)
 
+        self.__button_dataset_spilt = \
+            QPushButton(parent=self)
+        self.__button_dataset_spilt.setText("Dataset Spilt")
+        self.__button_dataset_spilt.clicked.connect(self.__button_dataset_spilt_clicked)
+        self.v_layout.addWidget(self.__button_dataset_spilt)
+
         author_label = QLabel(parent=self)
         author_label.setText("Author: Haomin Kong")
         self.v_layout.addWidget(author_label)
@@ -187,6 +194,15 @@ class MainWindow(QMainWindow):
             work_directory_path=path
         )
         self.interface_smooth.show()
+
+    def __button_dataset_spilt_clicked(self):
+        path = self.__select_directory_path_widget.get_absolute_path()
+        program_settings.last_work_directory = path
+
+        self.interface_dataset_spilt = InterFaceDatasetSpilt(
+            work_directory_path=path
+        )
+        self.interface_dataset_spilt.show()
 
 
 def init_main_window():

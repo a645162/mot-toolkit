@@ -12,6 +12,12 @@ class SamModelType(Enum):
     FAST_SAM_S = "FastSAM-s.pt"
     FAST_SAM_X = "FastSAM-x.pt"
 
+    def get_model_name(self) -> str:
+        return self.value
+
+    def __str__(self) -> str:
+        return self.value
+
 
 def get_sam_model_list() -> List[str]:
     return [model.value for model in SamModelType]

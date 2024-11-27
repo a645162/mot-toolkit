@@ -9,6 +9,7 @@ from mot_toolkit.datatype.directory.dir_file import DirectoryAndFile
 
 from mot_toolkit.gui.view.components.widget. \
     list.base_list_widget_with_menu import BaseListWidgetWithMenu
+from mot_toolkit.utils.system.file_explorer import show_in_explorer
 
 
 class FileListWidget(BaseListWidgetWithMenu):
@@ -71,10 +72,19 @@ class FileListWidget(BaseListWidgetWithMenu):
         self.menu.addAction(self.menu_copy_all_name)
         self.select_enable_list.append(self.menu_copy_all_name)
 
+        self.menu.addSeparator()
+
         self.menu_copy_path = QAction("Copy Path", self.menu)
         self.menu_copy_path.triggered.connect(self.__copy_path)
         self.menu.addAction(self.menu_copy_path)
         self.select_enable_list.append(self.menu_copy_path)
+
+        self.menu.addSeparator()
+
+        self.menu_show_in_explorer = QAction("Show in Explorer", self.menu)
+        self.menu_show_in_explorer.triggered.connect(self.__show_in_explorer)
+        self.menu.addAction(self.menu_show_in_explorer)
+        self.select_enable_list.append(self.menu_show_in_explorer)
 
     def update_list_content(self):
         if self.current_directory_obj is None:
@@ -185,3 +195,8 @@ class FileListWidget(BaseListWidgetWithMenu):
         # Copy to clipboard
         clipboard = QApplication.clipboard()
         clipboard.setText(self.path)
+
+    def __show_in_explorer(self):
+        self.update_path()
+
+        show_in_explorer(self.path)

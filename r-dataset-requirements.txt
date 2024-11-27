@@ -1,0 +1,10 @@
+# Image Processing
+torchvision
+pillow
+opencv-python
+
+# Dataset Spilt
+scikit-learn
+
+# Convert to COCO
+mmengine

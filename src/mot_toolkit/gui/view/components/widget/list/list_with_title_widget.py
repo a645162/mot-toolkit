@@ -120,6 +120,9 @@ class ListWithTitleWidget(QWidget):
 
     @selection_index.setter
     def selection_index(self, index: int):
+        # if index < -1:
+        #     index = self.count
+
         if index < -1 or index >= self.list_widget.count():
             return
 
@@ -131,6 +134,9 @@ class ListWithTitleWidget(QWidget):
             return
 
         self.list_widget.setCurrentRow(index)
+
+    def unselect(self):
+        self.list_widget.clearSelection()
 
     @property
     def selection_index_list(self) -> List[int]:
@@ -162,3 +168,9 @@ class ListWithTitleWidget(QWidget):
 
     def is_selected_last(self) -> bool:
         return self.selection_index == self.count - 1
+
+    def try_to_select_text(self, text: str):
+        self.list_widget.try_to_select_text(text)
+
+    def clear(self):
+        self.list_widget.clear()

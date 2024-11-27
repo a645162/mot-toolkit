@@ -121,6 +121,9 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict["imageHeight"] = self.image_height
         result_dict["imageWidth"] = self.image_width
 
+        if not isinstance(result_dict, dict):
+            logger.error(f"result_dict is not dict: {result_dict}")
+
         return result_dict
 
     def to_yolo_format(self, replace_label_dict: dict = None) -> str:
@@ -171,13 +174,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
         result_dict = self.to_dict()
 
         # Convert Dict to Json String
-        json_string = \
-            json.dumps(
-                result_dict,
-                sort_keys=False,
-                indent=2,
-                separators=(',', ': ')
-            )
+        try:
+            json_string = \
+                json.dumps(
+                    result_dict,
+                    sort_keys=False,
+                    indent=2,
+                    separators=(',', ': ')
+                )
+        except Exception as e:
+            logger.error(f"Error in to_json_string: {e}")
+            return ""
 
         return json_string.strip() + "\n"
 
@@ -188,11 +195,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         save_path = save_path.strip()
         if len(save_path) == 0:
+            logger.error("No Save Path Provided")
+            return
+
+        json_string = self.to_json_string()
+        if len(json_string.strip()) == 0:
+            logger.error(f"No Json String Generated {save_path}")
             return
 
         # Save to json file
         with open(save_path, "w") as f:
-            f.write(self.to_json_string())
+            f.write(json_string)
 
         logger.info("Save Json File Successfully: " + save_path)
 
@@ -629,6 +642,17 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return crop_image
 
+    def change_annotation_label(self, old_label: str, new_label: str) -> bool:
+        have_modify = False
+
+        for rect_item in self.rect_annotation_list:
+            if rect_item.label == old_label:
+                rect_item.label = new_label
+                self.modifying()
+                have_modify = True
+
+        return have_modify
+
 
 def parse_xanylabeling_json(
         json_path: str,
@@ -703,7 +727,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             func: Callable[[XAnyLabelingAnnotation, int], Any],
             multi_thread: bool = True,
             start_index: int = -1,
-            end_index: int = -1
+            end_index: int = -1,
+            emit_only_once: bool = True
     ):
         """
         Apply a function to each file in the annotation list, optionally using multiple threads.
@@ -712,6 +737,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         :param multi_thread: Whether to use multiple threads. Default is True.
         :param start_index: The starting index of the files to process. If -1, starts from the beginning.
         :param end_index: The ending index of the files to process. If -1, processes until the end.
+        :param emit_only_once: Whether to emit the modified signal only once after all files are processed.
 
         By the way, first one is start_index, last one is end_index.
 
@@ -725,16 +751,18 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         file_index_list = range(start_index, end_index + 1)
 
         def work_function(file_obj: XAnyLabelingAnnotation, index: int):
-            # Pause Emit Signal
-            file_obj.pause_emit = True
+            if emit_only_once:
+                # Pause Emit Signal
+                file_obj.pause_emit = True
 
             try:
                 func(file_obj, index)
             except Exception as e:
-                logger.error(f"Error in do_for_each_file: {e}")
+                logger.error(f"Error in do_for_each_file work_function: {e}")
 
-            # Resume Emit Signal
-            file_obj.pause_emit = False
+            if emit_only_once:
+                # Resume Emit Signal
+                file_obj.pause_emit = False
 
         if multi_thread:
             # Multi-thread processing using ThreadPoolExecutor
@@ -746,13 +774,13 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
                 # Wait for all tasks to complete
                 executor.shutdown(wait=True)
-
-            if len(file_obj_list) > 0:
-                self.slot_modified.emit(-1)
         else:
             # Single-threaded processing
             for index in file_index_list:
-                func(file_obj_list[index], index)
+                work_function(file_obj_list[index], index)
+
+        if emit_only_once and len(file_obj_list) > 0:
+            self.slot_modified.emit(-1)
 
     @property
     def loaded(self) -> bool:
@@ -763,7 +791,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if self.is_empty():
             return
 
-        __loaded = True
+        self.__loaded = True
 
         # Clear
         self.annotation_file.clear()
@@ -1145,7 +1173,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return True
 
-    def to_mot_gt_txt(self) -> str:
+    def to_mot_gt_txt(self, start_index: int = -1) -> str:
         class_list = self.update_label_list()
         if len(class_list) == 0:
             return ""
@@ -1159,6 +1187,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         final_text = ""
 
+        # first_index = self.first_file_index
+
         for class_name in class_list:
 
             class_annotation_obj_list: List[XAnyLabelingAnnotation] = \
@@ -1168,7 +1198,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             for annotation_obj in class_annotation_obj_list:
                 for rect_annotation in annotation_obj.rect_annotation_list:
                     if rect_annotation.label == class_name:
-                        frame = annotation_obj.mot_index
+                        if start_index >= 0:
+                            frame = annotation_obj.index + start_index
+                        else:
+                            frame = annotation_obj.mot_index
                         label = class_name
 
                         x = rect_annotation.x1

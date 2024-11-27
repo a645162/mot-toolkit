@@ -168,6 +168,12 @@ https://wiki.qt.io/Qt_for_Python_Development_Notes
 `conda` is available to install `Python 3.13` and `PySide6 6.8.0.2`,
 but `rye` is not support now.
 
+## Statistics
+
+```bash
+find . -type f -name "*.jpg" | wc -l
+```
+
 ## Thanks
 
 Thanks to the following projects:
@@ -175,6 +181,8 @@ Thanks to the following projects:
 - [PySide6](https://doc.qt.io/qtforpython/)
 - [X-Anylabeling](https://github.com/CVHub520/X-AnyLabeling)
 - [OpenCV](https://opencv.org/)
+- [PyTorch](https://pytorch.org/)
+- [Ultralytics](https://github.com/ultralytics/ultralytics)
 
 ## License
 

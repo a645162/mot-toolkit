@@ -107,12 +107,12 @@ def sam_predict_xyxy(
             box: List[float] = [xy_xy[0], xy_xy[1], xy_xy[2], xy_xy[3]]
 
             iou = calculate_iou(prompt_bbox_tuple, box)
-            logger.info(f"[{i}] IOU: {iou}")
+            logger.info(f"[{i}] IoU: {iou}")
 
             if iou > iou_threshold:
                 result_list.append(box)
             else:
-                logger.info(f"[{i}] IOU({iou}) is too low(<{iou_threshold}), skip.")
+                logger.info(f"[{i}] IoU({iou}) is too low(<{iou_threshold}), skip.")
 
     return result_list
 

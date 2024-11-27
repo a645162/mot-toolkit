@@ -39,7 +39,7 @@ class ExportSamTaskWindow(QDialog):
             sequence_name: str,
             json_name: str,
             target_label: str,
-            sam_model: str = "FastSAM-x.pt",
+            sam_model: str = "sam2.1_l.pt",
             parent=None,
     ):
         super().__init__(parent)
@@ -93,11 +93,12 @@ class ExportSamTaskWindow(QDialog):
         self.model_type_combobox.addItems(sam_model_list)
         layout.addWidget(self.model_type_combobox)
         # Set Current Text
-        if self.sam_model in sam_model_list:
-            self.model_type_combobox.setCurrentText(self.sam_model)
-        else:
-            logger.warning(f"Invalid SAM Model Type: {self.sam_model}")
-            self.model_type_combobox.setCurrentText(sam_model_list[0])
+        if self.sam_model:
+            if self.sam_model in sam_model_list:
+                self.model_type_combobox.setCurrentText(self.sam_model)
+            else:
+                logger.warning(f"Invalid SAM Model Type: {self.sam_model}")
+                # self.model_type_combobox.setCurrentText(sam_model_list[0])
 
         self.file_path_widget = FileSaveWidget(
             title="Please select the save path",

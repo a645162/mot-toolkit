@@ -1,0 +1,15 @@
+v1.3.0
+====================
+01. fix(Python): Fix some bugs
+02. fix(Python): Support Python 3.8
+03. fix(JSON): Try to fix json parse error
+04. fix(Preview): Fix preview file list change selection lost issue
+05. fix(Dataset): Fix configure file sync issue on Windows
+06. fix(Preview): Fix file list selection issue
+07. feat(Crawler): Try to support crawler for Bilibili
+08. feat(Preview): Add some shortcuts
+09. feat(Dataset): Export to DanceTrack
+10. feat(Finder): Support show in Explorer
+11. feat(Preview): Support assign a new ID in subsequent frames
+12. feat(Class): Class selector GUI
+13. test(Project): Support pre-commit
