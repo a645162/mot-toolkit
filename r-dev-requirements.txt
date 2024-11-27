@@ -1,6 +1,7 @@
 # Code quality
 ruff
 flake8
+pre-commit
 
 # Testing
 pytest
