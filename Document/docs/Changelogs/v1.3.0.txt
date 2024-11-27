@@ -10,3 +10,4 @@ v1.3.0
 8. feat(Preview): Add some shortcuts
 9. feat(Dataset): Export to DanceTrack
 10. feat(Finder): Support show in Explorer
+11. feat(Preview): Support assign a new ID in subsequent frames
