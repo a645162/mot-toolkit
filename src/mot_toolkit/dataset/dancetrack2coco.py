@@ -29,7 +29,6 @@ import os
 import os.path as osp
 from collections import defaultdict
 
-import mmcv
 import mmengine
 from tqdm import tqdm
 
@@ -42,18 +41,23 @@ def parse_args():
         description="Convert DanceTrack label and detections to \
         COCO-VID format."
     )
+
+    default_path = r"/home/konghaomin/Datasets/DanceTrack"
+
     parser.add_argument(
         "-i",
         "--input",
-        default=r"/home/konghaomin/ShipTrackSpilt20241112/DanceTrack",
+        default=default_path,
         help="path of MOT data",
     )
+
     parser.add_argument(
         "-o",
         "--output",
-        default=r"/home/konghaomin/ShipTrackSpilt20241112/DanceTrack/coco_style_anno",
+        default=os.path.join(default_path, "annotations"),
         help="path to save coco formatted label file",
     )
+
     return parser.parse_args()
 
 

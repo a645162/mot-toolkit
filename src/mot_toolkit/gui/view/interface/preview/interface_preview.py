@@ -668,8 +668,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_jump_to)
 
         # Obj List
+        self.r_object_list_widget.menu_subsequent_new_id \
+            .triggered.connect(self.__action_obj_subsequent_new_id)
+
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
+
         self.r_object_list_widget.menu_linear_interpolation \
             .triggered.connect(self.__action_obj_linear_interpolation)
         self.r_object_list_widget.menu_linear_interpolation_previous \
@@ -1423,6 +1427,56 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         show_in_explorer(file_path)
 
+    def __action_obj_subsequent_new_id(self):
+        file_index = self.get_current_file_truly_index()
+
+        if self.r_object_list_widget.selection_index == -1:
+            return
+
+        current_label_id: str = self.current_annotation_object.rect_annotation_list[
+            self.r_object_list_widget.selection_index
+        ].label
+
+        new_label_id: Optional[str] = self.__input_new_id()
+        if new_label_id is None:
+            return
+
+        frame_file_name = self.current_annotation_object.file_name_no_extension
+        frame_index = int(frame_file_name)
+
+        ret = QMessageBox.question(
+            self,
+            "Warning",
+            (
+                "Are you sure to change"
+                f" {current_label_id} to {new_label_id} "
+                "in subsequent frames?"
+                f"\nNot include current file.{frame_index}"
+                "\n\nThis operation is irreversible!"
+            ),
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No,
+        )
+
+        if ret != QMessageBox.StandardButton.Yes:
+            return
+
+        logger.info(
+            f"[{file_index}]Subsequent New ID: "
+            f"{current_label_id} -> {new_label_id}"
+        )
+
+        def change_id(annotation_obj: XAnyLabelingAnnotation, index: int):
+            if index > file_index:
+                annotation_obj.change_annotation_label(current_label_id, new_label_id)
+
+        self.annotation_directory.do_for_each_file(
+            func=change_id,
+            start_index=file_index + 1
+        )
+
+        self.update_annotation_object_display()
+
     def __action_obj_copy_subsequent_target(self):
         if self.r_object_list_widget.selection_index == -1:
             return
@@ -2113,7 +2167,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             value
         )
 
-    def __action_rect_add_rect(self):
+    def __input_new_id(self) -> Optional[str]:
         default_label_name: str = ""
 
         is_digit_label = True
@@ -2155,6 +2209,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             if not ok:
                 return
+
+        return label_name
+
+    def __action_rect_add_rect(self):
+        label_name: Optional[str] = self.__input_new_id()
+
+        if label_name is None:
+            return
 
         # Add New Rect
         self.current_annotation_object.add_rect(label_name)

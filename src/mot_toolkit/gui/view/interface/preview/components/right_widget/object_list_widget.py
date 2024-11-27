@@ -33,6 +33,16 @@ class ObjectListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
+        self.menu_subsequent_new_id = \
+            QAction(
+                "Assign a new ID in subsequent frames",
+                q_menu
+            )
+        q_menu.addAction(self.menu_subsequent_new_id)
+        select_enable_list.append(self.menu_subsequent_new_id)
+
+        q_menu.addSeparator()
+
         self.menu_copy_subsequent = \
             QAction(
                 "Copy the target in subsequent frames(Label)",

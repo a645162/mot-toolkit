@@ -5,7 +5,6 @@ import os
 import os.path as osp
 from collections import defaultdict
 
-import mmcv
 import mmengine
 from PIL import Image
 from tqdm import tqdm
@@ -13,18 +12,23 @@ from tqdm import tqdm
 
 def parse_args():
     parser = argparse.ArgumentParser(description="CrowdHuman to COCO Video format")
+
+    default_path = r"/home/konghaomin/Datasets/CrowdHuman"
+
     parser.add_argument(
         "-i",
         "--input",
-        default="D:\BaiduNetdiskDownload\CrowdHuman",
+        default=default_path,
         help="root directory of CrowdHuman annotations",
     )
+
     parser.add_argument(
         "-o",
         "--output",
-        default="D:\BaiduNetdiskDownload\CrowdHuman\coco_style_anno",
+        default=os.path.join(default_path, "annotations"),
         help="directory to save coco formatted label file",
     )
+
     return parser.parse_args()
 
 

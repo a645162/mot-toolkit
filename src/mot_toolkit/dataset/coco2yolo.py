@@ -8,22 +8,28 @@ import os
 
 from tqdm import tqdm
 
-parser = argparse.ArgumentParser()
 
-parser.add_argument(
-    "--json_path",
-    default=r"D:\Dataset\ABOships-PLUS\annotations\val.json",
-    type=str,
-    help="input: coco format(json)",
-)
+def get_opts():
+    parser = argparse.ArgumentParser()
 
-parser.add_argument(
-    "--save_path",
-    default=r"D:\Dataset\ABOships-PLUS\annotations\val",
-    type=str,
-    help="specify where to save the output dir of labels",
-)
-arg = parser.parse_args()
+    default_path = f""
+
+    parser.add_argument(
+        "--json_path",
+        default=r"D:\Dataset\ABOships-PLUS\annotations\val.json",
+        type=str,
+        help="input: coco format(json)",
+    )
+
+    parser.add_argument(
+        "--save_path",
+        default=r"D:\Dataset\ABOships-PLUS\annotations\val",
+        type=str,
+        help="specify where to save the output dir of labels",
+    )
+    arg = parser.parse_args()
+
+    return arg
 
 
 def convert(size, box):
@@ -42,6 +48,8 @@ def convert(size, box):
 
 
 if __name__ == "__main__":
+    arg = get_opts()
+
     json_file = arg.json_path  # COCO Object Instance 类型的标注
     ana_txt_save_path = arg.save_path  # 保存的路径
 
