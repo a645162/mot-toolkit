@@ -1,9 +1,10 @@
+# Image Processing
 torchvision
-
 pillow
 opencv-python
 
+# Dataset Spilt
 scikit-learn
 
-mmcv
+# Convert to COCO
 mmengine

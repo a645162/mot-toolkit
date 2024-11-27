@@ -1,14 +1,27 @@
+# Log
 loguru
+
+# Program Update
 GitPython
 
+# CLI Progress Bar
 tqdm
 
+# Core Data
 numpy<2.0.0
 opencv-python
 
+# GUI
+qtpy
 pyside6
 
+# File
 chardet
+PyYaml
+toml
 
+# Gamepad Controller
 pygame
+
+# System Process
 psutil

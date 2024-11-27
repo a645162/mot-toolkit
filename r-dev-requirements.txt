@@ -1,8 +1,13 @@
+# Code quality
 ruff
 flake8
+
+# Testing
 pytest
 
+# Package
 pyinstaller
 nuitka
 
+# Image convert
 cairosvg
