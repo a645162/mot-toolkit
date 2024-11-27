@@ -13,15 +13,16 @@ def match_func(a: int) -> str:
         else:
             return "default"
     else:
-        match a:
-            case 1:
-                return "1"
-            case 2:
-                return "2"
-            case [3, 4]:
-                return "3,4"
-            case _:
-                return "default"
+        pass
+        # match a:
+        #     case 1:
+        #         return "1"
+        #     case 2:
+        #         return "2"
+        #     case [3, 4]:
+        #         return "3,4"
+        #     case _:
+        #         return "default"
 
 
 if __name__ == "__main__":

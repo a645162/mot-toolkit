@@ -171,3 +171,6 @@ class ListWithTitleWidget(QWidget):
 
     def try_to_select_text(self, text: str):
         self.list_widget.try_to_select_text(text)
+
+    def clear(self):
+        self.list_widget.clear()

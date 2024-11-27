@@ -12,8 +12,6 @@ from tqdm import tqdm
 def get_opts():
     parser = argparse.ArgumentParser()
 
-    default_path = f""
-
     parser.add_argument(
         "--json_path",
         default=r"D:\Dataset\ABOships-PLUS\annotations\val.json",

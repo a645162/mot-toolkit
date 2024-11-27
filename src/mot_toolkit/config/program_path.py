@@ -10,8 +10,10 @@ path_src = \
 path_project = \
     os.path.dirname(path_src)
 
-def get_current_cmd_dir()->str:
+
+def get_current_cmd_dir() -> str:
     return os.getcwd()
+
 
 if __name__ == '__main__':
     print(py_path)

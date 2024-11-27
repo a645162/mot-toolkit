@@ -6,6 +6,7 @@ GitPython
 
 # CLI Progress Bar
 tqdm
+progressbar2
 
 # Core Data
 numpy<2.0.0
