@@ -916,6 +916,22 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return -1
 
+    def get_index_by_frame_index(self, frame_index: int) -> int:
+        if frame_index < 0:
+            return -1
+
+        for i, annotation_obj in enumerate(self.annotation_file):
+            current_index = -1
+            try:
+                current_index = int(annotation_obj.file_name_no_extension)
+            except Exception:
+                pass
+
+            if current_index == frame_index:
+                return i
+
+        return -1
+
     def check_is_last_file(self, file_obj: XAnyLabelingAnnotation) -> bool:
         index = self.get_file_object_index(file_obj)
 

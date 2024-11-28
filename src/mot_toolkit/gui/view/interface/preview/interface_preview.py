@@ -3,7 +3,7 @@ import os
 import random
 import sys
 import threading
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import cv2
 
@@ -673,6 +673,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
+        self.r_object_list_widget.menu_copy_between \
+            .triggered.connect(self.__action_obj_copy_between_target)
 
         self.r_object_list_widget.menu_linear_interpolation \
             .triggered.connect(self.__action_obj_linear_interpolation)
@@ -1506,6 +1508,51 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
+    def __action_obj_copy_between_target(self):
+        frame_range = self.__dialog_between_frames()
+
+        if frame_range is None:
+            return
+
+        frame_start, frame_end = frame_range
+
+        index = self.r_object_list_widget.selection_index
+        selected_rect_obj = self.current_annotation_object.rect_annotation_list[index]
+
+        frame_start_index, frame_end_index = (
+            self.annotation_directory.get_index_by_frame_index(frame_start),
+            self.annotation_directory.get_index_by_frame_index(frame_end)
+        )
+        if frame_start_index == -1 or frame_end_index == -1:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Frame not found."
+            )
+            return
+
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to copy between target?"
+            f"\nFrom {frame_start} to {frame_end}"
+            "\n\nThis operation is irreversible!",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
+        self.annotation_directory.do_for_each_file(
+            func=lambda annotation_obj, i: annotation_obj.add_or_update_rect(selected_rect_obj)
+            if frame_start_index <= i <= frame_end_index else None,
+            start_index=frame_start_index,
+            end_index=frame_end_index
+        )
+
+        self.update_annotation_object_display()
+
     def linear_interpolation(self, start_frame, end_frame):
         label_index = self.r_object_list_widget.selection_index
         if label_index == -1:
@@ -1730,7 +1777,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return
 
         logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
-        logger.info(f"Delete Label:{label}")
+        logger.info(f"Delete Label: {label}")
 
         # self.current_annotation_object.del_by_label(label)
         # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
@@ -1749,15 +1796,18 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
-    def __action_obj_del_between_target(self):
+    def __dialog_between_frames(self) -> Optional[Tuple[int, int]]:
+        first_file_index = self.annotation_directory.first_file_index
+        last_file_index = self.annotation_directory.last_file_index
+
         dialog = DialogInput2Int(
             default_value1=0,
             default_value2=0,
             label1="Start Frame:",
             label2="End Frame:",
-            min_value=0,
-            max_value=len(self.annotation_directory.annotation_file) - 1,
-            title="Delete Target Between Frames",
+            min_value=first_file_index,
+            max_value=last_file_index,
+            title="Select Frame Range",
             parent=self
         )
         dialog.setGeometry(100, 100, 200, 150)
@@ -1765,22 +1815,42 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        return dialog.get_integers()
+
+    def __action_obj_del_between_target(self):
+        frame_range = self.__dialog_between_frames()
+
+        if frame_range is None:
+            return
+
+        frame_start, frame_end = frame_range
+
         index = self.r_object_list_widget.selection_index
         label = self.current_annotation_object.rect_annotation_list[index].label
+
+        frame_start_index, frame_end_index = (
+            self.annotation_directory.get_index_by_frame_index(frame_start),
+            self.annotation_directory.get_index_by_frame_index(frame_end)
+        )
+        if frame_start_index == -1 or frame_end_index == -1:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Frame not found."
+            )
+            return
 
         ret = QMessageBox.question(
             self,
             "Warning",
             f"Are you sure you want to del target({label})?\n\n"
-            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}\n"
+            f"{frame_start} - {frame_end}\n"
             f"※Include start and end frame!!!",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
         if ret != QMessageBox.StandardButton.Yes:
             return
-
-        frame_start, frame_end = dialog.get_integers()
 
         logger.info(f"[{index}]Delete the target in range({frame_start}~{frame_end})")
         logger.info(f"Delete Label:{label}")
@@ -1793,9 +1863,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.annotation_directory.do_for_each_file(
             func=lambda annotation_obj, i:
             annotation_obj.del_by_label(label)
-            if frame_start <= i <= frame_end else None,
-            start_index=frame_start,
-            end_index=frame_end
+            if frame_start_index <= i <= frame_end_index else None,
+            start_index=frame_start_index,
+            end_index=frame_end_index
         )
 
         # self.__update_object_list_widget()
@@ -2187,9 +2257,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         label_name, ok = QInputDialog.getText(
             self,
-            "Input Dialog",
-            "Enter the label name:"
-            f" (Suggest: {default_label_name})",
+            title="Input Dialog",
+            label=(
+                "Enter the label name:"
+                f" (Suggest: {default_label_name})"
+            ),
             text=default_label_name
         )
 

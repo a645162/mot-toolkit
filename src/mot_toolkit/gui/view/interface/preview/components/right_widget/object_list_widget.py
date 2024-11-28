@@ -51,6 +51,14 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_copy_subsequent)
         select_enable_list.append(self.menu_copy_subsequent)
 
+        self.menu_copy_between = \
+            QAction(
+                "Copy the target between frames(Label)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_copy_between)
+        select_enable_list.append(self.menu_copy_between)
+
         self.menu_linear_interpolation = \
             QAction(
                 "Linear Interpolation",
