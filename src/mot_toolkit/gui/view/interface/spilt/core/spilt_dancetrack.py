@@ -6,7 +6,7 @@ from enum import Enum
 from typing import List, Tuple
 
 from mot_toolkit.config.hardware import io_cpu_count
-from mot_toolkit.dataset.dataset_dir import get_dataset_dir_list
+from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 from mot_toolkit.utils.logs import get_logger

@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QLabel, QLineEdit, QPushButton
 )
 
-from mot_toolkit.dataset.dataset_dir import get_dataset_dir_list
+from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt, SpiltType
 from mot_toolkit.gui.view.components. \
     window.base_interface_window import BaseWorkInterfaceWindow
