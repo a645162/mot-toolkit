@@ -694,6 +694,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_dl_sam2)
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
+        self.r_object_list_widget.menu_dl_sam2_subsequence \
+            .triggered.connect(self.__action_obj_dl_sam2_subsequence)
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -2004,6 +2006,94 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             target_label=target_label,
         )
         export_window.exec()
+
+    def __action_obj_dl_sam2_subsequence(self):
+        import mot_toolkit.dl as dl
+
+        if not dl.support_torch:
+            QMessageBox.critical(self, "Warning", "PyTorch is not installed.")
+            return
+        if not dl.support_v8:
+            QMessageBox.critical(self, "Warning", "ultralytics is not installed.")
+            return
+
+        annotation_object = self.get_selection_object()
+        rect_widget = self.main_image_view.selection_widget
+
+        if annotation_object is None or rect_widget is None:
+            QMessageBox.critical(self, "Warning", "No object selected.")
+            return
+
+        from mot_toolkit.dl.model import sam2
+
+        ok = QMessageBox.question(
+            self,
+            "Warning", "Are you sure you want to run SAM2 on the subsequence?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
+        logger.info(f"Batch SAM2 Task Count: {len(self.current_file_list)}")
+
+        for file_obj in self.current_file_list:
+            logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
+            have_modify = False
+            for rect_obj in file_obj.rect_annotation_list:
+                if rect_obj.label != annotation_object.label:
+                    continue
+
+                original_bbox = rect_obj.get_xyxy_list()
+                result_list = sam2.sam_predict_xyxy(
+                    file_obj.pic_path,
+                    original_bbox
+                )
+
+                if len(result_list) != 1:
+                    logger.warning(f"Error: SAM result count({len(result_list)}) != 1")
+                    continue
+
+                result_bbox = result_list[0]
+                if len(result_bbox) != 4:
+                    logger.warning(f"Error: SAM result bbox length({len(result_bbox)}) != 4")
+                    continue
+
+                x1, y1, x2, y2 = (
+                    result_bbox[0],
+                    result_bbox[1],
+                    result_bbox[2],
+                    result_bbox[3]
+                )
+
+                iou = calculate_iou(original_bbox, result_bbox)
+                iou = round(iou, 2)
+
+                logger.info(f"Before: {original_bbox}")
+                logger.info(f"New: {result_bbox}")
+                logger.info(f"IOU: {iou}")
+
+                iou_threshold = 0.4
+                if iou < iou_threshold:
+                    logger.info(f"IOU is too low: {iou} < {iou_threshold}")
+                    continue
+
+                annotation_object.x1 = x1
+                annotation_object.y1 = y1
+                annotation_object.x2 = x2
+                annotation_object.y2 = y2
+
+                have_modify = True
+
+                # Only one (No same label)
+                break
+            if not have_modify:
+                continue
+
+            file_obj.modifying()
+
+        self.update_annotation_object_display()
+        logger.info("Batch SAM2 Task Finished.")
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
