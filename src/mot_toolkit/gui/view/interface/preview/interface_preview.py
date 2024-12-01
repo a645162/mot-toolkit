@@ -2017,6 +2017,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.critical(self, "Warning", "ultralytics is not installed.")
             return
 
+        current_index = self.get_current_file_truly_index()
         annotation_object = self.get_selection_object()
         rect_widget = self.main_image_view.selection_widget
 
@@ -2037,7 +2038,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         logger.info(f"Batch SAM2 Task Count: {len(self.current_file_list)}")
 
-        for file_obj in self.current_file_list:
+        for i, file_obj in enumerate(self.current_file_list):
+            if i <= current_index:
+                continue
+
             logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
             have_modify = False
             for rect_obj in file_obj.rect_annotation_list:
@@ -2078,10 +2082,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     logger.info(f"IOU is too low: {iou} < {iou_threshold}")
                     continue
 
-                annotation_object.x1 = x1
-                annotation_object.y1 = y1
-                annotation_object.x2 = x2
-                annotation_object.y2 = y2
+                rect_obj.x1 = x1
+                rect_obj.y1 = y1
+                rect_obj.x2 = x2
+                rect_obj.y2 = y2
 
                 have_modify = True
 
