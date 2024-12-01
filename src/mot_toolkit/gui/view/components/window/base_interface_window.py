@@ -1,3 +1,5 @@
+import os
+
 from PySide6.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -11,6 +13,10 @@ class BaseWorkInterfaceWindow(BaseQMainWindow):
 
     def __init__(self, work_directory_path: str, parent=None):
         super().__init__(parent=parent)
+
+        # Resolve the path to an absolute path
+        if os.path.exists(work_directory_path):
+            work_directory_path = os.path.abspath(work_directory_path)
 
         self.work_directory_path = work_directory_path
 

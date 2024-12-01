@@ -2255,18 +2255,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             max_value = max(digit_list) if len(digit_list) else 0
             default_label_name = str(max_value + 1)
 
+        logger.info("Default Label Name:", default_label_name)
+
+        # I don't know why
+        # Must remove parent= title= label= to make it work
         label_name, ok = QInputDialog.getText(
             self,
-            title="Input Dialog",
-            label=(
-                "Enter the label name:"
-                f" (Suggest: {default_label_name})"
+            "Input Dialog",
+            (
+                    "Enter the label name:" +
+                    f" (Suggest: {default_label_name})"
             ),
             text=default_label_name
         )
 
         if not ok:
-            return
+            return None
 
         # Check Label Name is Exist?
         if label_name in self.annotation_directory.label_list:
@@ -2280,7 +2284,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
 
             if not ok:
-                return
+                return None
 
         return label_name
 
@@ -2481,3 +2485,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 event.accept()
             else:
                 event.ignore()
+
+
+if __name__ == "__main__":
+    app = QApplication([])
+
+    window = InterFacePreview(
+        work_directory_path=r"."
+    )
+    window.show()
+
+    sys.exit(app.exec())
