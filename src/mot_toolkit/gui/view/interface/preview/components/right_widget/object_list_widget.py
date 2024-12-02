@@ -167,6 +167,14 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_dl_sam2_subsequence)
         select_enable_list.append(self.menu_dl_sam2_subsequence)
 
+        self.menu_dl_copy_sam2_subsequence = \
+            QAction(
+                "DL: Copy and SAM2 Subsequence",
+                q_menu
+            )
+        q_menu.addAction(self.menu_dl_copy_sam2_subsequence)
+        select_enable_list.append(self.menu_dl_copy_sam2_subsequence)
+
         q_menu.addSeparator()
 
         self.menu_unselect_all = \

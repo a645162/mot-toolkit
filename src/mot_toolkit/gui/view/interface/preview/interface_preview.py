@@ -695,7 +695,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
         self.r_object_list_widget.menu_dl_sam2_subsequence \
-            .triggered.connect(self.__action_obj_dl_sam2_subsequence)
+            .triggered.connect(
+            lambda x: self.__action_obj_dl_sam2_subsequence(copy_previous=False)
+        )
+        self.r_object_list_widget.menu_dl_copy_sam2_subsequence \
+            .triggered.connect(
+            lambda x: self.__action_obj_dl_sam2_subsequence(copy_previous=True)
+        )
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -1723,7 +1729,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if rect_widget is None:
             return
 
-        logger.info(f"- Restore Width: {previous_rect_obj.width} Height: {previous_rect_obj.height}")
+        # logger.info(f"- Restore Width: {previous_rect_obj.width} Height: {previous_rect_obj.height}")
 
         rect_widget.width_original = previous_rect_obj.width
         rect_widget.height_original = previous_rect_obj.height
@@ -1731,6 +1737,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.main_image_view.move_annotation_to_mouse_position()
         rect_widget.x1_original = previous_rect_obj.x1
         rect_widget.y1_original = previous_rect_obj.y1
+
+        rect_widget.modify()
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
@@ -2007,7 +2015,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         export_window.exec()
 
-    def __action_obj_dl_sam2_subsequence(self):
+    def __action_obj_dl_sam2_subsequence(self, copy_previous=False):
         import mot_toolkit.dl as dl
 
         if not dl.support_torch:
@@ -2041,19 +2049,35 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         logger.info(f"Batch SAM2 Task Count: {total_count}")
 
+        previous_file_obj: Optional[XAnyLabelingAnnotation] = None
+
         for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
             if i <= current_index:
+                previous_file_obj = file_obj
                 continue
 
             now_count = i - current_index
             logger.info(f"Processing {now_count}/{total_count}")
             logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
             have_modify = False
+
+            previous_obj: Optional[XAnyLabelingRect] = None
+            if copy_previous:
+                for rect_obj in previous_file_obj.rect_annotation_list:
+                    if rect_obj.label == annotation_object.label:
+                        previous_obj = rect_obj
+                        break
+
             for rect_obj in file_obj.rect_annotation_list:
                 if rect_obj.label != annotation_object.label:
                     continue
 
                 original_bbox = rect_obj.get_xyxy_list()
+
+                # Copy Last Frame
+                if copy_previous and previous_obj is not None:
+                    original_bbox = previous_obj.get_xyxy_list()
+
                 result_list = sam2.sam_predict_xyxy(
                     file_obj.pic_path,
                     original_bbox
@@ -2096,6 +2120,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 # Only one (No same label)
                 break
+
+            previous_file_obj = file_obj
+
             if not have_modify:
                 continue
 
