@@ -694,13 +694,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_dl_sam2)
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
+
         self.r_object_list_widget.menu_dl_sam2_subsequence \
             .triggered.connect(
-            lambda x: self.__action_obj_dl_sam2_subsequence(copy_previous=False)
-        )
-        self.r_object_list_widget.menu_dl_copy_sam2_subsequence \
-            .triggered.connect(
-            lambda x: self.__action_obj_dl_sam2_subsequence(copy_previous=True)
+            lambda x: self.__action_obj_dl_sam2_subsequence(
+                copy_previous=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked(),
+                expand_top=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked()
+            )
         )
 
         self.r_object_list_widget.menu_unselect_all \
@@ -2015,7 +2015,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         export_window.exec()
 
-    def __action_obj_dl_sam2_subsequence(self, copy_previous=False):
+    def __action_obj_dl_sam2_subsequence(
+            self,
+            copy_previous=False,
+            expand_top=False,
+            iou_threshold=0.3
+    ):
         import mot_toolkit.dl as dl
 
         if not dl.support_torch:
@@ -2078,16 +2083,35 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 if copy_previous and previous_obj is not None:
                     original_bbox = previous_obj.get_xyxy_list()
 
+                input_bbox = original_bbox.copy()
+
+                if expand_top:
+                    x1, y1, x2, y2 = input_bbox
+                    y1 = max(0.0, y1 - abs(y2 - y1) / 2)
+                    input_bbox = [x1, y1, x2, y2]
+
                 result_list = sam2.sam_predict_xyxy(
                     file_obj.pic_path,
-                    original_bbox
+                    input_bbox
                 )
 
                 if len(result_list) != 1:
-                    logger.warning(f"Error: SAM result count({len(result_list)}) != 1")
-                    continue
+                    logger.warning(f"SAM result count({len(result_list)}) != 1")
+                    iou_list: List[float] = []
+                    for result_bbox in result_list:
+                        iou = calculate_iou(original_bbox, result_bbox)
+                        iou_list.append(iou)
 
-                result_bbox = result_list[0]
+                    # Get Max Index
+                    max_index = iou_list.index(max(iou_list))
+                    max_iou = max(iou_list)
+                    if max_iou < iou_threshold:
+                        logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
+                        continue
+                    result_bbox = result_list[max_index]
+                else:
+                    result_bbox = result_list[0]
+
                 if len(result_bbox) != 4:
                     logger.warning(f"Error: SAM result bbox length({len(result_bbox)}) != 4")
                     continue
@@ -2106,7 +2130,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 logger.info(f"New: {result_bbox}")
                 logger.info(f"IOU: {iou}")
 
-                iou_threshold = 0.4
                 if iou < iou_threshold:
                     logger.info(f"IOU is too low: {iou} < {iou_threshold}")
                     continue

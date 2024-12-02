@@ -159,6 +159,8 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_dl_export_task)
         select_enable_list.append(self.menu_dl_export_task)
 
+        q_menu.addSeparator()
+
         self.menu_dl_sam2_subsequence = \
             QAction(
                 "DL: SAM2 Subsequence",
@@ -167,13 +169,23 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_dl_sam2_subsequence)
         select_enable_list.append(self.menu_dl_sam2_subsequence)
 
-        self.menu_dl_copy_sam2_subsequence = \
+        self.menu_dl_sam2_subsequence_opt_copy = \
             QAction(
-                "DL: Copy and SAM2 Subsequence",
+                "   Copy Previous",
                 q_menu
             )
-        q_menu.addAction(self.menu_dl_copy_sam2_subsequence)
-        select_enable_list.append(self.menu_dl_copy_sam2_subsequence)
+        self.menu_dl_sam2_subsequence_opt_copy.setCheckable(True)
+        self.menu_dl_sam2_subsequence_opt_copy.setChecked(False)
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_copy)
+
+        self.menu_dl_sam2_subsequence_opt_expand_top = \
+            QAction(
+                "   Expand Top",
+                q_menu
+            )
+        self.menu_dl_sam2_subsequence_opt_expand_top.setCheckable(True)
+        self.menu_dl_sam2_subsequence_opt_expand_top.setChecked(False)
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_expand_top)
 
         q_menu.addSeparator()
 
