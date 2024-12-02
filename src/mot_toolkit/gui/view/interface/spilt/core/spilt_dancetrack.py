@@ -74,7 +74,7 @@ class SpiltDanceTrack:
         path_gt_txt = os.path.join(path_gt, "gt.txt")
         path_seq_info_ini = os.path.join(target_dir, "seqinfo.ini")
 
-        for i, file_obj in enumerate(annotation_directory.annotation_file):
+        for i, file_obj in enumerate(annotation_directory.annotation_file_list):
             current_index = i + self.file_name_start
 
             source_path_jpeg = file_obj.file_path.replace(".json", ".jpg")

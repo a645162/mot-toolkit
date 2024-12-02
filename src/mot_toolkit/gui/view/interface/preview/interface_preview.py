@@ -866,7 +866,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __update_file_list(self):
         # Update File List
         self.current_file_list = \
-            self.annotation_directory.annotation_file
+            self.annotation_directory.annotation_file_list
         self.current_file_str_list = \
             self.annotation_directory.file_name_list
 
@@ -946,12 +946,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return
 
         self.current_annotation_object = \
-            self.annotation_directory.annotation_file[index]
+            self.annotation_directory.annotation_file_list[index]
         self.current_file_path = self.current_annotation_object.file_path
 
         self.previous_annotation_object = None
         if index != 0:
-            self.previous_annotation_object = self.annotation_directory.annotation_file[index - 1]
+            self.previous_annotation_object = self.annotation_directory.annotation_file_list[index - 1]
 
         self.main_image_view.update_dataset_annotation_path(
             annotation_obj=self.current_annotation_object,
@@ -1011,7 +1011,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.r_label_class_list_widget.is_selected_last()
         ):
             self.current_file_list = \
-                self.annotation_directory.annotation_file
+                self.annotation_directory.annotation_file_list
             self.current_file_str_list = \
                 self.annotation_directory.file_name_list
         else:
@@ -1368,10 +1368,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return None
 
-        if file_index >= len(self.annotation_directory.annotation_file):
+        if file_index >= len(self.annotation_directory.annotation_file_list):
             return None
 
-        return self.annotation_directory.annotation_file[file_index]
+        return self.annotation_directory.annotation_file_list[file_index]
 
     def __action_file_reload(self):
         ok = QMessageBox.question(
@@ -1386,7 +1386,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         file_index = self.get_current_file_truly_index()
         if file_index != -1:
-            file_obj = self.annotation_directory.annotation_file[file_index]
+            file_obj = self.annotation_directory.annotation_file_list[file_index]
 
             file_name = file_obj.file_name_no_extension
             logger.info(f"Reload File: {file_name}")
@@ -1400,7 +1400,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return ""
 
-        file_path = self.annotation_directory.annotation_file[file_index].pic_path
+        file_path = self.annotation_directory.annotation_file_list[file_index].pic_path
 
         return file_path
 
@@ -1410,7 +1410,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return ""
 
-        return self.annotation_directory.annotation_file[file_index].file_path
+        return self.annotation_directory.annotation_file_list[file_index].file_path
 
     def __action_file_list_copy_path_image(self):
         file_path = self.__get_selection_image_path()
@@ -1628,7 +1628,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             label1="Start Frame:",
             label2="End Frame:",
             min_value=0,
-            max_value=len(self.annotation_directory.annotation_file) - 1,
+            max_value=len(self.annotation_directory.annotation_file_list) - 1,
             title="Linear Interpolation",
             parent=self
         )
@@ -2036,12 +2036,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if ok != QMessageBox.StandardButton.Yes:
             return
 
-        logger.info(f"Batch SAM2 Task Count: {len(self.current_file_list)}")
+        total_count = len(self.annotation_directory.annotation_file_list)
+        total_count = total_count - current_index
 
-        for i, file_obj in enumerate(self.current_file_list):
+        logger.info(f"Batch SAM2 Task Count: {total_count}")
+
+        for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
             if i <= current_index:
                 continue
 
+            now_count = i - current_index
+            logger.info(f"Processing {now_count}/{total_count}")
             logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
             have_modify = False
             for rect_obj in file_obj.rect_annotation_list:
@@ -2260,10 +2265,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         option_window = OpenCVPreviewOptionWindow(
             parent=self,
-            annotation_file=self.annotation_directory.annotation_file,
+            annotation_file=self.annotation_directory.annotation_file_list,
             current_frame=current_frame_index + 1,
             start_frame=1,
-            end_frame=len(self.annotation_directory.annotation_file),
+            end_frame=len(self.annotation_directory.annotation_file_list),
             selection_label=selection_label,
             color_dict=color_dict
         )
@@ -2403,7 +2408,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def check_is_have_modified(self) -> bool:
         found = False
 
-        for annotation_obj in self.annotation_directory.annotation_file:
+        for annotation_obj in self.annotation_directory.annotation_file_list:
             if annotation_obj.is_modified:
                 found = True
                 logger.info(f"{annotation_obj.file_path} is modified but not save.")

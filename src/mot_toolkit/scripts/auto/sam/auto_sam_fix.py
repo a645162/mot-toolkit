@@ -60,7 +60,7 @@ def handle_sequence(
     )
 
     previous_file_obj: XAnyLabelingAnnotation | None = None
-    for annotation_file_obj in annotation_directory.annotation_file:
+    for annotation_file_obj in annotation_directory.annotation_file_list:
         current_file_name = annotation_file_obj.file_name_no_extension
         current_file_index = int(current_file_name)
 

@@ -701,7 +701,7 @@ modify_store_file_name = "modified_files.json"
 class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     slot_modified: Signal = Signal(int)
 
-    annotation_file: List[XAnyLabelingAnnotation]
+    annotation_file_list: List[XAnyLabelingAnnotation]
 
     label_list: List[str]
 
@@ -716,7 +716,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     def __init__(self):
         super().__init__()
 
-        self.annotation_file = []
+        self.annotation_file_list = []
         self.label_list = []
         self.file_name_list = []
 
@@ -744,10 +744,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         """
         if start_index == -1:
             start_index = 0
-        if end_index == -1 or end_index > len(self.annotation_file):
-            end_index = len(self.annotation_file) - 1
+        if end_index == -1 or end_index > len(self.annotation_file_list):
+            end_index = len(self.annotation_file_list) - 1
 
-        file_obj_list = self.annotation_file[start_index:end_index + 1]
+        file_obj_list = self.annotation_file_list[start_index:end_index + 1]
         file_index_list = range(start_index, end_index + 1)
 
         def work_function(file_obj: XAnyLabelingAnnotation, index: int):
@@ -794,7 +794,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         self.__loaded = True
 
         # Clear
-        self.annotation_file.clear()
+        self.annotation_file_list.clear()
         self.file_name_list.clear()
 
         for i, json_file in enumerate(self.file_list):
@@ -808,15 +808,15 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
             annotation.slot_modified.connect(self.slot_modified)
 
-            self.annotation_file.append(annotation)
+            self.annotation_file_list.append(annotation)
 
         self.__check_can_only_file_name()
 
-        for annotation in self.annotation_file:
+        for annotation in self.annotation_file_list:
             self.file_name_list.append(annotation.file_name_no_extension)
 
     def save_json_files(self):
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
             if annotation_obj.is_modified:
                 annotation_obj.save()
 
@@ -826,7 +826,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         label_list.clear()
         self.label_obj_list_dict = {}
 
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
 
             current_label_list = annotation_obj.get_label_list()
             for label in current_label_list:
@@ -852,7 +852,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     def __check_can_only_file_name(self) -> bool:
         directory_list = []
         ext_list = []
-        for annotation in self.annotation_file:
+        for annotation in self.annotation_file_list:
             file_path = annotation.file_path
             directory_path = os.path.dirname(file_path)
             file_name = os.path.basename(file_path)
@@ -889,28 +889,28 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     @property
     def first_file(self) -> XAnyLabelingAnnotation:
-        return self.annotation_file[0] if len(self.annotation_file) > 0 else None
+        return self.annotation_file_list[0] if len(self.annotation_file_list) > 0 else None
 
     @property
     def last_file(self) -> XAnyLabelingAnnotation:
-        return self.annotation_file[-1] if len(self.annotation_file) > 0 else None
+        return self.annotation_file_list[-1] if len(self.annotation_file_list) > 0 else None
 
     def get_file_object_by_file_name(self, file_name: str) -> Optional[XAnyLabelingAnnotation]:
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
             if annotation_obj.file_name == file_name:
                 return annotation_obj
 
         return None
 
     def get_file_object_index(self, file_obj: XAnyLabelingAnnotation) -> int:
-        for i, annotation_obj in enumerate(self.annotation_file):
+        for i, annotation_obj in enumerate(self.annotation_file_list):
             if annotation_obj.is_same_path(file_obj):
                 return i
 
         return -1
 
     def get_file_object_index_by_name(self, file_name: str) -> int:
-        for i, annotation_obj in enumerate(self.annotation_file):
+        for i, annotation_obj in enumerate(self.annotation_file_list):
             if annotation_obj.file_name == file_name:
                 return i
 
@@ -920,7 +920,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if frame_index < 0:
             return -1
 
-        for i, annotation_obj in enumerate(self.annotation_file):
+        for i, annotation_obj in enumerate(self.annotation_file_list):
             current_index = -1
             try:
                 current_index = int(annotation_obj.file_name_no_extension)
@@ -938,12 +938,12 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if index == -1:
             return False
 
-        return index == len(self.annotation_file) - 1
+        return index == len(self.annotation_file_list) - 1
 
     def get_annotation_file_interval_list(self) -> List[AnnotationFileInterval]:
         interval_list: List[AnnotationFileInterval] = []
 
-        if len(self.annotation_file) == 0:
+        if len(self.annotation_file_list) == 0:
             return interval_list
 
         with open(self.save_record_path, "r", encoding="utf-8") as f:
@@ -970,7 +970,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         all_file_name_list = [
             file_obj.file_name
-            for file_obj in self.annotation_file
+            for file_obj in self.annotation_file_list
         ]
 
         # Remove File Name Not Exist
@@ -998,18 +998,18 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
             interval = AnnotationFileInterval()
             interval.name = str(i + 1)
-            interval.first_file = self.annotation_file[first_file_index]
-            interval.last_file = self.annotation_file[last_file_index]
+            interval.first_file = self.annotation_file_list[first_file_index]
+            interval.last_file = self.annotation_file_list[last_file_index]
 
             for j in range(first_file_index + 1, last_file_index):
-                interval.other_files_list.append(self.annotation_file[j])
+                interval.other_files_list.append(self.annotation_file_list[j])
 
             interval_list.append(interval)
 
         return interval_list
 
     def get_file_by_frame_number(self, frame_number: int) -> Optional[XAnyLabelingAnnotation]:
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
             try:
                 current_frame_number = int(annotation_obj.file_name_no_extension)
                 if current_frame_number == frame_number:
@@ -1031,8 +1031,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             start = self.get_file_object_by_file_name(file_name)
         if isinstance(start, int):
             file_index = start
-            if 0 <= file_index < len(self.annotation_file):
-                start = self.annotation_file[file_index]
+            if 0 <= file_index < len(self.annotation_file_list):
+                start = self.annotation_file_list[file_index]
         if not isinstance(start, XAnyLabelingAnnotation):
             logger.error(f"Invalid Start: {start}")
             return -1
@@ -1043,8 +1043,8 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             end = self.get_file_object_by_file_name(file_name)
         if isinstance(end, int):
             file_index = end
-            if 0 <= file_index < len(self.annotation_file):
-                end = self.annotation_file[file_index]
+            if 0 <= file_index < len(self.annotation_file_list):
+                end = self.annotation_file_list[file_index]
         if not isinstance(end, XAnyLabelingAnnotation):
             logger.error(f"Invalid End: {end}")
             return -1
@@ -1120,13 +1120,13 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     @property
     def file_count(self) -> int:
-        return len(self.annotation_file)
+        return len(self.annotation_file_list)
 
     @property
     def first_file_index(self) -> int:
         index = -1
 
-        for file_obj in self.annotation_file:
+        for file_obj in self.annotation_file_list:
             try:
                 file_name = file_obj.file_name_no_extension
                 current_file_index = int(file_name)
@@ -1142,7 +1142,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
     def last_file_index(self) -> int:
         index = -1
 
-        for file_obj in self.annotation_file:
+        for file_obj in self.annotation_file_list:
             try:
                 file_name = file_obj.file_name_no_extension
                 current_file_index = int(file_name)
@@ -1156,7 +1156,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     def fix_bugs(self) -> bool:
         modified = False
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
             if annotation_obj.fix_bugs():
                 modified = True
 
@@ -1174,7 +1174,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if not os.path.exists(output_dir):
             os.makedirs(output_dir, exist_ok=True)
 
-        for annotation_obj in self.annotation_file:
+        for annotation_obj in self.annotation_file_list:
             yolo_text = annotation_obj.to_yolo_format(
                 replace_label_dict=replace_label_dict
             ).strip() + "\n"
@@ -1265,12 +1265,12 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         name = f"{video_name}-{sequence_name}"
         im_dir = "img1"
         frame_rate = self.frame_rate
-        seq_length = len(self.annotation_file)
-        if len(self.annotation_file) == 0:
+        seq_length = len(self.annotation_file_list)
+        if len(self.annotation_file_list) == 0:
             return ""
-        im_width = self.annotation_file[0].image_width
-        im_height = self.annotation_file[0].image_height
-        im_ext = self.annotation_file[0].pic_file_extension
+        im_width = self.annotation_file_list[0].image_width
+        im_height = self.annotation_file_list[0].image_height
+        im_ext = self.annotation_file_list[0].pic_file_extension
 
         ini_text = (
             f"[Sequence]\n"

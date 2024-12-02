@@ -28,7 +28,7 @@ def handle_dir(dir_path):
 
     annotation_directory.load_json_files()
 
-    for annotation_file in annotation_directory.annotation_file:
+    for annotation_file in annotation_directory.annotation_file_list:
         name = annotation_file.file_name_no_extension
         image = annotation_file.get_cv_mat_with_box()
 
