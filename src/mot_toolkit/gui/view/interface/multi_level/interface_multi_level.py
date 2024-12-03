@@ -17,16 +17,29 @@ from mot_toolkit.gui.view.interface. \
     statistics.interface_statistics import WorkInterfaceStatistics
 from mot_toolkit.gui.view.interface. \
     smooth.interface_smooth import InterFaceSmooth
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
 
 
 class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
-    base_title = "Multi Level Finder"
+    base_title: str = "Multi Level Finder"
 
-    def __init__(self, work_directory_path: str, parent=None):
+    base_dir: str = ""
+
+    def __init__(
+            self,
+            work_directory_path: str,
+            parent=None
+    ):
         super().__init__(
             work_directory_path=work_directory_path,
             parent=parent
         )
+        self.base_dir = work_directory_path
+        if self.base_dir:
+            logger.info(f"BaseDir: {self.base_dir}")
+        logger.info(f"WorkInterfaceMultiLevel: {work_directory_path}")
 
         self.__setup_window_properties()
 
@@ -76,14 +89,14 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
         self.btn_toolbox_statistics.clicked.connect(self.__btn_toolbox_statistics_clicked)
         self.toolbox_layout.addWidget(self.btn_toolbox_statistics)
 
-        self.btn_toolbox_smooth = QPushButton(parent=self)
-        self.btn_toolbox_smooth.setText("Smooth")
-        self.btn_toolbox_smooth.setSizePolicy(
-            QSizePolicy.Policy.Minimum,
-            QSizePolicy.Policy.Minimum
-        )
-        self.btn_toolbox_smooth.clicked.connect(self.__btn_toolbox_smooth_clicked)
-        self.toolbox_layout.addWidget(self.btn_toolbox_smooth)
+        # self.btn_toolbox_smooth = QPushButton(parent=self)
+        # self.btn_toolbox_smooth.setText("Smooth")
+        # self.btn_toolbox_smooth.setSizePolicy(
+        #     QSizePolicy.Policy.Minimum,
+        #     QSizePolicy.Policy.Minimum
+        # )
+        # self.btn_toolbox_smooth.clicked.connect(self.__btn_toolbox_smooth_clicked)
+        # self.toolbox_layout.addWidget(self.btn_toolbox_smooth)
 
         self.toolbox_layout.addStretch()
 
@@ -103,7 +116,7 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
 
         self.btn_toolbox_preview.setEnabled(is_dir)
         self.btn_toolbox_statistics.setEnabled(is_dir)
-        self.btn_toolbox_smooth.setEnabled(is_dir)
+        # self.btn_toolbox_smooth.setEnabled(is_dir)
 
     def __btn_toolbox_preview_clicked(self):
         path = self.multi_level_finder.get_dir()
@@ -113,6 +126,7 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
 
         interface_preview = InterFacePreview(
             work_directory_path=path,
+            base_dir=self.base_dir,
             parent=self
         )
         interface_preview.show()
@@ -127,13 +141,13 @@ class WorkInterfaceMultiLevel(BaseWorkInterfaceWindow):
         )
         interface_statistics.show()
 
-    def __btn_toolbox_smooth_clicked(self):
-        path = self.multi_level_finder.get_dir()
-
-        path = os.path.abspath(path)
-
-        interface_smooth = InterFaceSmooth(
-            work_directory_path=path,
-            parent=self
-        )
-        interface_smooth.show()
+    # def __btn_toolbox_smooth_clicked(self):
+    #     path = self.multi_level_finder.get_dir()
+    #
+    #     path = os.path.abspath(path)
+    #
+    #     interface_smooth = InterFaceSmooth(
+    #         work_directory_path=path,
+    #         parent=self
+    #     )
+    #     interface_smooth.show()

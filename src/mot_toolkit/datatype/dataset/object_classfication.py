@@ -90,7 +90,7 @@ class ObjectClassConfigure:
             json.dump(dict_obj, f, indent=4)
 
     @staticmethod
-    def load_configure_file(file_path: str) -> "Optional[ObjectClassConfigure]":
+    def create_by_configure_file(file_path: str) -> "Optional[ObjectClassConfigure]":
         if not os.path.exists(file_path):
             return None
 

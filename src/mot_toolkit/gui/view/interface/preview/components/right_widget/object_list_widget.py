@@ -43,6 +43,16 @@ class ObjectListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
+        self.menu_change_class = \
+            QAction(
+                "Change Class",
+                q_menu
+            )
+        q_menu.addAction(self.menu_change_class)
+        select_enable_list.append(self.menu_change_class)
+
+        q_menu.addSeparator()
+
         self.menu_copy_subsequent = \
             QAction(
                 "Copy the target in subsequent frames(Label)",

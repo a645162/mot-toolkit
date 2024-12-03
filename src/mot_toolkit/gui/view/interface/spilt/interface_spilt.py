@@ -57,6 +57,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         logger.info(f"Spilt Configure Path: {self.settings_json_path}")
 
+        self.reload()
+
     def __setup_properties(self):
         # Set Title
         self.setWindowTitle("Spilt Datasets")

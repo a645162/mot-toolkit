@@ -114,7 +114,7 @@ class InterFaceClassify(BaseWorkInterfaceWindow):
             return
 
         self.class_config = \
-            ObjectClassConfigure.load_configure_file(self.configure_path)
+            ObjectClassConfigure.create_by_configure_file(self.configure_path)
         if self.class_config is None:
             self.class_config = ObjectClassConfigure()
 

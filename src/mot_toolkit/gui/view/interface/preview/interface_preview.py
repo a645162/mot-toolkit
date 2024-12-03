@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QDialog, QInputDialog, QMessageBox,
 )
 
+from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.dl.utils.value_calc import calculate_iou
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
@@ -38,6 +39,7 @@ from mot_toolkit.gui.view.components.widget. \
 from mot_toolkit.gui.view.components.widget.rect.annotation_widget_rect import AnnotationWidgetRect
 from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect
+from mot_toolkit.gui.view.interface.classify.dialog.object_class_select_dialog import ClassSelectionDialog
 from mot_toolkit.gui.view.interface. \
     preview.components.detail.detail_widget import DetailWidget
 from mot_toolkit.gui.view.interface.preview.components. \
@@ -69,6 +71,8 @@ logger = get_logger()
 
 
 class InterFacePreview(BaseWorkInterfaceWindow):
+    base_dir: str = ""
+
     annotation_directory: XAnyLabelingAnnotationDirectory = None
 
     current_file_list: List[XAnyLabelingAnnotation]
@@ -83,11 +87,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     menu: QMenuBar = None
 
-    def __init__(self, work_directory_path: str, parent=None):
+    def __init__(
+            self,
+            work_directory_path: str,
+            base_dir: str = "",
+            parent=None
+    ):
         super().__init__(
             work_directory_path=work_directory_path,
             parent=parent
         )
+        self.base_dir = base_dir
+        if self.base_dir:
+            logger.info(f"Base Directory: {self.base_dir}")
         logger.info(f"Preview Work Directory: {work_directory_path}")
 
         self.current_file_list = []
@@ -670,6 +682,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Obj List
         self.r_object_list_widget.menu_subsequent_new_id \
             .triggered.connect(self.__action_obj_subsequent_new_id)
+
+        self.r_object_list_widget.menu_change_class \
+            .triggered.connect(self.__action_obj_change_class)
 
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
@@ -1486,6 +1501,52 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         self.update_annotation_object_display()
+
+    def __action_obj_change_class(self):
+        select_rect_index = self.r_object_list_widget.selection_index
+        if select_rect_index == -1:
+            return
+        selected_rect_obj = \
+            self.current_annotation_object.rect_annotation_list[
+                select_rect_index
+            ]
+
+        selected_rect_id = selected_rect_obj.label
+        selected_rect_class_id = selected_rect_obj.group_id
+
+        class_config_json_path = os.path.join(self.base_dir, "class_config.json")
+
+        if not os.path.exists(class_config_json_path):
+            QMessageBox.warning(self, "Warning", "Class Config File Not Found!")
+            return
+
+        object_class_configure = ObjectClassConfigure.create_by_configure_file(
+            file_path=class_config_json_path
+        )
+
+        dialog = ClassSelectionDialog(
+            class_configure=object_class_configure,
+            class_id=selected_rect_class_id,
+            parent=self
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            logger.info("Dialog was canceled")
+
+        selected_class_id = dialog.selected_class_id
+        logger.info(f"Change Object Id {selected_rect_id} class to {selected_class_id}")
+
+        def change_class(annotation_obj: XAnyLabelingAnnotation, file_index: int):
+            for rect_obj in annotation_obj.rect_annotation_list:
+                if rect_obj.label == selected_rect_id:
+                    rect_obj.group_id = selected_class_id
+
+        self.annotation_directory.do_for_each_file(
+            func=change_class
+        )
+
+        self.update_annotation_object_display()
+
+        logger.info("Change Class Done!")
 
     def __action_obj_copy_subsequent_target(self):
         if self.r_object_list_widget.selection_index == -1:
