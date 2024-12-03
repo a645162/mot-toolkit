@@ -1540,6 +1540,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 if rect_obj.label == selected_rect_id:
                     rect_obj.group_id = selected_class_id
 
+                    annotation_obj.modifying()
+                    break
+
         self.annotation_directory.do_for_each_file(
             func=change_class
         )

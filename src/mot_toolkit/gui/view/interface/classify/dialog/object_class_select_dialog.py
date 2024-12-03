@@ -66,7 +66,7 @@ class ClassSelectionDialog(QDialog):
 
     def accept(self):
 
-        self.selected_class_id = self.class_combo_box.currentData()
+        self.__selected_class_id = self.class_combo_box.currentData()
 
         super().accept()
 
