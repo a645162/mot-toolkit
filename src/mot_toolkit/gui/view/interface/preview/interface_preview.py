@@ -710,11 +710,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
 
+        expend_top = 0.5 if self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked() else 0
         self.r_object_list_widget.menu_dl_sam2_subsequence \
             .triggered.connect(
             lambda x: self.__action_obj_dl_sam2_subsequence(
                 copy_previous=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked(),
-                expand_top=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked()
+                expand_top=expend_top
             )
         )
 
@@ -2085,9 +2086,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_obj_dl_sam2_subsequence(
             self,
-            copy_previous=False,
-            expand_top=False,
-            iou_threshold=0.3
+            copy_previous: bool = False,
+            expand_left: float = 0,
+            expand_top: float = 0,
+            expand_right: float = 0,
+            expand_bottom: float = 0,
+            iou_threshold: float = 0.3
     ):
         import mot_toolkit.dl as dl
 
@@ -2113,19 +2117,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         start_index = self.annotation_directory.get_index_by_frame_index(frame_range[0])
         end_index = self.annotation_directory.get_index_by_frame_index(frame_range[1])
 
-        ok = QMessageBox.question(
-            self,
-            "Warning",
-            (
-                "Are you sure you want to run SAM2 on the subsequence?"
-                f"\n\nFrom {frame_range[0]} to {frame_range[1]}"
-            ),
-            QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
-        )
-        if ok != QMessageBox.StandardButton.Yes:
-            return
-
         # Generate task file list
         task_file_obj_list: List[XAnyLabelingAnnotation] = []
         for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
@@ -2141,6 +2132,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 task_file_obj_list.append(file_obj)
 
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            (
+                "Are you sure you want to run SAM2 on the subsequence?"
+                f"\n\nFrom {frame_range[0]} to {frame_range[1]} (Total: {len(task_file_obj_list)})"
+            ),
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
         # Get Previous File Object
         previous_file_obj: Optional[XAnyLabelingAnnotation] = None
         if start_index != 0:
@@ -2149,6 +2153,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         total_count = len(task_file_obj_list)
         logger.info(f"Batch SAM2 Task Count: {total_count}")
+
+        error_list: List[str] = []
 
         for i, file_obj in enumerate(task_file_obj_list):
             logger.info(f"Processing [{i + 1}/{total_count}]")
@@ -2178,54 +2184,77 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 input_bbox = original_bbox.copy()
 
+                x1, y1, x2, y2 = map(float, input_bbox)
+
+                image_width = file_obj.image_width
+                image_height = file_obj.image_height
+
+                # expand_left = 0.3
+                # expand_top = 0.1
+                # expand_right = 0.2
+                # expand_bottom = 0
+
+                if expand_left:
+                    x1 = max(0.0, x1 - abs(x2 - x1) * expand_left)
                 if expand_top:
-                    x1, y1, x2, y2 = input_bbox
-                    y1 = max(0.0, y1 - abs(y2 - y1) / 2)
-                    input_bbox = [x1, y1, x2, y2]
+                    y1 = max(0.0, y1 - abs(y2 - y1) * expand_top)
+                if expand_right:
+                    x2 = min(image_width, x2 + abs(x2 - x1) * expand_right)
+                if expand_bottom:
+                    y2 = min(image_height, y2 + abs(y2 - y1) * expand_bottom)
+
+                input_bbox = [x1, y1, x2, y2]
 
                 result_list = sam2.sam_predict_xyxy(
                     file_obj.pic_path,
                     input_bbox
                 )
 
+                have_error = False
+
                 if len(result_list) == 0:
                     logger.warning(f"No result for Object:{rect_obj.label}")
-                    continue
-
-                if len(result_list) > 1:
-                    logger.warning(f"SAM result count({len(result_list)}) != 1")
-
-                    iou_list: List[float] = []
-                    for result_bbox in result_list:
-                        iou = calculate_iou(original_bbox, result_bbox)
-                        iou_list.append(iou)
-
-                    # Get Max Index
-                    max_index = iou_list.index(max(iou_list))
-                    max_iou = max(iou_list)
-                    if max_iou < iou_threshold:
-                        logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
-                        continue
-                    result_bbox = result_list[max_index]
+                    have_error = True
                 else:
-                    result_bbox = result_list[0]
+                    if len(result_list) > 1:
+                        logger.warning(f"SAM result count({len(result_list)}) != 1")
 
-                if len(result_bbox) != 4:
-                    logger.warning(f"Error: SAM result bbox length({len(result_bbox)}) != 4")
+                        iou_list: List[float] = []
+                        for result_bbox in result_list:
+                            iou = calculate_iou(original_bbox, result_bbox)
+                            iou_list.append(iou)
+
+                        # Get Max Index
+                        max_index = iou_list.index(max(iou_list))
+                        max_iou = max(iou_list)
+                        if max_iou < iou_threshold:
+                            logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
+                            have_error = True
+                        else:
+                            result_list = result_list[max_index]
+                    else:
+                        result_list = result_list[0]
+
+                    if not have_error and len(result_list) != 4:
+                        logger.warning(f"Error: SAM result bbox length({len(result_list)}) != 4")
+                        have_error = True
+
+                if have_error:
+                    error_list.append(file_obj.file_name_no_extension)
                     continue
 
                 x1, y1, x2, y2 = (
-                    result_bbox[0],
-                    result_bbox[1],
-                    result_bbox[2],
-                    result_bbox[3]
+                    result_list[0],
+                    result_list[1],
+                    result_list[2],
+                    result_list[3]
                 )
 
-                iou = calculate_iou(original_bbox, result_bbox)
+                iou = calculate_iou(original_bbox, result_list)
                 iou = round(iou, 2)
 
                 logger.info(f"Before: {original_bbox}")
-                logger.info(f"New: {result_bbox}")
+                logger.info(f"New: {result_list}")
                 logger.info(f"IOU: {iou}")
 
                 if iou < iou_threshold:
@@ -2249,6 +2278,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.update_annotation_object_display()
         logger.info("Batch SAM2 Task Finished.")
+        if len(error_list) > 0:
+            logger.warning(f"Batch SAM2 Task have {len(error_list)} errors")
+            for file_name in error_list:
+                logger.warning(f"SAM Error on {file_name}")
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
