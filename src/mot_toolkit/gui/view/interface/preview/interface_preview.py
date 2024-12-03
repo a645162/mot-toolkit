@@ -1874,9 +1874,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         first_file_index = self.annotation_directory.first_file_index
         last_file_index = self.annotation_directory.last_file_index
 
+        current_index = self.get_current_file_truly_index()
+        current_file_obj = self.annotation_directory.annotation_file_list[current_index]
+        current_file_index = int(current_file_obj.file_name_no_extension)
+
         dialog = DialogInput2Int(
-            default_value1=0,
-            default_value2=0,
+            default_value1=current_file_index + 1,
+            default_value2=last_file_index,
             label1="Start Frame:",
             label2="End Frame:",
             min_value=first_file_index,
@@ -2094,7 +2098,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             QMessageBox.critical(self, "Warning", "ultralytics is not installed.")
             return
 
-        current_index = self.get_current_file_truly_index()
         annotation_object = self.get_selection_object()
         rect_widget = self.main_image_view.selection_widget
 
@@ -2104,38 +2107,64 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         from mot_toolkit.dl.model import sam2
 
+        frame_range = self.__dialog_between_frames()
+        if frame_range is None:
+            return
+        start_index = self.annotation_directory.get_index_by_frame_index(frame_range[0])
+        end_index = self.annotation_directory.get_index_by_frame_index(frame_range[1])
+
         ok = QMessageBox.question(
             self,
-            "Warning", "Are you sure you want to run SAM2 on the subsequence?",
+            "Warning",
+            (
+                "Are you sure you want to run SAM2 on the subsequence?"
+                f"\n\nFrom {frame_range[0]} to {frame_range[1]}"
+            ),
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
         if ok != QMessageBox.StandardButton.Yes:
             return
 
-        total_count = len(self.annotation_directory.annotation_file_list)
-        total_count = total_count - current_index
+        # Generate task file list
+        task_file_obj_list: List[XAnyLabelingAnnotation] = []
+        for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
+            if start_index <= i <= end_index:
+                found = False
+                for rect_obj in file_obj.rect_annotation_list:
+                    if rect_obj.label == annotation_object.label:
+                        found = True
+                        break
 
+                if not found:
+                    continue
+
+                task_file_obj_list.append(file_obj)
+
+        # Get Previous File Object
+        previous_file_obj: Optional[XAnyLabelingAnnotation] = None
+        if start_index != 0:
+            previous_file_obj = \
+                self.annotation_directory.annotation_file_list[start_index - 1]
+
+        total_count = len(task_file_obj_list)
         logger.info(f"Batch SAM2 Task Count: {total_count}")
 
-        previous_file_obj: Optional[XAnyLabelingAnnotation] = None
-
-        for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
-            if i <= current_index:
-                previous_file_obj = file_obj
-                continue
-
-            now_count = i - current_index
-            logger.info(f"Processing {now_count}/{total_count}")
+        for i, file_obj in enumerate(task_file_obj_list):
+            logger.info(f"Processing [{i + 1}/{total_count}]")
             logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
             have_modify = False
 
-            previous_obj: Optional[XAnyLabelingRect] = None
-            if copy_previous:
+            previous_rect_obj: Optional[XAnyLabelingRect] = None
+
+            if copy_previous and previous_file_obj is not None:
                 for rect_obj in previous_file_obj.rect_annotation_list:
                     if rect_obj.label == annotation_object.label:
-                        previous_obj = rect_obj
+                        previous_rect_obj = rect_obj
                         break
+
+            # Copy Last Frame Object
+            previous_file_obj = file_obj
 
             for rect_obj in file_obj.rect_annotation_list:
                 if rect_obj.label != annotation_object.label:
@@ -2144,11 +2173,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 original_bbox = rect_obj.get_xyxy_list()
 
                 # Copy Last Frame
-                if copy_previous and previous_obj is not None:
-                    original_bbox = previous_obj.get_xyxy_list()
-
-                # Copy Last Frame Object
-                previous_file_obj = file_obj
+                if copy_previous and previous_rect_obj is not None:
+                    original_bbox = previous_rect_obj.get_xyxy_list()
 
                 input_bbox = original_bbox.copy()
 
