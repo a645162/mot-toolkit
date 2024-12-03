@@ -2083,6 +2083,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 if copy_previous and previous_obj is not None:
                     original_bbox = previous_obj.get_xyxy_list()
 
+                # Copy Last Frame Object
+                previous_file_obj = file_obj
+
                 input_bbox = original_bbox.copy()
 
                 if expand_top:
@@ -2095,8 +2098,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     input_bbox
                 )
 
-                if len(result_list) != 1:
+                if len(result_list) == 0:
+                    logger.warning(f"No result for Object:{rect_obj.label}")
+                    continue
+
+                if len(result_list) > 1:
                     logger.warning(f"SAM result count({len(result_list)}) != 1")
+
                     iou_list: List[float] = []
                     for result_bbox in result_list:
                         iou = calculate_iou(original_bbox, result_bbox)
@@ -2143,8 +2151,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 # Only one (No same label)
                 break
-
-            previous_file_obj = file_obj
 
             if not have_modify:
                 continue
