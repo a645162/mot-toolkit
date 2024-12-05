@@ -1532,6 +1532,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             logger.info("Dialog was canceled")
+            return
 
         selected_class_id = dialog.selected_class_id
         logger.info(f"Change Object Id {selected_rect_id} class to {selected_class_id}")
