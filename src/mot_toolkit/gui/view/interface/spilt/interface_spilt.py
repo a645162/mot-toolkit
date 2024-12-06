@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QHBoxLayout, QGroupBox,
-    QLabel, QLineEdit, QPushButton
+    QLabel, QLineEdit, QPushButton, QComboBox
 )
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
@@ -45,6 +45,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
     depth = 2
 
+    __json_file_name: str = "default.spilt.json"
+
     def __init__(self, work_directory_path: str, parent=None):
         super().__init__(work_directory_path, parent=parent)
         logger.info(f"Spilt Work Directory: {work_directory_path}")
@@ -55,9 +57,9 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.__setup_properties()
         self.__init_ui()
 
-        logger.info(f"Spilt Configure Path: {self.settings_json_path}")
+        self.load_json_list()
 
-        self.reload()
+        logger.info(f"Spilt Configure Path: {self.settings_json_path}")
 
     def __setup_properties(self):
         # Set Title
@@ -67,6 +69,23 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.work_directory_label = \
             QLabel("Work Directory: " + self.work_directory_path)
         self.v_layout.addWidget(self.work_directory_label)
+
+        self.select_file_group = QGroupBox("Select File")
+        self.select_file_layout = QHBoxLayout()
+        self.select_file_group.setLayout(self.select_file_layout)
+        self.v_layout.addWidget(self.select_file_group)
+
+        # Combobox
+        self.select_file_combobox = \
+            QComboBox(parent=self.select_file_group)
+
+        # Allow edit
+        self.select_file_combobox.setEditable(True)
+
+        # When combobox value changed
+        self.select_file_combobox.currentTextChanged.connect(self.__select_file_changed)
+
+        self.select_file_layout.addWidget(self.select_file_combobox)
 
         self.h_widget = QGroupBox(parent=self)
         self.h_widget.setTitle("Dataset Spilt")
@@ -167,15 +186,49 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         __connect_list_menu(self.dataset_test_list_widget)
         __connect_list_menu(self.dataset_other_list_widget)
 
+    def load_json_list(self):
+        if not os.path.exists(self.work_directory_path):
+            return
+
+        file_list = os.listdir(self.work_directory_path)
+        file_list = [f for f in file_list if f.endswith(".spilt.json")]
+
+        if len(file_list) == 0:
+            file_list.append("default.spilt.json")
+
+        self.select_file_combobox.clear()
+        self.select_file_combobox.addItems(file_list)
+
+    def __select_file_changed(self):
+        self.json_file_name = self.select_file_combobox.currentText()
+
+    @property
+    def json_file_name(self):
+        return self.__json_file_name
+
+    @json_file_name.setter
+    def json_file_name(self, value):
+        value = str(value).strip()
+
+        if value == "":
+            return
+
+        if not value.endswith(".spilt.json"):
+            return
+
+        self.__json_file_name = value
+
     @property
     def settings_json_path(self) -> str:
-        path = os.path.join(self.work_directory_path, "spilt_settings.json")
+        path = os.path.join(self.work_directory_path, self.json_file_name)
 
         if not os.path.exists(self.work_directory_path):
             try:
                 os.makedirs(self.work_directory_path, exist_ok=True)
             except Exception as e:
                 logger.error(f"Create Directory Error: {e}")
+
+        logger.info(f"Current json path: {path}")
 
         return path
 
@@ -184,12 +237,17 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.update_spilt_list_widget()
 
     def reload_data(self):
-        if os.path.exists(self.settings_json_path):
-            with open(self.settings_json_path, "r", encoding="utf-8") as f:
+        json_path = self.settings_json_path
+
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
                 json_dict: dict = json.load(f)
 
-            if len(json_dict.keys()) > 0:
-                self.json_dict.update(json_dict)
+            self.json_dict.clear()
+            self.json_dict.update(json_dict)
+
+            # if len(json_dict.keys()) > 0:
+            #     self.json_dict.update(json_dict)
 
         dir_level = 2
         try:
