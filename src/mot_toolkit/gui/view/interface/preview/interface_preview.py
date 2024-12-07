@@ -1477,7 +1477,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 "Are you sure to change"
                 f" {current_label_id} to {new_label_id} "
                 "in subsequent frames?"
-                f"\nNot include current file.{frame_index}"
+                f"\nInclude current file.{frame_index}"
                 "\n\nThis operation is irreversible!"
             ),
             QMessageBox.StandardButton.Yes,
@@ -1493,12 +1493,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         def change_id(annotation_obj: XAnyLabelingAnnotation, index: int):
-            if index > file_index:
+            if index >= file_index:
                 annotation_obj.change_annotation_label(current_label_id, new_label_id)
 
         self.annotation_directory.do_for_each_file(
             func=change_id,
-            start_index=file_index + 1
+            start_index=file_index
         )
 
         self.update_annotation_object_display()
