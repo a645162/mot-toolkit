@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QWidget,
     QHBoxLayout, QGroupBox,
-    QLabel, QLineEdit, QPushButton, QComboBox
+    QLabel, QLineEdit, QPushButton, QComboBox, QSizePolicy, QVBoxLayout, QMessageBox
 )
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
@@ -43,9 +43,11 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
     dataset_dir_list: List[DatasetSpilt]
 
-    depth = 2
+    depth = 1
 
     __json_file_name: str = "default.spilt.json"
+
+    __last_load_file_name: str = ""
 
     def __init__(self, work_directory_path: str, parent=None):
         super().__init__(work_directory_path, parent=parent)
@@ -85,7 +87,21 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         # When combobox value changed
         self.select_file_combobox.currentTextChanged.connect(self.__select_file_changed)
 
+        self.select_file_combobox.setMinimumWidth(300)
+
         self.select_file_layout.addWidget(self.select_file_combobox)
+
+        # Combobox Refresh Button
+        self.select_file_refresh_button = \
+            QPushButton("Refresh", parent=self.select_file_group)
+        self.select_file_refresh_button.clicked.connect(self.load_json_list)
+        # SizePolicy Minimum
+        self.select_file_refresh_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
+        self.select_file_layout.addWidget(self.select_file_refresh_button)
+
+        self.select_file_layout.addStretch()
 
         self.h_widget = QGroupBox(parent=self)
         self.h_widget.setTitle("Dataset Spilt")
@@ -146,10 +162,20 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.control_layout.addWidget(save_button)
 
         # Setting
-        self.v_layout.addWidget(QLabel("Depth:"))
+        setting_group = QGroupBox("Setting")
+        setting_layout = QVBoxLayout()
+        setting_group.setLayout(setting_layout)
+        self.v_layout.addWidget(setting_group)
+
+        setting_layout.addWidget(QLabel("Depth:"))
         self.dir_depth_lineedit = QLineEdit(parent=self)
-        self.dir_depth_lineedit.setText("2")
-        self.v_layout.addWidget(self.dir_depth_lineedit)
+        self.dir_depth_lineedit.setText(str(self.depth))
+        setting_layout.addWidget(self.dir_depth_lineedit)
+
+        setting_layout.addWidget(QLabel("File Name Depth:"))
+        self.file_name_depth_lineedit = QLineEdit(parent=self)
+        self.file_name_depth_lineedit.setText(str(2))
+        setting_layout.addWidget(self.file_name_depth_lineedit)
 
         # Connect Menu
         self.__connect_menu()
@@ -249,6 +275,12 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             # if len(json_dict.keys()) > 0:
             #     self.json_dict.update(json_dict)
 
+        try:
+            file_name_depth = json_dict.get("file_name_depth", 2)
+            self.file_name_depth_lineedit.setText(str(file_name_depth))
+        except Exception:
+            pass
+
         dir_level = 2
         try:
             dir_level = int(self.dir_depth_lineedit.text())
@@ -310,6 +342,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.dataset_dir_list.clear()
         self.dataset_dir_list.extend(all_dataset_obj_list)
 
+        self.__last_load_file_name = self.json_file_name
+
     def __get_spilt_dict(
             self,
             dataset_obj_list: List[DatasetSpilt]
@@ -367,6 +401,22 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         )
 
     def save(self):
+        if self.__last_load_file_name != self.json_file_name:
+            ok = QMessageBox.warning(
+                self,
+                "Warning",
+                (
+                    "Have you load the file?\n"
+                    "You really want to save???"
+                ),
+                QMessageBox.StandardButton.Yes,
+                QMessageBox.StandardButton.No
+            )
+            if ok != QMessageBox.StandardButton.Yes:
+                return
+
+        self.__update_dataset_props()
+
         (
             dataset_obj_list_train,
             dataset_obj_list_val,
@@ -384,6 +434,13 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         self.json_dict["depth"] = self.depth
 
+        file_name_depth = 2
+        try:
+            file_name_depth = int(self.file_name_depth_lineedit.text().strip())
+        except Exception:
+            pass
+        self.json_dict["file_name_depth"] = file_name_depth
+
         with open(self.settings_json_path, "w", encoding="utf-8") as f:
             json.dump(
                 obj=self.json_dict,
@@ -391,6 +448,17 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
                 indent=4,
                 ensure_ascii=False
             )
+
+    def __update_dataset_props(self):
+        for dataset_obj in self.dataset_dir_list:
+            file_name_depth = 2
+            try:
+                file_name_depth = int(self.file_name_depth_lineedit.text().strip())
+            except Exception:
+                pass
+
+            dataset_obj.depth = self.depth
+            dataset_obj.file_name_depth = file_name_depth
 
     def __update_list_widget_with_list(
             self,

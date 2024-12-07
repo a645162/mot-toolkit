@@ -37,18 +37,22 @@ class DatasetSpilt:
 
     __depth: int = 2
 
+    __file_name_depth: int = 2
+
     def __init__(
             self,
             path="",
             base_dir_path="",
             spilt_type: Optional[SpiltType] = None,
-            depth: int = 2
+            depth: int = 2,
+            file_name_depth: int = 2,
     ):
         self.current_run_dir = get_current_cmd_dir()
 
         self.base_dir_path = base_dir_path
         self.spilt_type = spilt_type
         self.depth = depth
+        self.file_name_depth = file_name_depth
 
         self.path = path
 
@@ -113,6 +117,17 @@ class DatasetSpilt:
 
         self.__depth = depth
 
+    @property
+    def file_name_depth(self) -> int:
+        return self.__file_name_depth
+
+    @file_name_depth.setter
+    def file_name_depth(self, depth: int):
+        if depth < 1:
+            return
+
+        self.__file_name_depth = depth
+
     def get_spilt_type_str(self) -> str:
         return self.spilt_type.value
 
@@ -133,7 +148,8 @@ class DatasetSpilt:
             "unique_path": self.unique_path,
             "base_dir_path": self.base_dir_path,
             "spilt_type": self.spilt_type.value,
-            "depth": self.depth
+            "depth": self.depth,
+            "file_name_depth": self.file_name_depth,
         }
 
     @staticmethod
@@ -145,14 +161,15 @@ class DatasetSpilt:
             path=data.get("path", ""),
             base_dir_path=data.get("base_dir_path", ""),
             spilt_type=SpiltType(data.get("spilt_type", SpiltType.NONE.value)),
-            depth=data.get("depth", 2)
+            depth=data.get("depth", 2),
+            file_name_depth=data.get("file_name_depth", 2),
         )
 
     def generate_new_name(self, path: str = "") -> str:
         if len(path) == 0:
             path = self.abs_path
 
-        current_depth = self.depth - 1
+        current_depth = self.file_name_depth - 1
 
         current_dir = path
         last_1_level_dir_name = os.path.basename(current_dir)
