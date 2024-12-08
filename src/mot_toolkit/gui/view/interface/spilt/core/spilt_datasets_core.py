@@ -123,7 +123,7 @@ if __name__ == '__main__':
     # dataset_base_dir = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
     # output_base_dir = r"H:\Datasets\TrackShipOnlineVideo\ShipTrackSpilt"
 
-    config = "test.spilt.json"
+    config = "20241208.spilt.json"
 
     spilt_dataset(
         dataset_base_dir=dataset_base_dir,

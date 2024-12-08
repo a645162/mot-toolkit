@@ -57,7 +57,11 @@ def save_to_csv(
         "Frame Count",
         "Object Count", "Object Instance Count",
         "Class Count",
-        "Object Size Type"
+
+        "Object Size Type",
+        "Small",
+        "Medium",
+        "Large",
     ]
 
     # Append Class Title
@@ -81,7 +85,8 @@ def save_to_csv(
 
 def handle_sequence_dir(
         sequence_dir_path: str,
-        class_config: ObjectClassConfigure
+        class_config: ObjectClassConfigure,
+        resize: bool = True
 ) -> List:
     return_list = []
 
@@ -99,9 +104,21 @@ def handle_sequence_dir(
 
     annotation_directory.load_json_files()
 
+    width_ratio = 1
+    height_ratio = 1
+
+    if resize:
+        first_file_obj = annotation_directory.annotation_file_list[0]
+        image_width, image_height = first_file_obj.image_width, first_file_obj.image_height
+        target_width, target_height = 640, 640
+        width_ratio = target_width / image_width
+        height_ratio = target_height / image_height
+
     id_list: List[str] = []
     object_instance_count = 0
-    object_size_type_list: List[ObjectSizeType] = []
+
+    object_id_dict: dict = {}
+
     for annotation_file in annotation_directory.annotation_file_list:
         for rect_annotation in annotation_file.rect_annotation_list:
             object_instance_count += 1
@@ -109,12 +126,22 @@ def handle_sequence_dir(
             if rect_annotation.label not in id_list:
                 id_list.append(rect_annotation.label)
 
+            if rect_annotation.label not in object_id_dict.keys():
+                object_id_dict[rect_annotation.label] = {}
+
+            object_dict = object_id_dict[rect_annotation.label]
+            if "object_size_type_list" not in object_dict.keys():
+                object_dict["object_size_type_list"] = []
+            object_size_type_list: List[ObjectSizeType] = \
+                object_dict["object_size_type_list"]
+
+            new_width = rect_annotation.width * width_ratio
+            new_height = rect_annotation.height * height_ratio
             object_size_type = ObjectSizeType.get_coco_object_size_type(
-                rect_annotation.width,
-                rect_annotation.height
+                width=new_width,
+                height=new_height
             )
-            if object_size_type not in object_size_type_list:
-                object_size_type_list.append(object_size_type)
+            object_size_type_list.append(object_size_type)
 
             # Stats Class Count
             for obj_class in class_config.object_classes:
@@ -130,20 +157,61 @@ def handle_sequence_dir(
     ]
     class_count = len(class_count_list_no_zero)
 
-    # Sort By Value
-    object_size_type_list.sort(key=lambda x: int(x))
+    seq_object_size_type_list = []
+
+    # Get most frequent object size type
+    for id in object_id_dict.keys():
+        object_size_type_list: List[ObjectSizeType] = \
+            object_id_dict[id]["object_size_type_list"]
+
+        type_list: List[ObjectSizeType] = list(set(object_size_type_list))
+
+        type_dict = {}
+        for type in type_list:
+            count = object_size_type_list.count(type)
+            type_dict[type.name] = count
+
+        max_key = max(type_dict, key=type_dict.get)
+
+        max_type = ObjectSizeType[max_key]
+
+        object_id_dict[id]["object_size_type"] = max_type
+
+        if max_type not in seq_object_size_type_list:
+            seq_object_size_type_list.append(max_type)
+
+    # # Sort By Value
+    # object_size_type_list.sort(key=lambda x: int(x))
 
     object_size_type_str_list = [
         str(size_type)
-        for size_type in object_size_type_list
+        for size_type in seq_object_size_type_list
     ]
     object_size_type_str = ",".join(object_size_type_str_list).strip()
+
+    count_small = 0
+    count_medium = 0
+    count_large = 0
+
+    for id in object_id_dict.keys():
+        object_size_type: ObjectSizeType = object_id_dict[id]["object_size_type"]
+        if object_size_type == ObjectSizeType.SMALL:
+            count_small += 1
+        elif object_size_type == ObjectSizeType.MEDIUM:
+            count_medium += 1
+        elif object_size_type == ObjectSizeType.LARGE:
+            count_large += 1
 
     return_list.append(frame_count)
     return_list.append(len(id_list))
     return_list.append(object_instance_count)
     return_list.append(class_count)
+
     return_list.append(object_size_type_str)
+    return_list.append(count_small)
+    return_list.append(count_medium)
+    return_list.append(count_large)
+
     return_list.extend(class_count_list)
 
     print("\t\tFrame Count:", return_list[0])
@@ -151,16 +219,19 @@ def handle_sequence_dir(
     print("\t\tObject Instance Count:", return_list[2])
     print("\t\tClass Count:", return_list[3])
     print("\t\tObject Size Type:", return_list[4])
+    print("\t\t\tSmall Object Count:", return_list[5])
+    print("\t\t\tMedium Object Count:", return_list[6])
+    print("\t\t\tLarge Object Count:", return_list[7])
     print("\t\tClass Instance Count List:")
-    for idx, count in enumerate(return_list[5:]):
+    for idx, count in enumerate(return_list[8:]):
         print(f"\t\t\t{class_config.object_classes[idx].class_name}: {count}")
 
     return return_list
 
 
 if __name__ == "__main__":
-    base_path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
-    # base_path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    # base_path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
+    base_path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
 
     empty_line_spilt = True
 
