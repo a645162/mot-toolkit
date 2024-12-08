@@ -50,8 +50,8 @@ def install_crawler():
     print("Install Crawler Done!")
 
 
-def install_torch():
-    install_requirements_txt("r-torch-requirements.txt")
+def install_dl():
+    install_requirements_txt("r-dl-requirements.txt")
 
     print("Install Torch Done!")
 
@@ -105,7 +105,7 @@ if __name__ == "__main__":
     print("Install Options:")
     print("-" * 20)
     print(f"Dev: {args.dev}")
-    print(f"Torch: {args.torch}")
+    print(f"Deep Learning: {args.dl}")
     print(f"Crawler: {args.crawler}")
     print(f"Dataset: {args.dataset}")
     print(f"Eval: {args.eval}")
@@ -117,8 +117,8 @@ if __name__ == "__main__":
 
     if args.dev:
         install_dep_dev()
-    if args.torch:
-        install_torch()
+    if args.dl:
+        install_dl()
     if args.crawler:
         install_crawler()
     if args.dataset:

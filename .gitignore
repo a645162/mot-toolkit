@@ -9,6 +9,8 @@ TrackEval/
 *.avi
 *.mp4
 
+.~lock.*
+
 /Output/
 
 /Test/
