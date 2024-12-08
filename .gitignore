@@ -2,6 +2,8 @@ requirements.lock
 requirements-dev.lock
 uv.lock
 
+TrackEval/
+
 *.pt
 
 *.avi

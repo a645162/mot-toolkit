@@ -81,7 +81,7 @@ def stat_count(dir_path: str) -> List[Tuple[str, str, str, str, str, str]]:
 
                 # Object Sum in each annotation files
                 object_sum_list = []
-                for annotation_file in annotation_directory.annotation_file:
+                for annotation_file in annotation_directory.annotation_file_list:
                     object_sum_list.append(len(annotation_file.rect_annotation_list))
                 object_sum_count = sum(object_sum_list)
 

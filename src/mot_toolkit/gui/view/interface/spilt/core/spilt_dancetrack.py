@@ -6,7 +6,7 @@ from enum import Enum
 from typing import List, Tuple
 
 from mot_toolkit.config.hardware import io_cpu_count
-from mot_toolkit.dataset.dataset_dir import get_dataset_dir_list
+from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 from mot_toolkit.utils.logs import get_logger
@@ -74,7 +74,7 @@ class SpiltDanceTrack:
         path_gt_txt = os.path.join(path_gt, "gt.txt")
         path_seq_info_ini = os.path.join(target_dir, "seqinfo.ini")
 
-        for i, file_obj in enumerate(annotation_directory.annotation_file):
+        for i, file_obj in enumerate(annotation_directory.annotation_file_list):
             current_index = i + self.file_name_start
 
             source_path_jpeg = file_obj.file_path.replace(".json", ".jpg")

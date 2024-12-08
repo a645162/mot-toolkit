@@ -4,6 +4,7 @@ from typing import Optional
 
 from mot_toolkit.gui.view.components.widget. \
     basic.link_label import LinkLabel
+from mot_toolkit.gui.view.interface.classify.interface_classify import InterFaceClassify
 from mot_toolkit.gui.view.interface.spilt.interface_spilt import InterFaceDatasetSpilt
 from mot_toolkit.utils.logs import get_logger
 
@@ -31,7 +32,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import (
     QApplication,
     QMainWindow, QWidget,
-    QVBoxLayout, QPushButton, QLabel,
+    QVBoxLayout, QPushButton, QLabel, QGroupBox,
 )
 
 logger.info(f"PySide6({PySide6Version}) Load Success")
@@ -62,11 +63,15 @@ logger.info("Start To Load Qt Resource")
 
 # Load Program Resources
 
-logger.info("Load Qt Resource Success")
+logger.info("Try to load Qt Resource Success")
+try:
+    from mot_toolkit.gui.resources.resources import qInitResources
 
-from mot_toolkit.gui.resources.resources import qInitResources
-
-qInitResources()
+    qInitResources()
+except ImportError as e:
+    logger.error(f"Please Compile Qt Resource First! {e}")
+except Exception as e:
+    logger.error(f"Load Qt Resource Failed! {e}")
 
 logger.info("Load Package Finished!")
 
@@ -113,32 +118,63 @@ class MainWindow(QMainWindow):
         self.__select_directory_path_widget.path_line_edit.setText(default_path)
         self.v_layout.addWidget(self.__select_directory_path_widget)
 
+        # Group Main
+        group_main = QGroupBox("Main")
+        group_main_layout = QVBoxLayout()
+        group_main.setLayout(group_main_layout)
+        self.v_layout.addWidget(group_main)
+
         self.__button_interface_multi_level = QPushButton(parent=self)
         self.__button_interface_multi_level.setText("Multi Level Finder")
         self.__button_interface_multi_level.clicked.connect(self.__button_interface_multi_level_clicked)
-        self.v_layout.addWidget(self.__button_interface_multi_level)
-
-        self.__button_stats = QPushButton(parent=self)
-        self.__button_stats.setText("Statistics")
-        self.__button_stats.clicked.connect(self.__button_stats_clicked)
-        self.v_layout.addWidget(self.__button_stats)
+        group_main_layout.addWidget(self.__button_interface_multi_level)
 
         self.__button_preview = QPushButton(parent=self)
         self.__button_preview.setText("Preview")
         self.__button_preview.setStyleSheet("color: blue;")
         self.__button_preview.clicked.connect(self.__button_preview_clicked)
-        self.v_layout.addWidget(self.__button_preview)
+        group_main_layout.addWidget(self.__button_preview)
 
-        self.__button_smooth = QPushButton(parent=self)
-        self.__button_smooth.setText("Smooth")
-        self.__button_smooth.clicked.connect(self.__button_smooth_clicked)
-        self.v_layout.addWidget(self.__button_smooth)
+        # Group Statistics
+        group_stats = QGroupBox("Statistics")
+        group_stats_layout = QVBoxLayout()
+        group_stats.setLayout(group_stats_layout)
+        self.v_layout.addWidget(group_stats)
+
+        self.__button_stats = QPushButton(parent=self)
+        self.__button_stats.setText("Statistics")
+        self.__button_stats.clicked.connect(self.__button_stats_clicked)
+        group_stats_layout.addWidget(self.__button_stats)
+
+        # Group Classify
+        group_classify = QGroupBox("Classify")
+        group_classify_layout = QVBoxLayout()
+        group_classify.setLayout(group_classify_layout)
+        self.v_layout.addWidget(group_classify)
+
+        self.__button_class_config = QPushButton(parent=self)
+        self.__button_class_config.setText("Class Config")
+        self.__button_class_config.clicked.connect(self.__button_class_config_clicked)
+        group_classify_layout.addWidget(self.__button_class_config)
 
         self.__button_dataset_spilt = \
             QPushButton(parent=self)
         self.__button_dataset_spilt.setText("Dataset Spilt")
         self.__button_dataset_spilt.clicked.connect(self.__button_dataset_spilt_clicked)
-        self.v_layout.addWidget(self.__button_dataset_spilt)
+        group_classify_layout.addWidget(self.__button_dataset_spilt)
+
+        # Group Other
+        group_other = QGroupBox("Other")
+        group_other_layout = QVBoxLayout()
+        group_other.setLayout(group_other_layout)
+        self.v_layout.addWidget(group_other)
+
+        self.__button_smooth = QPushButton(parent=self)
+        self.__button_smooth.setText("Smooth")
+        self.__button_smooth.clicked.connect(self.__button_smooth_clicked)
+        group_other_layout.addWidget(self.__button_smooth)
+
+        # Bottom
 
         author_label = QLabel(parent=self)
         author_label.setText("Author: Haomin Kong")
@@ -157,6 +193,7 @@ class MainWindow(QMainWindow):
                 lambda _: self.__select_directory_path_widget.open_dir_select_dialog()
             )
 
+    # Group Main
     def __button_interface_multi_level_clicked(self):
         path = self.__select_directory_path_widget.get_absolute_path()
         program_settings.last_work_directory = path
@@ -166,15 +203,6 @@ class MainWindow(QMainWindow):
             parent=self
         )
         self.interface_multi_level.show()
-
-    def __button_stats_clicked(self):
-        path = self.__select_directory_path_widget.get_absolute_path()
-        program_settings.last_work_directory = path
-
-        self.interface_statistics = WorkInterfaceStatistics(
-            work_directory_path=path
-        )
-        self.interface_statistics.show()
 
     def __button_preview_clicked(self):
         path = self.__select_directory_path_widget.get_absolute_path()
@@ -186,14 +214,25 @@ class MainWindow(QMainWindow):
         )
         self.interface_preview.show()
 
-    def __button_smooth_clicked(self):
+    # Statistics
+    def __button_stats_clicked(self):
         path = self.__select_directory_path_widget.get_absolute_path()
         program_settings.last_work_directory = path
 
-        self.interface_smooth = InterFaceSmooth(
+        self.interface_statistics = WorkInterfaceStatistics(
             work_directory_path=path
         )
-        self.interface_smooth.show()
+        self.interface_statistics.show()
+
+    # Classify
+    def __button_class_config_clicked(self):
+        path = self.__select_directory_path_widget.get_absolute_path()
+        program_settings.last_work_directory = path
+
+        self.interface_class_config = InterFaceClassify(
+            work_directory_path=path
+        )
+        self.interface_class_config.show()
 
     def __button_dataset_spilt_clicked(self):
         path = self.__select_directory_path_widget.get_absolute_path()
@@ -203,6 +242,16 @@ class MainWindow(QMainWindow):
             work_directory_path=path
         )
         self.interface_dataset_spilt.show()
+
+    # Other
+    def __button_smooth_clicked(self):
+        path = self.__select_directory_path_widget.get_absolute_path()
+        program_settings.last_work_directory = path
+
+        self.interface_smooth = InterFaceSmooth(
+            work_directory_path=path
+        )
+        self.interface_smooth.show()
 
 
 def init_main_window():

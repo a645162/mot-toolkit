@@ -3,7 +3,7 @@ import os
 import random
 import sys
 import threading
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import cv2
 
@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (
     QDialog, QInputDialog, QMessageBox,
 )
 
+from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.dl.utils.value_calc import calculate_iou
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
@@ -38,6 +39,7 @@ from mot_toolkit.gui.view.components.widget. \
 from mot_toolkit.gui.view.components.widget.rect.annotation_widget_rect import AnnotationWidgetRect
 from mot_toolkit.gui.view.components. \
     widget.rect.image_rect import ImageRect
+from mot_toolkit.gui.view.interface.classify.dialog.object_class_select_dialog import ClassSelectionDialog
 from mot_toolkit.gui.view.interface. \
     preview.components.detail.detail_widget import DetailWidget
 from mot_toolkit.gui.view.interface.preview.components. \
@@ -69,6 +71,8 @@ logger = get_logger()
 
 
 class InterFacePreview(BaseWorkInterfaceWindow):
+    base_dir: str = ""
+
     annotation_directory: XAnyLabelingAnnotationDirectory = None
 
     current_file_list: List[XAnyLabelingAnnotation]
@@ -83,11 +87,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     menu: QMenuBar = None
 
-    def __init__(self, work_directory_path: str, parent=None):
+    def __init__(
+            self,
+            work_directory_path: str,
+            base_dir: str = "",
+            parent=None
+    ):
         super().__init__(
             work_directory_path=work_directory_path,
             parent=parent
         )
+        self.base_dir = base_dir
+        if self.base_dir:
+            logger.info(f"Base Directory: {self.base_dir}")
         logger.info(f"Preview Work Directory: {work_directory_path}")
 
         self.current_file_list = []
@@ -671,8 +683,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_subsequent_new_id \
             .triggered.connect(self.__action_obj_subsequent_new_id)
 
+        self.r_object_list_widget.menu_change_class \
+            .triggered.connect(self.__action_obj_change_class)
+
         self.r_object_list_widget.menu_copy_subsequent \
             .triggered.connect(self.__action_obj_copy_subsequent_target)
+        self.r_object_list_widget.menu_copy_between \
+            .triggered.connect(self.__action_obj_copy_between_target)
 
         self.r_object_list_widget.menu_linear_interpolation \
             .triggered.connect(self.__action_obj_linear_interpolation)
@@ -692,6 +709,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             .triggered.connect(self.__action_obj_dl_sam2)
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
+
+        expend_top = 0.5 if self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked() else 0
+        self.r_object_list_widget.menu_dl_sam2_subsequence \
+            .triggered.connect(
+            lambda x: self.__action_obj_dl_sam2_subsequence(
+                copy_previous=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked(),
+                expand_top=expend_top
+            )
+        )
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -862,7 +888,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __update_file_list(self):
         # Update File List
         self.current_file_list = \
-            self.annotation_directory.annotation_file
+            self.annotation_directory.annotation_file_list
         self.current_file_str_list = \
             self.annotation_directory.file_name_list
 
@@ -942,12 +968,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return
 
         self.current_annotation_object = \
-            self.annotation_directory.annotation_file[index]
+            self.annotation_directory.annotation_file_list[index]
         self.current_file_path = self.current_annotation_object.file_path
 
         self.previous_annotation_object = None
         if index != 0:
-            self.previous_annotation_object = self.annotation_directory.annotation_file[index - 1]
+            self.previous_annotation_object = self.annotation_directory.annotation_file_list[index - 1]
 
         self.main_image_view.update_dataset_annotation_path(
             annotation_obj=self.current_annotation_object,
@@ -1007,7 +1033,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.r_label_class_list_widget.is_selected_last()
         ):
             self.current_file_list = \
-                self.annotation_directory.annotation_file
+                self.annotation_directory.annotation_file_list
             self.current_file_str_list = \
                 self.annotation_directory.file_name_list
         else:
@@ -1364,10 +1390,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return None
 
-        if file_index >= len(self.annotation_directory.annotation_file):
+        if file_index >= len(self.annotation_directory.annotation_file_list):
             return None
 
-        return self.annotation_directory.annotation_file[file_index]
+        return self.annotation_directory.annotation_file_list[file_index]
 
     def __action_file_reload(self):
         ok = QMessageBox.question(
@@ -1382,7 +1408,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         file_index = self.get_current_file_truly_index()
         if file_index != -1:
-            file_obj = self.annotation_directory.annotation_file[file_index]
+            file_obj = self.annotation_directory.annotation_file_list[file_index]
 
             file_name = file_obj.file_name_no_extension
             logger.info(f"Reload File: {file_name}")
@@ -1396,7 +1422,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return ""
 
-        file_path = self.annotation_directory.annotation_file[file_index].pic_path
+        file_path = self.annotation_directory.annotation_file_list[file_index].pic_path
 
         return file_path
 
@@ -1406,7 +1432,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return ""
 
-        return self.annotation_directory.annotation_file[file_index].file_path
+        return self.annotation_directory.annotation_file_list[file_index].file_path
 
     def __action_file_list_copy_path_image(self):
         file_path = self.__get_selection_image_path()
@@ -1451,7 +1477,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 "Are you sure to change"
                 f" {current_label_id} to {new_label_id} "
                 "in subsequent frames?"
-                f"\nNot include current file.{frame_index}"
+                f"\nInclude current file.{frame_index}"
                 "\n\nThis operation is irreversible!"
             ),
             QMessageBox.StandardButton.Yes,
@@ -1467,15 +1493,65 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         def change_id(annotation_obj: XAnyLabelingAnnotation, index: int):
-            if index > file_index:
+            if index >= file_index:
                 annotation_obj.change_annotation_label(current_label_id, new_label_id)
 
         self.annotation_directory.do_for_each_file(
             func=change_id,
-            start_index=file_index + 1
+            start_index=file_index
         )
 
         self.update_annotation_object_display()
+
+    def __action_obj_change_class(self):
+        select_rect_index = self.r_object_list_widget.selection_index
+        if select_rect_index == -1:
+            return
+        selected_rect_obj = \
+            self.current_annotation_object.rect_annotation_list[
+                select_rect_index
+            ]
+
+        selected_rect_id = selected_rect_obj.label
+        selected_rect_class_id = selected_rect_obj.group_id
+
+        class_config_json_path = os.path.join(self.base_dir, "class_config.json")
+
+        if not os.path.exists(class_config_json_path):
+            QMessageBox.warning(self, "Warning", "Class Config File Not Found!")
+            return
+
+        object_class_configure = ObjectClassConfigure.create_by_configure_file(
+            file_path=class_config_json_path
+        )
+
+        dialog = ClassSelectionDialog(
+            class_configure=object_class_configure,
+            class_id=selected_rect_class_id,
+            parent=self
+        )
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            logger.info("Dialog was canceled")
+            return
+
+        selected_class_id = dialog.selected_class_id
+        logger.info(f"Change Object Id {selected_rect_id} class to {selected_class_id}")
+
+        def change_class(annotation_obj: XAnyLabelingAnnotation, file_index: int):
+            for rect_obj in annotation_obj.rect_annotation_list:
+                if rect_obj.label == selected_rect_id:
+                    rect_obj.group_id = selected_class_id
+
+                    annotation_obj.modifying()
+                    break
+
+        self.annotation_directory.do_for_each_file(
+            func=change_class
+        )
+
+        self.update_annotation_object_display()
+
+        logger.info("Change Class Done!")
 
     def __action_obj_copy_subsequent_target(self):
         if self.r_object_list_widget.selection_index == -1:
@@ -1504,6 +1580,51 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         # self.__update_object_list_widget()
         # self.__update_label_class_list()
+        self.update_annotation_object_display()
+
+    def __action_obj_copy_between_target(self):
+        frame_range = self.__dialog_between_frames()
+
+        if frame_range is None:
+            return
+
+        frame_start, frame_end = frame_range
+
+        index = self.r_object_list_widget.selection_index
+        selected_rect_obj = self.current_annotation_object.rect_annotation_list[index]
+
+        frame_start_index, frame_end_index = (
+            self.annotation_directory.get_index_by_frame_index(frame_start),
+            self.annotation_directory.get_index_by_frame_index(frame_end)
+        )
+        if frame_start_index == -1 or frame_end_index == -1:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Frame not found."
+            )
+            return
+
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to copy between target?"
+            f"\nFrom {frame_start} to {frame_end}"
+            "\n\nThis operation is irreversible!",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
+        self.annotation_directory.do_for_each_file(
+            func=lambda annotation_obj, i: annotation_obj.add_or_update_rect(selected_rect_obj)
+            if frame_start_index <= i <= frame_end_index else None,
+            start_index=frame_start_index,
+            end_index=frame_end_index
+        )
+
         self.update_annotation_object_display()
 
     def linear_interpolation(self, start_frame, end_frame):
@@ -1579,7 +1700,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             label1="Start Frame:",
             label2="End Frame:",
             min_value=0,
-            max_value=len(self.annotation_directory.annotation_file) - 1,
+            max_value=len(self.annotation_directory.annotation_file_list) - 1,
             title="Linear Interpolation",
             parent=self
         )
@@ -1674,7 +1795,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if rect_widget is None:
             return
 
-        logger.info(f"- Restore Width: {previous_rect_obj.width} Height: {previous_rect_obj.height}")
+        # logger.info(f"- Restore Width: {previous_rect_obj.width} Height: {previous_rect_obj.height}")
 
         rect_widget.width_original = previous_rect_obj.width
         rect_widget.height_original = previous_rect_obj.height
@@ -1682,6 +1803,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.main_image_view.move_annotation_to_mouse_position()
         rect_widget.x1_original = previous_rect_obj.x1
         rect_widget.y1_original = previous_rect_obj.y1
+
+        rect_widget.modify()
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
@@ -1730,7 +1853,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return
 
         logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
-        logger.info(f"Delete Label:{label}")
+        logger.info(f"Delete Label: {label}")
 
         # self.current_annotation_object.del_by_label(label)
         # for i, annotation_obj in enumerate(self.annotation_directory.annotation_file):
@@ -1749,15 +1872,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.__update_label_class_list()
         self.update_annotation_object_display()
 
-    def __action_obj_del_between_target(self):
+    def __dialog_between_frames(self) -> Optional[Tuple[int, int]]:
+        first_file_index = self.annotation_directory.first_file_index
+        last_file_index = self.annotation_directory.last_file_index
+
+        current_index = self.get_current_file_truly_index()
+        current_file_obj = self.annotation_directory.annotation_file_list[current_index]
+        current_file_index = int(current_file_obj.file_name_no_extension)
+
         dialog = DialogInput2Int(
-            default_value1=0,
-            default_value2=0,
+            default_value1=current_file_index + 1,
+            default_value2=last_file_index,
             label1="Start Frame:",
             label2="End Frame:",
-            min_value=0,
-            max_value=len(self.annotation_directory.annotation_file) - 1,
-            title="Delete Target Between Frames",
+            min_value=first_file_index,
+            max_value=last_file_index,
+            title="Select Frame Range",
             parent=self
         )
         dialog.setGeometry(100, 100, 200, 150)
@@ -1765,22 +1895,42 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if dialog.exec() != QDialog.DialogCode.Accepted:
             return
 
+        return dialog.get_integers()
+
+    def __action_obj_del_between_target(self):
+        frame_range = self.__dialog_between_frames()
+
+        if frame_range is None:
+            return
+
+        frame_start, frame_end = frame_range
+
         index = self.r_object_list_widget.selection_index
         label = self.current_annotation_object.rect_annotation_list[index].label
+
+        frame_start_index, frame_end_index = (
+            self.annotation_directory.get_index_by_frame_index(frame_start),
+            self.annotation_directory.get_index_by_frame_index(frame_end)
+        )
+        if frame_start_index == -1 or frame_end_index == -1:
+            QMessageBox.critical(
+                self,
+                "Error",
+                "Frame not found."
+            )
+            return
 
         ret = QMessageBox.question(
             self,
             "Warning",
             f"Are you sure you want to del target({label})?\n\n"
-            f"{dialog.get_integers()[0]} - {dialog.get_integers()[1]}\n"
+            f"{frame_start} - {frame_end}\n"
             f"※Include start and end frame!!!",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
         )
         if ret != QMessageBox.StandardButton.Yes:
             return
-
-        frame_start, frame_end = dialog.get_integers()
 
         logger.info(f"[{index}]Delete the target in range({frame_start}~{frame_end})")
         logger.info(f"Delete Label:{label}")
@@ -1793,9 +1943,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.annotation_directory.do_for_each_file(
             func=lambda annotation_obj, i:
             annotation_obj.del_by_label(label)
-            if frame_start <= i <= frame_end else None,
-            start_index=frame_start,
-            end_index=frame_end
+            if frame_start_index <= i <= frame_end_index else None,
+            start_index=frame_start_index,
+            end_index=frame_end_index
         )
 
         # self.__update_object_list_widget()
@@ -1934,6 +2084,205 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             target_label=target_label,
         )
         export_window.exec()
+
+    def __action_obj_dl_sam2_subsequence(
+            self,
+            copy_previous: bool = False,
+            expand_left: float = 0,
+            expand_top: float = 0,
+            expand_right: float = 0,
+            expand_bottom: float = 0,
+            iou_threshold: float = 0.3
+    ):
+        import mot_toolkit.dl as dl
+
+        if not dl.support_torch:
+            QMessageBox.critical(self, "Warning", "PyTorch is not installed.")
+            return
+        if not dl.support_v8:
+            QMessageBox.critical(self, "Warning", "ultralytics is not installed.")
+            return
+
+        annotation_object = self.get_selection_object()
+        rect_widget = self.main_image_view.selection_widget
+
+        if annotation_object is None or rect_widget is None:
+            QMessageBox.critical(self, "Warning", "No object selected.")
+            return
+
+        from mot_toolkit.dl.model import sam2
+
+        frame_range = self.__dialog_between_frames()
+        if frame_range is None:
+            return
+        start_index = self.annotation_directory.get_index_by_frame_index(frame_range[0])
+        end_index = self.annotation_directory.get_index_by_frame_index(frame_range[1])
+
+        # Generate task file list
+        task_file_obj_list: List[XAnyLabelingAnnotation] = []
+        for i, file_obj in enumerate(self.annotation_directory.annotation_file_list):
+            if start_index <= i <= end_index:
+                found = False
+                for rect_obj in file_obj.rect_annotation_list:
+                    if rect_obj.label == annotation_object.label:
+                        found = True
+                        break
+
+                if not found:
+                    continue
+
+                task_file_obj_list.append(file_obj)
+
+        ok = QMessageBox.question(
+            self,
+            "Warning",
+            (
+                "Are you sure you want to run SAM2 on the subsequence?"
+                f"\n\nFrom {frame_range[0]} to {frame_range[1]} (Total: {len(task_file_obj_list)})"
+            ),
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        if ok != QMessageBox.StandardButton.Yes:
+            return
+
+        # Get Previous File Object
+        previous_file_obj: Optional[XAnyLabelingAnnotation] = None
+        if start_index != 0:
+            previous_file_obj = \
+                self.annotation_directory.annotation_file_list[start_index - 1]
+
+        total_count = len(task_file_obj_list)
+        logger.info(f"Batch SAM2 Task Count: {total_count}")
+
+        error_list: List[str] = []
+
+        for i, file_obj in enumerate(task_file_obj_list):
+            logger.info(f"Processing [{i + 1}/{total_count}]")
+            logger.info(f"Run SAM2 on {file_obj.file_name_no_extension}")
+            have_modify = False
+
+            previous_rect_obj: Optional[XAnyLabelingRect] = None
+
+            if copy_previous and previous_file_obj is not None:
+                for rect_obj in previous_file_obj.rect_annotation_list:
+                    if rect_obj.label == annotation_object.label:
+                        previous_rect_obj = rect_obj
+                        break
+
+            # Copy Last Frame Object
+            previous_file_obj = file_obj
+
+            for rect_obj in file_obj.rect_annotation_list:
+                if rect_obj.label != annotation_object.label:
+                    continue
+
+                original_bbox = rect_obj.get_xyxy_list()
+
+                # Copy Last Frame
+                if copy_previous and previous_rect_obj is not None:
+                    original_bbox = previous_rect_obj.get_xyxy_list()
+
+                input_bbox = original_bbox.copy()
+
+                x1, y1, x2, y2 = map(float, input_bbox)
+
+                image_width = file_obj.image_width
+                image_height = file_obj.image_height
+
+                # expand_left = 0.3
+                # expand_top = 0.1
+                # expand_right = 0.2
+                # expand_bottom = 0
+
+                if expand_left:
+                    x1 = max(0.0, x1 - abs(x2 - x1) * expand_left)
+                if expand_top:
+                    y1 = max(0.0, y1 - abs(y2 - y1) * expand_top)
+                if expand_right:
+                    x2 = min(image_width, x2 + abs(x2 - x1) * expand_right)
+                if expand_bottom:
+                    y2 = min(image_height, y2 + abs(y2 - y1) * expand_bottom)
+
+                input_bbox = [x1, y1, x2, y2]
+
+                result_list = sam2.sam_predict_xyxy(
+                    file_obj.pic_path,
+                    input_bbox
+                )
+
+                have_error = False
+
+                if len(result_list) == 0:
+                    logger.warning(f"No result for Object:{rect_obj.label}")
+                    have_error = True
+                else:
+                    if len(result_list) > 1:
+                        logger.warning(f"SAM result count({len(result_list)}) != 1")
+
+                        iou_list: List[float] = []
+                        for result_bbox in result_list:
+                            iou = calculate_iou(original_bbox, result_bbox)
+                            iou_list.append(iou)
+
+                        # Get Max Index
+                        max_index = iou_list.index(max(iou_list))
+                        max_iou = max(iou_list)
+                        if max_iou < iou_threshold:
+                            logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
+                            have_error = True
+                        else:
+                            result_list = result_list[max_index]
+                    else:
+                        result_list = result_list[0]
+
+                    if not have_error and len(result_list) != 4:
+                        logger.warning(f"Error: SAM result bbox length({len(result_list)}) != 4")
+                        have_error = True
+
+                if have_error:
+                    error_list.append(file_obj.file_name_no_extension)
+                    continue
+
+                x1, y1, x2, y2 = (
+                    result_list[0],
+                    result_list[1],
+                    result_list[2],
+                    result_list[3]
+                )
+
+                iou = calculate_iou(original_bbox, result_list)
+                iou = round(iou, 2)
+
+                logger.info(f"Before: {original_bbox}")
+                logger.info(f"New: {result_list}")
+                logger.info(f"IOU: {iou}")
+
+                if iou < iou_threshold:
+                    logger.info(f"IOU is too low: {iou} < {iou_threshold}")
+                    continue
+
+                rect_obj.x1 = x1
+                rect_obj.y1 = y1
+                rect_obj.x2 = x2
+                rect_obj.y2 = y2
+
+                have_modify = True
+
+                # Only one (No same label)
+                break
+
+            if not have_modify:
+                continue
+
+            file_obj.modifying()
+
+        self.update_annotation_object_display()
+        logger.info("Batch SAM2 Task Finished.")
+        if len(error_list) > 0:
+            logger.warning(f"Batch SAM2 Task have {len(error_list)} errors")
+            for file_name in error_list:
+                logger.warning(f"SAM Error on {file_name}")
 
     def __action_obj_unselect_all(self):
         self.r_object_list_widget.selection_index = -1
@@ -2096,10 +2445,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         option_window = OpenCVPreviewOptionWindow(
             parent=self,
-            annotation_file=self.annotation_directory.annotation_file,
+            annotation_file=self.annotation_directory.annotation_file_list,
             current_frame=current_frame_index + 1,
             start_frame=1,
-            end_frame=len(self.annotation_directory.annotation_file),
+            end_frame=len(self.annotation_directory.annotation_file_list),
             selection_label=selection_label,
             color_dict=color_dict
         )
@@ -2185,16 +2534,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             max_value = max(digit_list) if len(digit_list) else 0
             default_label_name = str(max_value + 1)
 
+        logger.info("Default Label Name:", default_label_name)
+
+        # I don't know why
+        # Must remove parent= title= label= to make it work
         label_name, ok = QInputDialog.getText(
             self,
             "Input Dialog",
-            "Enter the label name:"
-            f" (Suggest: {default_label_name})",
+            (
+                    "Enter the label name:" +
+                    f" (Suggest: {default_label_name})"
+            ),
             text=default_label_name
         )
 
         if not ok:
-            return
+            return None
 
         # Check Label Name is Exist?
         if label_name in self.annotation_directory.label_list:
@@ -2208,7 +2563,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
 
             if not ok:
-                return
+                return None
 
         return label_name
 
@@ -2233,7 +2588,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def check_is_have_modified(self) -> bool:
         found = False
 
-        for annotation_obj in self.annotation_directory.annotation_file:
+        for annotation_obj in self.annotation_directory.annotation_file_list:
             if annotation_obj.is_modified:
                 found = True
                 logger.info(f"{annotation_obj.file_path} is modified but not save.")
@@ -2409,3 +2764,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 event.accept()
             else:
                 event.ignore()
+
+
+if __name__ == "__main__":
+    app = QApplication([])
+
+    window = InterFacePreview(
+        work_directory_path=r"."
+    )
+    window.show()
+
+    sys.exit(app.exec())

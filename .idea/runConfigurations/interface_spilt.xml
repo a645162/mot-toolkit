@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="interface_spilt" type="PythonConfigurationType" factoryName="Python" folderName="TestWidget" nameIsGenerated="true">
+  <configuration default="false" name="interface_spilt" type="PythonConfigurationType" factoryName="Python" folderName="Interface" nameIsGenerated="true">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />

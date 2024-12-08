@@ -4,11 +4,10 @@ import datetime
 from typing import List
 
 import PIL.Image as pillow
-import torchvision.transforms as T
 import torchvision.transforms.functional as F
 
 from mot_toolkit.config.hardware import io_cpu_count
-from mot_toolkit.dataset.dataset_dir import get_dataset_dir_list
+from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 
 
 def check_pillow_error(img_path: str) -> bool:

@@ -1,0 +1,18 @@
+v1.4.0
+====================
+* New Features:
+01. feat(Eval): Try to add TrackEval
+02. feat(SAM): Directly run SAM2 when Preview
+03. feat(SAM): Support Expand Top
+04. feat(Dataset): Add some dataset tools
+05. feat(Class): Support change class
+06. feat(SAM): Add a dialog to input Start Frame and End Frame
+07. feat(Stats): Support stats class
+08. feat(Spilt): Support select configuration file
+09. feat(Project): Fully support `pyproject.toml`
+
+* Improvements:
+01. fix(Between): Change Index to Frame Index
+02. fix(Preview): Fix add rect label input dialog
+03. fix(Preview): Fix Ctrl+F cannot save issue
+04. fix(SAM): Fix SAM2 result is not 1

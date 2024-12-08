@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="install_torch" type="PythonConfigurationType" factoryName="Python" folderName="Dev Scripts">
+  <configuration default="false" name="install_dl" type="PythonConfigurationType" factoryName="Python" folderName="Dev Scripts">
     <module name="mot-toolkit" />
     <option name="ENV_FILES" value="" />
     <option name="INTERPRETER_OPTIONS" value="" />
@@ -24,7 +24,7 @@
       </ENTRIES>
     </EXTENSION>
     <option name="SCRIPT_NAME" value="$PROJECT_DIR$/install.py" />
-    <option name="PARAMETERS" value="--torch" />
+    <option name="PARAMETERS" value="--dl" />
     <option name="SHOW_COMMAND_LINE" value="false" />
     <option name="EMULATE_TERMINAL" value="false" />
     <option name="MODULE_MODE" value="false" />

@@ -43,6 +43,16 @@ class ObjectListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
+        self.menu_change_class = \
+            QAction(
+                "Change Class",
+                q_menu
+            )
+        q_menu.addAction(self.menu_change_class)
+        select_enable_list.append(self.menu_change_class)
+
+        q_menu.addSeparator()
+
         self.menu_copy_subsequent = \
             QAction(
                 "Copy the target in subsequent frames(Label)",
@@ -50,6 +60,14 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_copy_subsequent)
         select_enable_list.append(self.menu_copy_subsequent)
+
+        self.menu_copy_between = \
+            QAction(
+                "Copy the target between frames(Label)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_copy_between)
+        select_enable_list.append(self.menu_copy_between)
 
         self.menu_linear_interpolation = \
             QAction(
@@ -150,6 +168,34 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_dl_export_task)
         select_enable_list.append(self.menu_dl_export_task)
+
+        q_menu.addSeparator()
+
+        self.menu_dl_sam2_subsequence = \
+            QAction(
+                "DL: SAM2 Subsequence",
+                q_menu
+            )
+        q_menu.addAction(self.menu_dl_sam2_subsequence)
+        select_enable_list.append(self.menu_dl_sam2_subsequence)
+
+        self.menu_dl_sam2_subsequence_opt_copy = \
+            QAction(
+                "   Copy Previous",
+                q_menu
+            )
+        self.menu_dl_sam2_subsequence_opt_copy.setCheckable(True)
+        self.menu_dl_sam2_subsequence_opt_copy.setChecked(False)
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_copy)
+
+        self.menu_dl_sam2_subsequence_opt_expand_top = \
+            QAction(
+                "   Expand Top",
+                q_menu
+            )
+        self.menu_dl_sam2_subsequence_opt_expand_top.setCheckable(True)
+        self.menu_dl_sam2_subsequence_opt_expand_top.setChecked(False)
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_expand_top)
 
         q_menu.addSeparator()
 

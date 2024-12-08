@@ -33,7 +33,7 @@ json_dict_example: dict = {
 def spilt_dataset(
         dataset_base_dir: str,
         output_base_dir: str,
-        spilt_config: str = "spilt_settings.json"
+        spilt_config: str = "default.spilt.json"
 ):
     if not (os.path.exists(dataset_base_dir) and os.path.isdir(dataset_base_dir)):
         logger.error("Dataset base dir not found: " + dataset_base_dir)
@@ -72,6 +72,7 @@ def spilt_dataset(
     dataset_test_list: List[DatasetSpilt] = []
 
     depth = config_dict["depth"]
+    # file_name_depth = config_dict["file_name_depth"]
 
     for path_str in dataset_train_str_list:
         obj = DatasetSpilt(
@@ -122,7 +123,10 @@ if __name__ == '__main__':
     # dataset_base_dir = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
     # output_base_dir = r"H:\Datasets\TrackShipOnlineVideo\ShipTrackSpilt"
 
+    config = "test.spilt.json"
+
     spilt_dataset(
         dataset_base_dir=dataset_base_dir,
-        output_base_dir=output_base_dir
+        output_base_dir=output_base_dir,
+        spilt_config=config
     )

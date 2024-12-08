@@ -1,0 +1,57 @@
+import os
+
+import cv2
+import numpy as np
+from tqdm import tqdm
+
+files_dir = "D:/Dataset/LDM-Tship/LMD-TShip_new/LMD-TShip_new/data"
+seq_dirs = os.listdir(files_dir)
+files = []
+for seq_dir in seq_dirs:
+    seq_files = os.listdir(os.path.join(files_dir, seq_dir))
+    for seq_file in seq_files:
+        if seq_file.split(".")[1] not in ["jpg", "png", "bmp"]:
+            seq_files.remove(seq_file)
+    seq_files_dir = [
+        os.path.join(files_dir, seq_dir, seq_file) for seq_file in seq_files
+    ]
+    files.append(seq_files_dir)
+
+R = 0.0
+G = 0.0
+B = 0.0
+R_2 = 0.0
+G_2 = 0.0
+B_2 = 0.0
+N = 0
+
+for seq in tqdm(files):
+    for file in tqdm(seq):
+        img = cv2.imread(file)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        img = np.array(img)
+        h, w, c = img.shape
+        N += h * w
+
+        R_t = img[:, :, 0]
+        R += np.sum(R_t)
+        R_2 += np.sum(np.power(R_t, 2.0))
+
+        G_t = img[:, :, 1]
+        G += np.sum(G_t)
+        G_2 += np.sum(np.power(G_t, 2.0))
+
+        B_t = img[:, :, 2]
+        B += np.sum(B_t)
+        B_2 += np.sum(np.power(B_t, 2.0))
+
+R_mean = R / N
+G_mean = G / N
+B_mean = B / N
+
+R_std = np.sqrt(R_2 / N - R_mean * R_mean)
+G_std = np.sqrt(G_2 / N - G_mean * G_mean)
+B_std = np.sqrt(B_2 / N - B_mean * B_mean)
+
+print("R_mean: %f, G_mean: %f, B_mean: %f" % (R_mean, G_mean, B_mean))
+print("R_std: %f, G_std: %f, B_std: %f" % (R_std, G_std, B_std))

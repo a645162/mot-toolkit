@@ -33,13 +33,23 @@ Aim to compatible with `X-AnyLabeling` and `LabelMe` and these following:
 
 ## Installation
 
-### 1. Use `rye`
+### 1. Use `pip` to install `mot-toolkit`
+
+```bash
+# Remove which you don't need
+pip install ".[dl,dataset,crawler,eval,dev]"
+```
+
+**Notice:**
+This option will not compile the `PySide6` resources.
+
+### 2. Use `rye` and Source Code
 
 ```bash
 rye sync --update-all
 ```
 
-### 2. Use `pip`
+### 3. Use `pip` and Source Code
 
 1. (Optional) Create a virtual environment:
 
