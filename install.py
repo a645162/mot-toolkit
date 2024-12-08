@@ -6,10 +6,16 @@ def setup_mirrors():
     os.system("pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple")
 
 
-def install_dep():
-    ret = os.system("pip install -r requirements.txt")
+def install_requirements_txt(file_path: str = "requirements.txt") -> bool:
+    ret = os.system(f"pip install -r {file_path}")
 
-    if ret != 0:
+    return ret == 0
+
+
+def install_dep():
+    ret = install_requirements_txt()
+
+    if not ret:
         print("Install necessary dependencies Failed!")
         exit(1)
 
@@ -31,13 +37,13 @@ def install_dep():
 
 
 def install_dep_dev():
-    os.system("pip install -r r-dev-requirements.txt")
+    install_requirements_txt("r-dev-requirements.txt")
 
     print("Install Dev Done!")
 
 
 def install_crawler():
-    os.system("pip install -r r-crawler-requirements.txt")
+    install_requirements_txt("r-crawler-requirements.txt")
 
     os.system("playwright install")
 
@@ -45,19 +51,19 @@ def install_crawler():
 
 
 def install_torch():
-    os.system("pip install -r r-torch-requirements.txt")
+    install_requirements_txt("r-torch-requirements.txt")
 
     print("Install Torch Done!")
 
 
 def install_dataset():
-    os.system("pip install -r r-dataset-requirements.txt")
+    install_requirements_txt("r-dataset-requirements.txt")
 
     print("Install Dataset Done!")
 
 
 def install_eval():
-    os.system("pip install -r r-eval-requirements.txt")
+    install_requirements_txt("r-eval-requirements.txt")
 
     print("Install Eval Done!")
 
@@ -70,7 +76,7 @@ def get_options():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--dev", "-d", action="store_true", help="Install Dev Dependencies")
-    parser.add_argument("--torch", "-t", action="store_true", help="Install Torch Dependencies")
+    parser.add_argument("--dl", action="store_true", help="Install Torch Dependencies")
 
     parser.add_argument("--crawler", action="store_true", help="Install Crawler Dependencies")
     parser.add_argument("--dataset", action="store_true", help="Install Dataset Dependencies")
@@ -88,7 +94,7 @@ if __name__ == "__main__":
 
     if args.all:
         args.dev = True
-        args.torch = True
+        args.dl = True
         args.crawler = True
         args.dataset = True
         args.eval = True

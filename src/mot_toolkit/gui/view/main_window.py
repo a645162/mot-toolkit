@@ -63,11 +63,15 @@ logger.info("Start To Load Qt Resource")
 
 # Load Program Resources
 
-logger.info("Load Qt Resource Success")
+logger.info("Try to load Qt Resource Success")
+try:
+    from mot_toolkit.gui.resources.resources import qInitResources
 
-from mot_toolkit.gui.resources.resources import qInitResources
-
-qInitResources()
+    qInitResources()
+except ImportError as e:
+    logger.error(f"Please Compile Qt Resource First! {e}")
+except Exception as e:
+    logger.error(f"Load Qt Resource Failed! {e}")
 
 logger.info("Load Package Finished!")
 

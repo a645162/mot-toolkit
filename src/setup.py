@@ -27,7 +27,7 @@ setup(
     author_email="a645162@gmail.com",
     license="GPLv3",
     packages=find_packages(),
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     install_requires=[
         "loguru",
 
@@ -43,6 +43,7 @@ setup(
         "console_scripts": [
             "mot-toolkit = mot_toolkit.main_gui:main",
             "mot-toolkit-tools = mot_toolkit.tools:main",
+            "mot-toolkit-spilt = mot_toolkit.gui.view.interface.spilt.spilt_cli:main",
         ],
     },
 )

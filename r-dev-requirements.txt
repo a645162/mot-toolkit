@@ -12,3 +12,5 @@ nuitka
 
 # Image convert
 cairosvg
+
+pip_search

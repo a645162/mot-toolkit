@@ -1,25 +1,133 @@
+# https://packaging.python.org/en/latest/guides/writing-pyproject-toml/
+
 [project]
 name = "mot-toolkit"
-version = "0.1.0"
+version = "1.4.0"
 description = "MOT Toolkit"
 authors = [
     { name = "Haomin Kong", email = "a645162@qq.com" }
 ]
 dependencies = [
     "loguru",
-    "pyside6",
-    "opencv-python",
-    "numpy",
-    "chardet",
-    "pygame",
     "GitPython",
+    "tqdm",
+    "progressbar2",
+    "numpy<2.0.0",
+    "opencv-python",
+    "qtpy",
+    "pyside6",
+    "chardet",
+    "PyYaml",
+    "toml",
+    "pygame",
+    "psutil",
 ]
 readme = "README.md"
-requires-python = ">= 3.6"
+readme-content-type = "text/markdown"
+#license = { text = "GPLv3" }
+license = { file = "LICENSE" }
+requires-python = ">= 3.8"
+maintainers = [
+    { name = "Haomin Kong", email = "a645162@qq.com" }
+]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+keywords = [
+    "MOT", "mot",
+    "tracking", "tracker",
+    "tracking toolkit"
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.urls]
+Homepage = "https://github.com/a645162/mot-toolkit"
+Documentation = "https://github.com/a645162/mot-toolkit/blob/main/README.zh-CN.md"
+Repository = "https://github.com/a645162/mot-toolkit.git"
+Issues = "https://github.com/a645162/mot-toolkit/issues"
+Changelog = "https://github.com/a645162/mot-toolkit/blob/main/CHANGELOG.md"
+DOWNLOAD = "https://github.com/a645162/mot-toolkit/releases"
+
+[project.scripts]
+mot-toolkit = "mot_toolkit.main_gui:main"
+mot-toolkit-tools = "mot_toolkit.tools:main"
+mot-toolkit-spilt = "mot_toolkit.gui.view.interface.spilt.spilt_cli:main"
+
+# 动态替换 README.md 中的链接
+#[tool.hatch.metadata.hooks.readme]
+#content-type = "text/markdown"
+#path = "README.md"
+
+#[[tool.hatch.metadata.hooks.readme.replacements]]
+#pattern = r"$README\.zh-CN\.md$"
+#replacement = "https://github.com/a645162/mot-toolkit/blob/main/README.zh-CN.md"
+
+[tool.hatch.build.targets.sdist]
+include = ["LICENSE", "README.md"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mot_toolkit"]
+#source-dirs = ["src"]
+
+[project.optional-dependencies]
+dl = [
+    "torch",
+    "torchvision",
+    "ultralytics>=8.3.0",
+]
+
+dataset = [
+    "torchvision",
+    "pillow",
+    "opencv-python",
+    "scikit-learn",
+    "mmengine",
+]
+
+crawler = [
+    "playwright"
+]
+
+# TrackEval
+## https://github.com/JonathonLuiten/TrackEval
+## https://github.com/a645162/TrackEvalNew
+eval = [
+    "numpy>=1.18.1",
+    "scipy>=1.4.1",
+    "pycocotools>=2.0.2",
+    "matplotlib>=3.2.1",
+    "opencv_python>=4.4.0.46",
+    "scikit_image>=0.16.2",
+    "pytest>=6.0.1",
+    "Pillow>=8.1.2",
+    "tqdm>=4.64.0",
+    "tabulate",
+]
+
+dev = [
+    "ruff",
+    "flake8",
+    "pre-commit",
+    "pytest",
+    "pyinstaller",
+    "nuitka",
+    "cairosvg",
+    "pip_search",
+]
 
 [tool.rye]
 managed = true
@@ -33,10 +141,10 @@ dev-dependencies = [
     "pillow>=10.4.0",
 ]
 
-[tool.poetry.group.yolo.dependencies]
-torch=">=2.0.0"
-torchvision=">=0.10.0"
-ultralytics=">=8.3.0"
+[tool.poetry.group.dl.dependencies]
+torch = ">=2.0.0"
+torchvision = ">=0.10.0"
+ultralytics = ">=8.3.0"
 
 [tool.uv]
 dev-dependencies = [
@@ -60,12 +168,6 @@ dev-dependencies = [
     "pillow>=10.4.0",
 ]
 
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/mot_toolkit"]
-
 # Rye Source
 [[tool.rye.source]]
 name = "HuaWei"
@@ -82,10 +184,10 @@ name = "Tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "explicit"
 
-[[tool.rye.source]]
-name = "USTC"
-url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
-priority = "explicit"
+#[[tool.rye.source]]
+#name = "USTC"
+#url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
+#priority = "explicit"
 
 # Poetry Source
 [[tool.poetry.source]]
@@ -103,7 +205,7 @@ name = "Tsinghua"
 url = "https://pypi.tuna.tsinghua.edu.cn/simple"
 priority = "explicit"
 
-[[tool.poetry.source]]
-name = "USTC"
-url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
-priority = "explicit"
+#[[tool.poetry.source]]
+#name = "USTC"
+#url = "https://mirrors.ustc.edu.cn/pypi/web/simple"
+#priority = "explicit"
