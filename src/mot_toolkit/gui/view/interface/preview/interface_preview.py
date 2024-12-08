@@ -705,12 +705,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.r_object_list_widget.menu_copy_position_float \
             .triggered.connect(self.__action_obj_copy_position)
+        self.r_object_list_widget.menu_object_info \
+            .triggered.connect(self.__action_obj_info)
         self.r_object_list_widget.menu_dl_sam2 \
             .triggered.connect(self.__action_obj_dl_sam2)
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
 
-        expend_top = 0.5 if self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked() else 0
+        enable_expand_top = \
+            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked()
+        expend_top = 0.5 if enable_expand_top else 0
         self.r_object_list_widget.menu_dl_sam2_subsequence \
             .triggered.connect(
             lambda x: self.__action_obj_dl_sam2_subsequence(
@@ -1981,6 +1985,30 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         logger.info(f"Copy Position:{position_str}")
 
         QMessageBox.information(self, "Copy Position", position_str)
+
+    def __action_obj_info(self):
+        annotation_object = self.get_selection_object()
+
+        position_str = (
+            f"{annotation_object.x1},"
+            f"{annotation_object.y1},"
+            f"{annotation_object.x2},"
+            f"{annotation_object.y2}"
+        )
+
+        width, height = annotation_object.width, annotation_object.height
+
+        QMessageBox.information(
+            self, "Object Info",
+            (
+                f"Label: {annotation_object.label}\n"
+                f"Group: {annotation_object.group_id}\n"
+                "\n"
+                f"Position: {position_str}\n"
+                f"Width: {width} x {height}\n"
+                f"Area: {width * height}"
+            )
+        )
 
     def __action_obj_dl_sam2(self):
         import mot_toolkit.dl as dl

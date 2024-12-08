@@ -8,10 +8,12 @@
 #           每个分类的目标数(每个类别的实例数)
 import csv
 import os
+import time
 from typing import List
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
+from mot_toolkit.datatype.dataset.object_property import ObjectSizeType
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 
 
@@ -34,8 +36,12 @@ def walk_dir_get_dir_list(dir_path: str) -> List[str]:
     return dir_list
 
 
-def get_class_config(base_dir: str):
-    config_path = os.path.join(base_dir, "class_config.json")
+def get_class_config(
+        base_dir: str,
+        config_file_name: str = "class_config.json"
+):
+    config_path = os.path.join(base_dir, config_file_name)
+    print("Class Config Path:", config_path)
     return ObjectClassConfigure.create_by_configure_file(config_path)
 
 
@@ -51,6 +57,7 @@ def save_to_csv(
         "Frame Count",
         "Object Count", "Object Instance Count",
         "Class Count",
+        "Object Size Type"
     ]
 
     # Append Class Title
@@ -94,12 +101,20 @@ def handle_sequence_dir(
 
     id_list: List[str] = []
     object_instance_count = 0
+    object_size_type_list: List[ObjectSizeType] = []
     for annotation_file in annotation_directory.annotation_file_list:
         for rect_annotation in annotation_file.rect_annotation_list:
             object_instance_count += 1
 
             if rect_annotation.label not in id_list:
                 id_list.append(rect_annotation.label)
+
+            object_size_type = ObjectSizeType.get_coco_object_size_type(
+                rect_annotation.width,
+                rect_annotation.height
+            )
+            if object_size_type not in object_size_type_list:
+                object_size_type_list.append(object_size_type)
 
             # Stats Class Count
             for obj_class in class_config.object_classes:
@@ -115,18 +130,29 @@ def handle_sequence_dir(
     ]
     class_count = len(class_count_list_no_zero)
 
+    # Sort By Value
+    object_size_type_list.sort(key=lambda x: int(x))
+
+    object_size_type_str_list = [
+        str(size_type)
+        for size_type in object_size_type_list
+    ]
+    object_size_type_str = ",".join(object_size_type_str_list).strip()
+
     return_list.append(frame_count)
     return_list.append(len(id_list))
     return_list.append(object_instance_count)
     return_list.append(class_count)
+    return_list.append(object_size_type_str)
     return_list.extend(class_count_list)
 
     print("\t\tFrame Count:", return_list[0])
     print("\t\tObject Count:", return_list[1])
     print("\t\tObject Instance Count:", return_list[2])
     print("\t\tClass Count:", return_list[3])
+    print("\t\tObject Size Type:", return_list[4])
     print("\t\tClass Instance Count List:")
-    for idx, count in enumerate(return_list[4:]):
+    for idx, count in enumerate(return_list[5:]):
         print(f"\t\t\t{class_config.object_classes[idx].class_name}: {count}")
 
     return return_list
@@ -134,8 +160,17 @@ def handle_sequence_dir(
 
 if __name__ == "__main__":
     base_path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
+    # base_path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+
+    empty_line_spilt = True
+
+    start_time = time.time()
 
     class_config = get_class_config(base_path)
+
+    if class_config is None:
+        print("Class Config Not Found!")
+        exit(1)
 
     result_list: List = []
 
@@ -179,8 +214,13 @@ if __name__ == "__main__":
                 *seq_result
             ])
 
-        result_list.append([])
+        if empty_line_spilt:
+            result_list.append([])
 
     save_to_csv(result_list, class_config, "result.csv")
 
+    end_time = time.time()
+
     print("Done")
+
+    print("Time:", round(end_time - start_time, 2), "s")
