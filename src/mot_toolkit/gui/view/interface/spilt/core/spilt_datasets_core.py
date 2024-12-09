@@ -6,6 +6,7 @@ from mot_toolkit.datatype.dataset.dataset_spilt import (
     DatasetSpilt, SpiltType
 )
 from mot_toolkit.gui.view.interface.spilt.core.spilt_dancetrack import SpiltDanceTrack
+from mot_toolkit.gui.view.interface.spilt.core.spilt_yolo import SpiltYolo
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
@@ -115,14 +116,22 @@ def spilt_dataset(
     )
 
     # YOLO
+    # spilt_yolo = SpiltYolo()
+    # spilt_yolo.output_yolo(
+    #     output_yolo_dir=output_yolo_dir,
+    #     dataset_train_list=dataset_train_list,
+    #     dataset_val_list=dataset_val_list,
+    #     dataset_test_list=dataset_test_list,
+    # )
 
 
 if __name__ == '__main__':
-    dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
-    output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
-    # dataset_base_dir = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
-    # output_base_dir = r"H:\Datasets\TrackShipOnlineVideo\ShipTrackSpilt"
+    # dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    # output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
+    dataset_base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
+    output_base_dir = r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full"
 
+    # config = "test.spilt.json"
     config = "20241208.spilt.json"
 
     spilt_dataset(
