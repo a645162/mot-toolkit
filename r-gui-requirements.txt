@@ -1,0 +1,6 @@
+# GUI
+qtpy
+pyside6
+
+# Gamepad Controller
+pygame

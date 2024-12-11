@@ -91,6 +91,12 @@ class SpiltDanceTrack:
 
             yolo_text_list = []
             for rect_obj in file_obj.rect_annotation_list:
+                group_id = rect_obj.group_id.strip()
+
+                if group_id == "":
+                    logger.error(f"Object({rect_obj.label}) Group ID is Empty! {file_obj.file_path}")
+                    continue
+
                 x_ratio = rect_obj.center_x_ratio
                 y_ratio = rect_obj.center_y_ratio
                 w_ratio = rect_obj.width_ratio
@@ -102,7 +108,7 @@ class SpiltDanceTrack:
                 w_ratio = round(w_ratio, round_count)
                 h_ratio = round(h_ratio, round_count)
 
-                line = (f"{rect_obj.group_id} "
+                line = (f"{group_id} "
                         f"{x_ratio} "
                         f"{y_ratio} "
                         f"{w_ratio} "

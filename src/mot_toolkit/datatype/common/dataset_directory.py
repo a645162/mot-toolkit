@@ -3,6 +3,8 @@ import os
 
 from PySide6.QtCore import QObject
 
+from mot_toolkit.gui.view.interface.spilt.common.datasets_spilt_type import DatasetSpiltType
+
 
 class AnnotationDirectory(QObject):
     __dir_path: str = ""
@@ -15,6 +17,8 @@ class AnnotationDirectory(QObject):
     __walked: bool = False
 
     frame_rate = 30
+
+    spilt_type: DatasetSpiltType = DatasetSpiltType.Train
 
     def __init__(self, dir_path: str = ""):
         super().__init__()
@@ -141,6 +145,10 @@ class AnnotationDirectory(QObject):
 
                 if file.endswith(file_extension):
                     self.file_list.append(os.path.join(root, file))
+
+    def set_file_list(self, file_list: List[str]):
+        self.file_list = file_list
+        self.__loaded = True
 
     @property
     def walked(self) -> bool:

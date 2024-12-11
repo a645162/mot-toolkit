@@ -19,6 +19,14 @@ def install_dep():
         print("Install necessary dependencies Failed!")
         exit(1)
 
+
+def install_gui():
+    ret = install_requirements_txt("r-gui-requirements.txt")
+
+    if not ret:
+        print("Install necessary dependencies Failed!")
+        exit(1)
+
     command = """
     pyside6-rcc \
         ./Resources/PySide6/resources.qrc \
@@ -33,7 +41,7 @@ def install_dep():
 
     print("Qt Resource Compile Done!")
 
-    print("Install Done!")
+    print("Install GUI Done!")
 
 
 def install_dep_dev():
@@ -76,6 +84,7 @@ def get_options():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--dev", "-d", action="store_true", help="Install Dev Dependencies")
+    parser.add_argument("--gui", action="store_true", help="Install GUI Dependencies")
     parser.add_argument("--dl", action="store_true", help="Install Torch Dependencies")
 
     parser.add_argument("--crawler", action="store_true", help="Install Crawler Dependencies")
@@ -94,6 +103,7 @@ if __name__ == "__main__":
 
     if args.all:
         args.dev = True
+        args.gui = True
         args.dl = True
         args.crawler = True
         args.dataset = True
@@ -105,6 +115,7 @@ if __name__ == "__main__":
     print("Install Options:")
     print("-" * 20)
     print(f"Dev: {args.dev}")
+    print(f"GUI: {args.gui}")
     print(f"Deep Learning: {args.dl}")
     print(f"Crawler: {args.crawler}")
     print(f"Dataset: {args.dataset}")
@@ -117,6 +128,8 @@ if __name__ == "__main__":
 
     if args.dev:
         install_dep_dev()
+    if args.gui:
+        install_gui()
     if args.dl:
         install_dl()
     if args.crawler:

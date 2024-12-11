@@ -184,6 +184,10 @@ but `rye` is not support now.
 find . -type f -name "*.jpg" | wc -l
 ```
 
+## Other Software
+
+- [scalabel](https://github.com/scalabel/scalabel)
+
 ## Thanks
 
 Thanks to the following projects:

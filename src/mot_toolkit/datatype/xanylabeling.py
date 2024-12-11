@@ -216,7 +216,9 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.save_json(self.file_path)
 
         # Update Original Dict
-        self.ori_dict = self.to_dict()
+        new_dict = self.to_dict()
+        self.ori_dict.clear()
+        self.ori_dict.update(new_dict)
 
         return True
 
