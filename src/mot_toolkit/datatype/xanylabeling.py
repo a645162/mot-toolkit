@@ -36,6 +36,8 @@ class XAnyLabelingRect(RectDataAnnotation):
     def __init__(self, label: str = ""):
         super().__init__(label)
 
+        self.shape_type = "rectangle"
+
     def __copy__(self):
         new_object = XAnyLabelingRect(self.label)
 
@@ -188,39 +190,57 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return json_string.strip() + "\n"
 
-    def save_json(self, save_path: str = ""):
+    def save_json(
+            self,
+            save_path: str = "",
+            with_log: bool = True
+    ) -> bool:
         save_path = save_path.strip()
         if len(save_path) == 0:
             save_path = self.file_path
 
         save_path = save_path.strip()
         if len(save_path) == 0:
-            logger.error("No Save Path Provided")
-            return
+            if with_log:
+                logger.error("No Save Path Provided")
+            return False
 
         json_string = self.to_json_string()
         if len(json_string.strip()) == 0:
-            logger.error(f"No Json String Generated {save_path}")
-            return
+            if with_log:
+                logger.error(f"No Json String Generated {save_path}")
+            return False
 
         # Save to json file
-        with open(save_path, "w") as f:
-            f.write(json_string)
+        try:
+            with open(save_path, "w") as f:
+                f.write(json_string)
+        except Exception as e:
+            if with_log:
+                logger.error(f"Error in Save Json File: {e}")
 
-        logger.info("Save Json File Successfully: " + save_path)
+            return False
 
-    def save(self) -> bool:
+        if with_log:
+            logger.info("Save Json File Successfully: " + save_path)
+
+        return True
+
+    def save(self, with_log: bool = True) -> bool:
         if not super().save():
             return False
 
-        self.save_json(self.file_path)
+        save_result = self.save_json(
+            save_path=self.file_path,
+            with_log=with_log
+        )
 
         # Update Original Dict
         new_dict = self.to_dict()
         self.ori_dict.clear()
         self.ori_dict.update(new_dict)
 
-        return True
+        return save_result
 
     def reload(self, check=True) -> bool:
         if check and not super().reload():
