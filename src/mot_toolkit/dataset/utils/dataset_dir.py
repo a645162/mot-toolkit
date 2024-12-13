@@ -33,7 +33,8 @@ def check_dir_is_disable(
 def get_dataset_dir_list(
         dataset_dir_path: str,
         depth: int = 2,
-        black_list: List[str] = None
+        black_list: List[str] = None,
+        check_disable: bool = True
 ) -> List[str]:
     if black_list is None:
         black_list = []
@@ -62,11 +63,12 @@ def get_dataset_dir_list(
             final_dir_list.append(jpeg_dir_name)
 
     # Remove disable dir
-    new_path_list = []
-    for dir_path in final_dir_list:
-        if not check_dir_is_disable(dir_path):
-            new_path_list.append(dir_path)
-    final_dir_list = new_path_list
+    if check_disable:
+        new_path_list = []
+        for dir_path in final_dir_list:
+            if not check_dir_is_disable(dir_path):
+                new_path_list.append(dir_path)
+        final_dir_list = new_path_list
 
     depth -= 1
     while depth > 0:

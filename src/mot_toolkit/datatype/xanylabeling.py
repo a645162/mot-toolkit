@@ -64,7 +64,7 @@ class XAnyLabelingRect(RectDataAnnotation):
 
 
 class XAnyLabelingAnnotation(AnnotationFile):
-    version: str
+    version: str = "0.2.4"
     flags: dict
 
     rect_annotation_list: List[XAnyLabelingRect]
