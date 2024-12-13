@@ -2,6 +2,34 @@ import os
 from typing import List
 
 
+def check_dir_is_disable(
+        dir_path: str,
+        disable_file_name: str = "disable"
+) -> bool:
+    dir_path = os.path.abspath(dir_path)
+
+    result = False
+
+    file_path = os.path.join(dir_path, disable_file_name)
+    if os.path.exists(file_path):
+        print("Found disable file:", file_path)
+        result = True
+
+    # Check Parent Dir
+    # Check is have parent dir
+    parent_dir = os.path.dirname(dir_path)
+    if parent_dir != dir_path:
+        result = (
+                result or
+                check_dir_is_disable(
+                    dir_path=parent_dir,
+                    disable_file_name=disable_file_name
+                )
+        )
+
+    return result
+
+
 def get_dataset_dir_list(
         dataset_dir_path: str,
         depth: int = 2,
@@ -33,6 +61,13 @@ def get_dataset_dir_list(
 
             final_dir_list.append(jpeg_dir_name)
 
+    # Remove disable dir
+    new_path_list = []
+    for dir_path in final_dir_list:
+        if not check_dir_is_disable(dir_path):
+            new_path_list.append(dir_path)
+    final_dir_list = new_path_list
+
     depth -= 1
     while depth > 0:
         new_dir_list: List[str] = []
@@ -56,7 +91,7 @@ def get_dataset_dir_list(
 
 
 if __name__ == "__main__":
-    datasets_dir_path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    datasets_dir_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
 
     dir_list = get_dataset_dir_list(
         dataset_dir_path=datasets_dir_path,
@@ -64,5 +99,6 @@ if __name__ == "__main__":
         black_list=["Task"]
     )
 
+    print("Final Dir List:")
     for dir_path in dir_list:
         print(dir_path)
