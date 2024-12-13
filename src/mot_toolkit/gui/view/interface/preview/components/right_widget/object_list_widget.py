@@ -5,9 +5,17 @@ from PySide6.QtWidgets import QMenu
 
 from mot_toolkit.gui.view.components.widget. \
     list.list_with_title_widget import ListWithTitleWidget
+from mot_toolkit.gui.view.interface.preview.components.dialog.padding_input_dialog import PaddingInputDialog
+from mot_toolkit.utils.logs import get_logger
+
+logger = get_logger()
 
 
 class ObjectListWidget(ListWithTitleWidget):
+    padding_top: float = 0
+    padding_bottom: float = 0
+    padding_left: float = 0
+    padding_right: float = 0
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -188,14 +196,25 @@ class ObjectListWidget(ListWithTitleWidget):
         self.menu_dl_sam2_subsequence_opt_copy.setChecked(False)
         q_menu.addAction(self.menu_dl_sam2_subsequence_opt_copy)
 
-        self.menu_dl_sam2_subsequence_opt_expand_top = \
+        self.menu_dl_sam2_subsequence_opt_enable_padding = \
             QAction(
-                "   Expand Top",
+                "   Enable Padding",
                 q_menu
             )
-        self.menu_dl_sam2_subsequence_opt_expand_top.setCheckable(True)
-        self.menu_dl_sam2_subsequence_opt_expand_top.setChecked(False)
-        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_expand_top)
+        self.menu_dl_sam2_subsequence_opt_enable_padding.setCheckable(True)
+        self.menu_dl_sam2_subsequence_opt_enable_padding.setChecked(False)
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_enable_padding)
+
+        self.menu_dl_sam2_subsequence_opt_padding_info = \
+            QAction(
+                "   Padding Info",
+                q_menu
+            )
+        self.menu_dl_sam2_subsequence_opt_padding_info.triggered.connect(
+            self.__action_padding_settings
+        )
+        q_menu.addAction(self.menu_dl_sam2_subsequence_opt_padding_info)
+        self.__update_padding_info()
 
         q_menu.addSeparator()
 
@@ -206,3 +225,30 @@ class ObjectListWidget(ListWithTitleWidget):
             )
         q_menu.addAction(self.menu_unselect_all)
         select_enable_list.append(self.menu_unselect_all)
+
+    def __update_padding_info(self):
+        self.menu_dl_sam2_subsequence_opt_padding_info.setText(
+            f"   Top({self.padding_top}), "
+            f"Bottom({self.padding_bottom}), "
+            f"Left({self.padding_left}), "
+            f"Right({self.padding_right})"
+        )
+
+    def __action_padding_settings(self):
+        padding_input_dialog = PaddingInputDialog(parent=self)
+        if padding_input_dialog.exec_() != PaddingInputDialog.DialogCode.Accepted:
+            return
+
+        padding_value_tuple = padding_input_dialog.get_padding_values()
+        if padding_value_tuple is None:
+            logger.error("Invalid padding value")
+            return
+
+        (
+            self.padding_top,
+            self.padding_bottom,
+            self.padding_left,
+            self.padding_right
+        ) = padding_value_tuple
+
+        self.__update_padding_info()

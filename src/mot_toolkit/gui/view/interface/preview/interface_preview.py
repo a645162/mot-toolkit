@@ -712,14 +712,35 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
 
-        enable_expand_top = \
-            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_expand_top.isChecked()
-        expend_top = 0.5 if enable_expand_top else 0
+        enable_expand = \
+            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_enable_padding.isChecked()
+
+        padding_top, padding_bottom, padding_left, padding_right = 0, 0, 0, 0
+
+        if enable_expand:
+            (
+                padding_top,
+                padding_bottom,
+                padding_left,
+                padding_right
+            ) = (
+                self.r_object_list_widget.padding_top,
+                self.r_object_list_widget.padding_bottom,
+                self.r_object_list_widget.padding_left,
+                self.r_object_list_widget.padding_right
+            )
+
+        copy_mode = \
+            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked()
+
         self.r_object_list_widget.menu_dl_sam2_subsequence \
             .triggered.connect(
             lambda x: self.__action_obj_dl_sam2_subsequence(
-                copy_previous=self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked(),
-                expand_top=expend_top
+                copy_previous=copy_mode,
+                expand_top=padding_top,
+                expand_bottom=padding_bottom,
+                expand_left=padding_left,
+                expand_right=padding_right
             )
         )
 
