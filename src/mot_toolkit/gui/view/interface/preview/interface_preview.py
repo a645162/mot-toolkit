@@ -712,37 +712,38 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_dl_export_task \
             .triggered.connect(self.__action_obj_dl_export_task)
 
-        enable_expand = \
-            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_enable_padding.isChecked()
+        def __action_obj_dl_sam2_subsequence():
+            copy_previous_rect = \
+                self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked()
 
-        padding_top, padding_bottom, padding_left, padding_right = 0, 0, 0, 0
+            enable_expand = \
+                self.r_object_list_widget.menu_dl_sam2_subsequence_opt_enable_padding.isChecked()
 
-        if enable_expand:
-            (
-                padding_top,
-                padding_bottom,
-                padding_left,
-                padding_right
-            ) = (
-                self.r_object_list_widget.padding_top,
-                self.r_object_list_widget.padding_bottom,
-                self.r_object_list_widget.padding_left,
-                self.r_object_list_widget.padding_right
-            )
+            padding_top, padding_bottom, padding_left, padding_right = 0, 0, 0, 0
 
-        copy_mode = \
-            self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked()
+            if enable_expand:
+                (
+                    padding_top,
+                    padding_bottom,
+                    padding_left,
+                    padding_right
+                ) = (
+                    self.r_object_list_widget.padding_top,
+                    self.r_object_list_widget.padding_bottom,
+                    self.r_object_list_widget.padding_left,
+                    self.r_object_list_widget.padding_right
+                )
 
-        self.r_object_list_widget.menu_dl_sam2_subsequence \
-            .triggered.connect(
-            lambda x: self.__action_obj_dl_sam2_subsequence(
-                copy_previous=copy_mode,
+            self.__obj_dl_sam2_subsequence(
+                copy_previous=copy_previous_rect,
                 expand_top=padding_top,
                 expand_bottom=padding_bottom,
                 expand_left=padding_left,
                 expand_right=padding_right
             )
-        )
+
+        self.r_object_list_widget.menu_dl_sam2_subsequence \
+            .triggered.connect(__action_obj_dl_sam2_subsequence)
 
         self.r_object_list_widget.menu_unselect_all \
             .triggered.connect(self.__action_obj_unselect_all)
@@ -2134,7 +2135,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
         export_window.exec()
 
-    def __action_obj_dl_sam2_subsequence(
+    def __obj_dl_sam2_subsequence(
             self,
             copy_previous: bool = False,
             expand_left: float = 0,
@@ -2182,12 +2183,21 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 task_file_obj_list.append(file_obj)
 
+        enable_expand = expand_left or expand_top or expand_right or expand_bottom
+
+        expand_str = (
+            "\n\nExpand:"
+            f"\nTop: {expand_top} Bottom: {expand_bottom}"
+            f"\nLeft: {expand_left} Right: {expand_right}"
+        ) if enable_expand else ""
         ok = QMessageBox.question(
             self,
             "Warning",
             (
                 "Are you sure you want to run SAM2 on the subsequence?"
                 f"\n\nFrom {frame_range[0]} to {frame_range[1]} (Total: {len(task_file_obj_list)})"
+                f"\n\nCopy Mode: {copy_previous}"
+                f"{expand_str}"
             ),
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
@@ -2230,6 +2240,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 # Copy Last Frame
                 if copy_previous and previous_rect_obj is not None:
+                    logger.info(f"Copy Previous Frame Object: {previous_file_obj.file_name_no_extension}")
                     original_bbox = previous_rect_obj.get_xyxy_list()
 
                 input_bbox = original_bbox.copy()
@@ -2252,6 +2263,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     x2 = min(image_width, x2 + abs(x2 - x1) * expand_right)
                 if expand_bottom:
                     y2 = min(image_height, y2 + abs(y2 - y1) * expand_bottom)
+
+                if expand_left or expand_top or expand_right or expand_bottom:
+                    logger.info(
+                        f"Expand Top:{expand_top} "
+                        f"Left:{expand_left} "
+                        f"Right:{expand_right} "
+                        f"Bottom:{expand_bottom}"
+                    )
+                    logger.info(f"Expand BBox: {input_bbox} -> {x1}, {y1}, {x2}, {y2}")
 
                 input_bbox = [x1, y1, x2, y2]
 
