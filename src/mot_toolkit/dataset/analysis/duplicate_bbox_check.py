@@ -1,6 +1,7 @@
 import os
 
 from multiprocessing import pool
+from typing import List, Tuple
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 
@@ -16,6 +17,8 @@ def handle_seq(sequence_dir):
     annotation_directory.load_json_files()
 
     for file_obj in annotation_directory.annotation_file_list:
+        duplicate_label_pair_list: List[Tuple] = []
+
         for rect_obj in file_obj.rect_annotation_list:
             for other_rect_obj in file_obj.rect_annotation_list:
                 if rect_obj.label == other_rect_obj.label:
@@ -23,6 +26,20 @@ def handle_seq(sequence_dir):
 
                 iou = rect_obj.get_iou(other_rect_obj)
                 if iou > 0.95:
+                    found = False
+                    for label_pair in duplicate_label_pair_list:
+                        if (
+                                rect_obj.label in label_pair and
+                                other_rect_obj.label in label_pair
+                        ):
+                            found = True
+                            break
+
+                    if found:
+                        continue
+
+                    duplicate_label_pair_list.append((rect_obj.label, other_rect_obj.label))
+
                     print(f"Duplicate bbox ({round(iou, 2)}) found in {file_obj.file_path}")
                     print(f"rect_obj: {rect_obj}")
                     print(f"other_rect_obj: {other_rect_obj}")
