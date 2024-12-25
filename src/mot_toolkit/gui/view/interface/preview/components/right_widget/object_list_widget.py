@@ -235,7 +235,15 @@ class ObjectListWidget(ListWithTitleWidget):
         )
 
     def __action_padding_settings(self):
-        padding_input_dialog = PaddingInputDialog(parent=self)
+        padding_input_dialog = PaddingInputDialog(
+            default_values=(
+                self.padding_top,
+                self.padding_bottom,
+                self.padding_left,
+                self.padding_right
+            ),
+            parent=self
+        )
         if padding_input_dialog.exec_() != PaddingInputDialog.DialogCode.Accepted:
             return
 
