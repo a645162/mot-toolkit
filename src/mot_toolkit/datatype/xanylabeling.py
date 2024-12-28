@@ -3,11 +3,13 @@ from typing import List, Callable, Any, Optional, Union
 import json
 import os.path
 
-from PySide6.QtCore import Signal
-
 import cv2
 import numpy as np
+
+from PySide6.QtCore import Signal
 from PySide6.QtGui import QColor
+
+from objprint import op
 
 from mot_toolkit.config.hardware import cpu_count
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
@@ -1326,6 +1328,8 @@ if __name__ == '__main__':
     annotation_directory.load_json_files()
 
     print(annotation_directory.update_label_list())
+
+    op(annotation_directory)
 
     print()
 

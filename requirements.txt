@@ -1,5 +1,7 @@
 # Log
 loguru
+objprint
+
 
 # Program Update
 GitPython

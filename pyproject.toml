@@ -9,6 +9,7 @@ authors = [
 ]
 dependencies = [
     "loguru",
+    "objprint",
     "GitPython",
     "tqdm",
     "progressbar2",
