@@ -42,7 +42,7 @@ def parse_args():
         COCO-VID format."
     )
 
-    default_path = r"/home/konghaomin/Datasets/DanceTrack"
+    default_path = r"/home/konghaomin/Datasets/MaritimeTrack_Full_Same_73/DanceTrack/MoTRv2/DanceTrack"
 
     parser.add_argument(
         "-i",
@@ -57,6 +57,8 @@ def parse_args():
         default=os.path.join(default_path, "annotations"),
         help="path to save coco formatted label file",
     )
+
+    # Is need check 'Seq Name'
 
     return parser.parse_args()
 
@@ -114,10 +116,15 @@ def main():
             video_folder = osp.join(in_folder, video_name)
             infos = mmengine.list_from_file(f"{video_folder}/seqinfo.ini")
             # video-level infos
-            assert video_name == infos[1].strip().split("=")[1]
+            # assert video_name == infos[1].strip().split("=")[1]
             img_folder = infos[2].strip().split("=")[1]
             img_names = os.listdir(f"{video_folder}/{img_folder}")
             img_names = [d for d in img_names if d != ".DS_Store"]
+            img_names = [
+                path
+                for path in img_names
+                if path.endswith(".jpg")
+            ]
             img_names = sorted(img_names)
             fps = int(infos[3].strip().split("=")[1])
             num_imgs = int(infos[4].strip().split("=")[1])
