@@ -3,6 +3,7 @@ from typing import List
 from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu
 
+from mot_toolkit.gui.view.components.dialog.dialog_input_1_int import DialogInput1Int
 from mot_toolkit.gui.view.components.widget. \
     list.list_with_title_widget import ListWithTitleWidget
 from mot_toolkit.gui.view.interface.preview.components.dialog.padding_input_dialog import PaddingInputDialog
@@ -16,6 +17,8 @@ class ObjectListWidget(ListWithTitleWidget):
     padding_bottom: float = 0
     padding_left: float = 0
     padding_right: float = 0
+
+    run_times: int = 1
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
@@ -216,6 +219,17 @@ class ObjectListWidget(ListWithTitleWidget):
         q_menu.addAction(self.menu_dl_sam2_subsequence_opt_padding_info)
         self.__update_padding_info()
 
+        self.menu_dl_sam2_run_times = \
+            QAction(
+                "   Run Times",
+                q_menu
+            )
+        self.menu_dl_sam2_run_times.triggered.connect(
+            lambda: self.__run_times_dialog()
+        )
+        q_menu.addAction(self.menu_dl_sam2_run_times)
+        self.__update_run_times()
+
         q_menu.addSeparator()
 
         self.menu_unselect_all = \
@@ -260,3 +274,28 @@ class ObjectListWidget(ListWithTitleWidget):
         ) = padding_value_tuple
 
         self.__update_padding_info()
+
+    def __run_times_dialog(self):
+        input_dialog = DialogInput1Int(
+            default_value=self.run_times,
+            label="Enter Run Times:",
+            min_value=1,
+            max_value=10,
+            parent=self
+        )
+        if input_dialog.exec_() != PaddingInputDialog.DialogCode.Accepted:
+            return
+
+        run_times = input_dialog.get_integer()
+        if run_times is None:
+            logger.error("Invalid run times")
+            return
+
+        self.run_times = run_times
+
+        self.__update_run_times()
+
+    def __update_run_times(self):
+        self.menu_dl_sam2_run_times.setText(
+            f"   Run Times: {self.run_times}"
+        )

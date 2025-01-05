@@ -95,6 +95,14 @@ You may need to use `Python 3.11` or lower on macOS.
 3. Use `Single Object Tracking (SOT)` algorithm
 4. Adjust and delete from the frame where the target disappears.
 
+## QtPy
+
+You need to install one of the Qt Python binding, pyside2, pyside6, python-pyqt5, or python-pyqt6.
+You could use python-pyqt5 by default.
+It is strongly recommended that you use pyqt5 or pyside2. pyqt5 and pyside6 may not work due to API changes.
+If you have multiple Qt Python bindings installed, you could set environment variable 'QT_API' to the one you would like to use.
+See also qtpy's doc for more information: https://github.com/spyder-ide/qtpy
+
 ## Remote Run GUI On Linux Server
 
 Recommend to use `X11 Forwarding` to run GUI on a remote server.

@@ -734,12 +734,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     self.r_object_list_widget.padding_right
                 )
 
+            run_times = self.r_object_list_widget.run_times
+
             self.__obj_dl_sam2_subsequence(
                 copy_previous=copy_previous_rect,
                 expand_top=padding_top,
                 expand_bottom=padding_bottom,
                 expand_left=padding_left,
-                expand_right=padding_right
+                expand_right=padding_right,
+                run_times=run_times
             )
 
         self.r_object_list_widget.menu_dl_sam2_subsequence \
@@ -2142,6 +2145,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             expand_top: float = 0,
             expand_right: float = 0,
             expand_bottom: float = 0,
+            run_times: int = 1,
             iou_threshold: float = 0.3
     ):
         import mot_toolkit.dl as dl
@@ -2273,52 +2277,56 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     )
                     logger.info(f"Expand BBox: {input_bbox} -> {x1}, {y1}, {x2}, {y2}")
 
-                input_bbox = [x1, y1, x2, y2]
-
-                result_list = sam2.sam_predict_xyxy(
-                    file_obj.pic_path,
-                    input_bbox
-                )
-
                 have_error = False
 
-                if len(result_list) == 0:
-                    logger.warning(f"No result for Object:{rect_obj.label}")
-                    have_error = True
-                else:
-                    if len(result_list) > 1:
-                        logger.warning(f"SAM result count({len(result_list)}) != 1")
+                for _ in range(run_times):
+                    input_bbox = [x1, y1, x2, y2]
 
-                        iou_list: List[float] = []
-                        for result_bbox in result_list:
-                            iou = calculate_iou(original_bbox, result_bbox)
-                            iou_list.append(iou)
+                    result_list = sam2.sam_predict_xyxy(
+                        file_obj.pic_path,
+                        input_bbox
+                    )
 
-                        # Get Max Index
-                        max_index = iou_list.index(max(iou_list))
-                        max_iou = max(iou_list)
-                        if max_iou < iou_threshold:
-                            logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
-                            have_error = True
-                        else:
-                            result_list = result_list[max_index]
-                    else:
-                        result_list = result_list[0]
-
-                    if not have_error and len(result_list) != 4:
-                        logger.warning(f"Error: SAM result bbox length({len(result_list)}) != 4")
+                    if len(result_list) == 0:
+                        logger.warning(f"No result for Object:{rect_obj.label}")
                         have_error = True
+                    else:
+                        if len(result_list) > 1:
+                            logger.warning(f"SAM result count({len(result_list)}) != 1")
+
+                            iou_list: List[float] = []
+                            for result_bbox in result_list:
+                                iou = calculate_iou(original_bbox, result_bbox)
+                                iou_list.append(iou)
+
+                            # Get Max Index
+                            max_index = iou_list.index(max(iou_list))
+                            max_iou = max(iou_list)
+                            if max_iou < iou_threshold:
+                                logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
+                                have_error = True
+                            else:
+                                result_list = result_list[max_index]
+                        else:
+                            result_list = result_list[0]
+
+                        if not have_error and len(result_list) != 4:
+                            logger.warning(f"Error: SAM result bbox length({len(result_list)}) != 4")
+                            have_error = True
+
+                    if have_error:
+                        break
+
+                    x1, y1, x2, y2 = (
+                        result_list[0],
+                        result_list[1],
+                        result_list[2],
+                        result_list[3]
+                    )
 
                 if have_error:
                     error_list.append(file_obj.file_name_no_extension)
                     continue
-
-                x1, y1, x2, y2 = (
-                    result_list[0],
-                    result_list[1],
-                    result_list[2],
-                    result_list[3]
-                )
 
                 iou = calculate_iou(original_bbox, result_list)
                 iou = round(iou, 2)
