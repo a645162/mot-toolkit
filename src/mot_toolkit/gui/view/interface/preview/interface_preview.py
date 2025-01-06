@@ -2236,6 +2236,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             # Copy Last Frame Object
             previous_file_obj = file_obj
 
+            have_error = False
+
             for rect_obj in file_obj.rect_annotation_list:
                 if rect_obj.label != annotation_object.label:
                     continue
@@ -2276,8 +2278,6 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         f"Bottom:{expand_bottom}"
                     )
                     logger.info(f"Expand BBox: {input_bbox} -> {x1}, {y1}, {x2}, {y2}")
-
-                have_error = False
 
                 for _ in range(run_times):
                     input_bbox = [x1, y1, x2, y2]
@@ -2353,6 +2353,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 have_modify = True
 
                 # Only one (No same label)
+                break
+
+            if have_error and copy_previous:
                 break
 
             if not have_modify:
