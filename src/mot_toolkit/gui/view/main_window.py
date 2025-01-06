@@ -7,6 +7,7 @@ from mot_toolkit.gui.view.components.widget. \
 from mot_toolkit.gui.view.interface.classify.interface_classify import InterFaceClassify
 from mot_toolkit.gui.view.interface.spilt.interface_spilt import InterFaceDatasetSpilt
 from mot_toolkit.utils.logs import get_logger
+from mot_toolkit.utils.system.conda import get_conda_env_name
 
 logger = get_logger()
 
@@ -23,6 +24,14 @@ if is_linux():
     logger.info(f"Linux Graphic System: {window_system.value}")
 
 logger.info("Python " + sys.version)
+
+conda_env_name = get_conda_env_name()
+if len(conda_env_name) > 0:
+    logger.info(f"Conda Environment: {conda_env_name}")
+
+# Python Executable Path
+python_exe_path = sys.executable
+logger.info(f"Python Executable Path: {python_exe_path}")
 
 logger.info("Start To Load MainWindow Package")
 

@@ -9,6 +9,7 @@ from mot_toolkit.gui.view.components. \
     window.base_q_main_window import BaseQMainWindow
 from mot_toolkit.gui.view.components.widget. \
     basic.link_label import LinkLabel
+from mot_toolkit.utils.system.conda import get_conda_env_name
 from mot_toolkit.utils.system.linux.system import is_linux
 from mot_toolkit.utils.system.system import SystemType
 
@@ -61,6 +62,15 @@ class InterFaceAbout(BaseQMainWindow):
         self.add_label(f"Python Version: Python {python_version}")
         qt_version = PySide6.__version__
         self.add_label(f"Qt Version: PySide6({qt_version})")
+
+        self.add_label("")
+
+        conda_env_name = get_conda_env_name()
+        if len(conda_env_name) > 0:
+            self.add_label(f"Conda Environment: {conda_env_name}")
+
+        python_exe_path = sys.executable
+        self.add_label(f"Executable Path: {python_exe_path}")
 
         self.add_label("")
         self.add_label("Author: Haomin Kong")

@@ -2326,6 +2326,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 if have_error:
                     error_list.append(file_obj.file_name_no_extension)
+
+                    if copy_previous:
+                        logger.error(f"Error on {file_obj.file_name_no_extension}")
+                        logger.error("Directly exit because of error on 'Copy Mode'.")
+                        break
+
                     continue
 
                 iou = calculate_iou(original_bbox, result_list)
@@ -2609,7 +2615,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             ]
             # Max Value
             max_value = max(digit_list) if len(digit_list) else 0
-            default_label_name = str(max_value + 1)
+
+            default_value = -1
+            for i in range(1, max_value + 1):
+                if i not in digit_list:
+                    default_value = i
+                    break
+
+            if default_value == -1:
+                default_value = max_value + 1
+
+            default_label_name = str(default_value)
 
         logger.info("Default Label Name:", default_label_name)
 
