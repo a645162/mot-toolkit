@@ -1,15 +1,19 @@
+from typing import Tuple
+
 import torch
 
 
-def validate_device(device: torch.device) -> tuple:
+def validate_device(
+        device: torch.device,
+        use_double_precision: bool = False,
+        tensor_size: int = 10
+) -> Tuple[bool, bool, str]:
     """
     Validate the given device object.
 
-    :param
-        device (torch.device): The device object to validate.
-
-    :return
-        tuple: (is_gpu, available, device_name)
+    :param device: The device object to validate.
+    :param use_double_precision: If True, uses double precision (FP64) for computations, otherwise uses single precision (FP32).
+    :return: A tuple containing (is_gpu, available, device_name)
     """
     is_gpu = device.type == 'cuda'
     available = False
@@ -17,44 +21,67 @@ def validate_device(device: torch.device) -> tuple:
 
     if is_gpu:
         if not torch.cuda.is_available():
-            device_name = "CUDA不可用"
+            device_name = "CUDA unavailable"
         else:
             try:
-                # Get the device index
+                # Choose data type based on precision requirement
+                dtype = torch.float64 if use_double_precision else torch.float32
+
                 index = device.index if device.index is not None else 0
 
-                device_count = torch.cuda.device_count()
-                if index >= device_count:
-                    raise ValueError(f"Device index {index} out of range({device_count})")
+                def operate_tensor(
+                        tensor1: torch.Tensor,
+                        tensor2: torch.Tensor
+                ) -> torch.Tensor:
+                    """
+                    Perform some operations on two tensors and return a result tensor.
+                    """
 
-                size = 10
+                    # Transpose
+                    tensor3 = tensor1.cos().sin()
+                    tensor4 = tensor2.atan().absolute()
 
-                def operate_tensor(tensor1: torch.Tensor, tensor2: torch.Tensor):
-                    tensor3 = tensor1.add_(tensor2)
-                    tensor4 = tensor1.mul(tensor3)
+                    # Add
+                    tensor5 = tensor1.add(tensor2)
+                    tensor6 = tensor3.add(tensor4)
 
-                    return tensor4
+                    # Multiply and Divide
+                    tensor7 = tensor5.div(tensor6)
+                    tensor8 = tensor5.mul(tensor6)
 
-                tensor1_cpu = torch.ones(size).to('cpu')
-                tensor2_cpu = torch.ones(size).to('cpu')
+                    # FFT
+                    tensor9 = torch.fft.fft(tensor7)
+                    tensor10 = torch.fft.fft(tensor8)
+
+                    # Inverse FFT
+                    tensor11 = torch.fft.ifft(tensor9)
+                    tensor12 = torch.fft.ifft(tensor10)
+
+                    # Multiply
+                    tensor_result = tensor11.mul(tensor12)
+
+                    return tensor_result
+
+                tensor1_cpu = torch.randn(tensor_size, dtype=dtype).to('cpu')
+                tensor2_cpu = torch.randn(tensor_size, dtype=dtype).to('cpu')
 
                 result_cpu = operate_tensor(tensor1_cpu, tensor2_cpu)
 
-                # 测试设备可用性
-                tensor1_gpu = torch.ones(10).to(device)
-                tensor2_gpu = torch.ones(10).to(device)
+                tensor1_gpu = tensor1_cpu.clone().to(device=device, dtype=dtype)
+                tensor2_gpu = tensor2_cpu.clone().to(device=device, dtype=dtype)
 
                 result_gpu = operate_tensor(tensor1_gpu, tensor2_gpu)
 
-                result_device = result_gpu.device
-                if (result_device.type != device.type or
-                        (device.index is not None and result_device.index != device.index)):
-                    raise ValueError("Result Tensor device mismatch")
-
                 result_gpu_cpu = result_gpu.to('cpu')
 
-                if not torch.equal(result_cpu, result_gpu_cpu):
-                    raise ValueError("Device operation failed")
+                diff_tensor = result_cpu - result_gpu_cpu
+                diff_value = diff_tensor.abs().sum()
+
+                # Adjust tolerance based on precision used
+                tolerance = 1e-4 if use_double_precision else 1e-5
+
+                if diff_value > tolerance:
+                    raise ValueError(f"Device result is not equal to CPU result({diff_value}>{tolerance})")
 
                 available = True
                 device_name = torch.cuda.get_device_name(index)
@@ -67,12 +94,14 @@ def validate_device(device: torch.device) -> tuple:
 
 
 if __name__ == '__main__':
+    # Determine whether to use GPU or fallback to CPU
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-    result = validate_device(device)
+    # Validate the device and print the results
+    result = validate_device(device, use_double_precision=True)
 
     is_gpu, available, device_name = result
 
-    print(f"是否为GPU: {is_gpu}")
-    print(f"是否可用: {available}")
-    print(f"设备名称: {device_name}")
+    print(f"Is GPU: {is_gpu}")
+    print(f"Is Available: {available}")
+    print(f"Device Name: {device_name}")
