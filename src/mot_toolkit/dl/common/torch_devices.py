@@ -36,7 +36,14 @@ def get_recommended_device():
             # CUDA可用
             logger.info("CUDA is available!")
             logger.info("Using NVIDIA CUDA...")
-            return torch.device("cuda")
+
+            # Get GPU Count
+            gpu_count = torch.cuda.device_count()
+            if gpu_count > 1:
+                logger.info(f"Found {gpu_count} GPUs. Selecting the first GPU...")
+                return torch.device("cuda:0")
+
+            return torch.device("cuda:0")
         else:
             # CUDA不可用
             logger.info("CUDA is not available!")
