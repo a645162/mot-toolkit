@@ -1,13 +1,37 @@
 import os
 import argparse
+from typing import Union, List
 
 
 def setup_mirrors():
     os.system("pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple")
 
 
-def install_requirements_txt(file_path: str = "requirements.txt") -> bool:
+def install_requirements_txt(
+        file_path: Union[str, List[str]] = "requirements.txt"
+) -> bool:
+    if isinstance(file_path, str):
+        file_path = [file_path]
+
     ret = os.system(f"pip install -r {file_path}")
+
+    return ret == 0
+
+
+def install_package(
+        package_name: Union[str, List[str]] = "pip",
+        update: bool = False
+) -> bool:
+    if isinstance(package_name, str):
+        package_name = [package_name]
+
+    update_flag = ""
+    if update:
+        update_flag = " -U "
+
+    package_str = " ".join(package_name)
+
+    ret = os.system(f"pip install {update_flag} {package_str}")
 
     return ret == 0
 
@@ -78,6 +102,27 @@ def install_eval():
 
 def install_labelme():
     os.system("pip install labelme")
+
+
+def update():
+    pass
+
+
+def upgrade():
+    install_package("pip", update=True)
+    install_package("setuptools", update=True)
+
+    install_package("pyside6", update=True)
+
+    install_package(
+        [
+            "ultralytics",
+            "opencv-python",
+        ],
+        update=True
+    )
+
+    print("Upgrade Done!")
 
 
 def get_options():
