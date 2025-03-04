@@ -183,6 +183,28 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         self.frame_interval_edit = QLineEdit('1')
         group_play_control_layout.addWidget(self.frame_interval_edit)
 
+        #########################
+        # Right
+        #########################
+
+        # Group Screen Control
+        group_screen_control = QGroupBox("Screen Control")
+        group_screen_control_layout = QVBoxLayout()
+        group_screen_control.setLayout(group_screen_control_layout)
+        right_layout.addWidget(group_screen_control)
+
+        self.show_frame_text_checkbox = QCheckBox('Show Frame Text')
+        group_screen_control_layout.addWidget(self.show_frame_text_checkbox)
+        self.show_frame_text_checkbox.setChecked(True)
+
+        self.frame_progress_checkbox = QCheckBox('Show Frame Progress')
+        group_screen_control_layout.addWidget(self.frame_progress_checkbox)
+        self.frame_progress_checkbox.setChecked(True)
+
+        self.frame_object_count_checkbox = QCheckBox('Show Frame Object Count')
+        group_screen_control_layout.addWidget(self.frame_object_count_checkbox)
+        self.frame_object_count_checkbox.setChecked(True)
+
         # Group Box Control
         group_box_control = QGroupBox("Box Control")
         group_box_control_layout = QVBoxLayout()
@@ -360,6 +382,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
             thickness = int(self.thickness_edit.text())
             crop_padding = int(self.crop_padding_edit.text())
 
+            # Screen
+            show_frame_text = self.show_frame_text_checkbox.isChecked()
+            show_frame_progress = self.frame_progress_checkbox.isChecked()
+            show_frame_object_count = self.frame_object_count_checkbox.isChecked()
+
             frame_interval = int(self.frame_interval_edit.text())
             selection_label = str(self.selection_label_edit.text()).strip()
 
@@ -484,16 +511,24 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     continue
 
                 # Draw Text
-                text = f"Frame: {i + 1}/{file_count}, Object Count: {annotation.annotation_count}"
-                cv2.putText(
-                    image,
-                    text,
-                    (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 0),
-                    2
-                )
+                if show_frame_text:
+                    text_list: List[str] = []
+                    if show_frame_progress:
+                        text_list.append(f"Frame: {frame_index}/{file_count}")
+                    if show_frame_object_count:
+                        text_list.append(f"Object Count: {annotation.annotation_count}")
+
+                    text = " | ".join(text_list)
+
+                    cv2.putText(
+                        image,
+                        text,
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 255, 0),
+                        2
+                    )
 
                 # Resize
                 if scale_ratio != 1:
