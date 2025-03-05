@@ -11,6 +11,8 @@ import os
 import time
 from typing import List
 
+import tqdm
+
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.datatype.dataset.object_property import ObjectSizeType
@@ -88,6 +90,12 @@ def handle_sequence_dir(
         class_config: ObjectClassConfigure,
         resize: bool = True
 ) -> List:
+    if sequence_dir_path == "":
+        return []
+
+    if not os.path.isdir(sequence_dir_path):
+        return []
+
     return_list = []
 
     class_count_list: List[int] = [
@@ -101,6 +109,10 @@ def handle_sequence_dir(
 
     # Frame Count
     frame_count = len(annotation_directory.file_list)
+
+    if frame_count == 0:
+        print(f"Sequence {sequence_dir_path} has no frame!")
+        return []
 
     annotation_directory.load_json_files()
 
@@ -230,8 +242,8 @@ def handle_sequence_dir(
 
 
 if __name__ == "__main__":
-    # base_path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
-    base_path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
+    base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
+    # base_path = r"/mnt/h/Datasets/MaritimeTrackAllData/LabelMe"
 
     empty_line_spilt = True
 
@@ -262,6 +274,9 @@ if __name__ == "__main__":
             new_video_dir_list.append(video_dir_path)
     video_dir_list = new_video_dir_list
 
+    # print(video_dir_list)
+    # input()
+
     # video_dir_list = [
     #     path
     #     for path in video_dir_list
@@ -274,7 +289,7 @@ if __name__ == "__main__":
         sequence_count = len(sequence_dir_list)
         print(video_name, sequence_count)
 
-        for sequence_dir_path in sequence_dir_list:
+        for sequence_dir_path in tqdm.tqdm(sequence_dir_list):
             sequence_name = os.path.basename(sequence_dir_path)
             print("\t" + sequence_name)
 
@@ -288,7 +303,7 @@ if __name__ == "__main__":
         if empty_line_spilt:
             result_list.append([])
 
-    save_to_csv(result_list, class_config, "result.csv")
+    save_to_csv(result_list, class_config, "20250305.csv")
 
     end_time = time.time()
 

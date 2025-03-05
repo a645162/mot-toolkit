@@ -679,6 +679,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_file_list_widget.menu_jump_to \
             .triggered.connect(self.__action_obj_jump_to)
 
+        # Class List
+        self.r_label_class_list_widget.menu_change_class \
+            .triggered.connect(
+            self.__action_label_change_class
+        )
+
         # Obj List
         self.r_object_list_widget.menu_subsequent_new_id \
             .triggered.connect(self.__action_obj_subsequent_new_id)
@@ -1531,6 +1537,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         self.update_annotation_object_display()
+
+    def __action_label_change_class(self):
+        selection_index = self.r_label_class_list_widget.selection_index
+        if selection_index == -1:
+            return
+        if selection_index == self.r_label_class_list_widget.count - 1:
+            return
+
+        self.__action_obj_change_class()
 
     def __action_obj_change_class(self):
         select_rect_index = self.r_object_list_widget.selection_index
