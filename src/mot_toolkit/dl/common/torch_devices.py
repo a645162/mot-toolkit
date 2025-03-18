@@ -265,13 +265,22 @@ def get_linux_vga_device():
     filter = "|".join(keywords)
 
     try:
-        command = f"lspci | grep -E '{filter}'"
+        command = "lspci -k -d ::03xx"
+
         output = subprocess.check_output(command, shell=True)
         output = output.decode("utf-8").strip()
 
         return output
     except Exception:
-        return "Unknown"
+        try:
+            failback_command = f"lspci | grep -E '{filter}'"
+
+            output = subprocess.check_output(failback_command, shell=True)
+            output = output.decode("utf-8").strip()
+
+            return output
+        except Exception:
+            return "Unknown"
 
 
 if __name__ == '__main__':
