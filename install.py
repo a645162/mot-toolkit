@@ -4,23 +4,52 @@ from typing import Union, List
 
 
 def setup_mirrors():
-    os.system("pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple")
+    os.system(
+        "pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple"
+    )
 
 
-def install_requirements_txt(
-        file_path: Union[str, List[str]] = "requirements.txt"
-) -> bool:
-    if isinstance(file_path, str):
-        file_path = [file_path]
+def install_conda_packages(
+    packages: Union[str, List[str]] = "numpy",
+):
+    if isinstance(packages, str):
+        packages = [packages]
 
-    ret = os.system(f"pip install -r {file_path}")
-
+    package_str = " ".join(packages)
+    ret = os.system(f"conda install {package_str} -y")
     return ret == 0
 
 
+def install_pip_packages(
+    packages: Union[str, List[str]],
+):
+    if isinstance(packages, str):
+        packages = [packages]
+
+    package_str = " ".join(packages)
+    ret = os.system(f"pip install {package_str}")
+    return ret == 0
+
+
+def install_pip_requirements_txt(
+    file_paths: Union[str, List[str]] = "requirements.txt",
+) -> bool:
+    if isinstance(file_paths, str):
+        file_paths = [file_paths]
+
+    is_success = True
+    for file_path in file_paths:
+        ret = os.system(f"pip install -r {file_path}")
+        if ret != 0:
+            print(f"Install {file_path} Failed!")
+            is_success = False
+            break
+
+    return is_success
+
+
 def install_package(
-        package_name: Union[str, List[str]] = "pip",
-        update: bool = False
+    package_name: Union[str, List[str]] = "pip", update: bool = False
 ) -> bool:
     if isinstance(package_name, str):
         package_name = [package_name]
@@ -37,7 +66,7 @@ def install_package(
 
 
 def install_dep():
-    ret = install_requirements_txt()
+    ret = install_pip_requirements_txt()
 
     if not ret:
         print("Install necessary dependencies Failed!")
@@ -45,7 +74,7 @@ def install_dep():
 
 
 def install_gui():
-    ret = install_requirements_txt("r-gui-requirements.txt")
+    ret = install_pip_requirements_txt("r-gui-requirements.txt")
 
     if not ret:
         print("Install necessary dependencies Failed!")
@@ -69,13 +98,13 @@ def install_gui():
 
 
 def install_dep_dev():
-    install_requirements_txt("r-dev-requirements.txt")
+    install_pip_requirements_txt("r-dev-requirements.txt")
 
     print("Install Dev Done!")
 
 
 def install_crawler():
-    install_requirements_txt("r-crawler-requirements.txt")
+    install_pip_requirements_txt("r-crawler-requirements.txt")
 
     os.system("playwright install")
 
@@ -83,25 +112,38 @@ def install_crawler():
 
 
 def install_dl():
-    install_requirements_txt("r-dl-requirements.txt")
+    install_pip_requirements_txt("r-dl-requirements.txt")
 
     print("Install Torch Done!")
 
 
 def install_dataset():
-    install_requirements_txt("r-dataset-requirements.txt")
+    install_pip_requirements_txt("r-dataset-requirements.txt")
 
     print("Install Dataset Done!")
 
 
 def install_eval():
-    install_requirements_txt("r-eval-requirements.txt")
+    install_pip_requirements_txt("r-eval-requirements.txt")
 
     print("Install Eval Done!")
 
 
 def install_labelme():
     os.system("pip install labelme")
+
+
+def check_is_intel_cpu_platform() -> bool:
+    import cpuinfo
+    import re
+
+    info = cpuinfo.get_cpu_info()
+    cpu_name = info["brand_raw"]
+
+    if re.search(r"Intel", cpu_name):
+        return True
+
+    return False
 
 
 def update():
@@ -119,7 +161,7 @@ def upgrade():
             "ultralytics",
             "opencv-python",
         ],
-        update=True
+        update=True,
     )
 
     print("Upgrade Done!")
@@ -128,23 +170,34 @@ def upgrade():
 def get_options():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--dev", "-d", action="store_true", help="Install Dev Dependencies")
+    parser.add_argument(
+        "--dev", "-d", action="store_true", help="Install Dev Dependencies"
+    )
     parser.add_argument("--gui", action="store_true", help="Install GUI Dependencies")
     parser.add_argument("--dl", action="store_true", help="Install Torch Dependencies")
 
-    parser.add_argument("--crawler", action="store_true", help="Install Crawler Dependencies")
-    parser.add_argument("--dataset", action="store_true", help="Install Dataset Dependencies")
+    parser.add_argument(
+        "--crawler", action="store_true", help="Install Crawler Dependencies"
+    )
+    parser.add_argument(
+        "--dataset", action="store_true", help="Install Dataset Dependencies"
+    )
 
     parser.add_argument("--eval", action="store_true", help="Install Eval Dependencies")
     parser.add_argument("--labelme", action="store_true", help="Install LabelMe")
 
-    parser.add_argument("--all", "-a", action="store_true", help="Install All Dependencies")
+    parser.add_argument(
+        "--all", "-a", action="store_true", help="Install All Dependencies"
+    )
 
     return parser.parse_args()
 
 
 if __name__ == "__main__":
     args = get_options()
+
+    # For debug
+    # args.all = True
 
     if args.all:
         args.dev = True
@@ -186,3 +239,8 @@ if __name__ == "__main__":
 
     if args.labelme:
         install_labelme()
+
+    if check_is_intel_cpu_platform():
+        print("Intel CPU Platform Detected!")
+        print("Installing numpy with conda(with MKL Support)...")
+        install_conda_packages("numpy")

@@ -21,3 +21,4 @@ toml
 
 # System Process
 psutil
+py-cpuinfo
