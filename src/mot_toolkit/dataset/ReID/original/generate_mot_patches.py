@@ -13,8 +13,8 @@ def generate_trajectories(file_path, groundTrues):
 
     lines = f.read().split('\n')
     values = []
-    for l in lines:
-        split = l.split(',')
+    for line in lines:
+        split = line.split(',')
         if len(split) < 2:
             break
         numbers = [float(i) for i in split]

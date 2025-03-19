@@ -3,20 +3,23 @@ from typing import List
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.utils.list_data import sort_int_str_list
-from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory, XAnyLabelingAnnotation
+from mot_toolkit.datatype.xanylabeling import (
+    XAnyLabelingAnnotationDirectory,
+    XAnyLabelingAnnotation,
+)
 
 replace_rule = {
-    "1": "0",# Ship
-    "2": "12",# Other
-    "3": "1",# Cargo ship
-    "4": "2",# Fishing Boat
-    "5": "3",# Container Ship
-    "6": "4",#Passenger Ship
-    "7": "13",# Raft
-    "8": "5",# Island
-    "9": "6",# Buoy
-    "10": "7",# Obstacle
-    "11": "8",# Tugboat
+    "1": "0",  # Ship
+    "2": "12",  # Other
+    "3": "1",  # Cargo ship
+    "4": "2",  # Fishing Boat
+    "5": "3",  # Container Ship
+    "6": "4",  # Passenger Ship
+    "7": "13",  # Raft
+    "8": "5",  # Island
+    "9": "6",  # Buoy
+    "10": "7",  # Obstacle
+    "11": "8",  # Tugboat
 }
 
 
@@ -33,8 +36,7 @@ def handle_sequence(sequence_dir):
         task_id_list = sort_int_str_list(task_id_list)
 
         annotation_obj_list_task_list = [
-            file_obj.get_list_by_group_id(group_id)
-            for group_id in task_id_list
+            file_obj.get_list_by_group_id(group_id) for group_id in task_id_list
         ]
 
         for annotation_obj_list in annotation_obj_list_task_list:
@@ -48,17 +50,11 @@ def handle_sequence(sequence_dir):
 
         file_obj.save()
 
-    annotation_directory.do_for_each_file(
-        func=replace_group_id
-    )
+    annotation_directory.do_for_each_file(func=replace_group_id)
 
 
 base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe1"
-sequence_path_list = \
-    get_dataset_dir_list(
-        dataset_dir_path=base_dir,
-        depth=1
-    )
+sequence_path_list = get_dataset_dir_list(dataset_dir_path=base_dir, depth=1)
 
 # with multiprocessing.Pool(26) as pool:
 #     pool.map(handle_sequence, sequence_path_list)
