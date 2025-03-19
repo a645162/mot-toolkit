@@ -97,10 +97,12 @@ if __name__ == "__main__":
 
     dir_list = get_dataset_dir_list(
         dataset_dir_path=datasets_dir_path,
-        depth=2,
+        depth=1,
         black_list=["Task"]
     )
 
     print("Final Dir List:")
     for dir_path in dir_list:
         print(dir_path)
+
+    print("Total:", len(dir_list))
