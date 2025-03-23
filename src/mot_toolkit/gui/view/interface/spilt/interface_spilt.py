@@ -15,6 +15,7 @@ from mot_toolkit.gui.view.components. \
     window.base_interface_window import BaseWorkInterfaceWindow
 from mot_toolkit.gui.view.interface.spilt.components.spilt_list_widget import SpiltListWidget
 from mot_toolkit.utils.logs import get_logger
+from mot_toolkit.utils.statistics.stats_file import stats_file_count
 
 logger = get_logger()
 
@@ -152,13 +153,32 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             parent=self.control_widget
         )
         reload_button.clicked.connect(self.reload)
+        # 大小尽可能小
+        reload_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         self.control_layout.addWidget(reload_button)
+
+        stats_count_button = QPushButton(
+            "Stats Count",
+            parent=self.control_widget
+        )
+        stats_count_button.clicked.connect(self.stats_count)
+        # 大小尽可能小
+        stats_count_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
+        self.control_layout.addWidget(stats_count_button)
 
         save_button = QPushButton(
             "Save",
             parent=self.control_widget
         )
         save_button.clicked.connect(self.save)
+        # 大小尽可能小
+        save_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         self.control_layout.addWidget(save_button)
 
         # Setting
@@ -218,6 +238,16 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         file_list = os.listdir(self.work_directory_path)
         file_list = [f for f in file_list if f.endswith(".spilt.json")]
+
+        abs_path_list = [
+            os.path.join(self.work_directory_path, f) for f in file_list
+        ]
+
+        def sort_by_modify_time(path_list: List[str]) -> List[str]:
+            return sorted(path_list, key=lambda x: os.path.getmtime(x), reverse=True)
+
+        abs_path_list = sort_by_modify_time(abs_path_list)
+        file_list = [os.path.basename(f) for f in abs_path_list]
 
         if len(file_list) == 0:
             file_list.append("default.spilt.json")
@@ -513,6 +543,33 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
                 break
 
         self.update_spilt_list_widget()
+
+    def stats_count(self):
+        (dataset_obj_list_train,
+         dataset_obj_list_val,
+         dataset_obj_list_test,
+         dataset_obj_list_other
+         ) = self.__get_spilt_list()
+
+        def get_count(dataset_obj_list: List[DatasetSpilt]):
+            count = 0
+            for dataset_obj in dataset_obj_list:
+                count += stats_file_count(dataset_obj.abs_path, "jpg")
+
+            return count
+
+        text = (
+            f"Train: {get_count(dataset_obj_list_train)}\n"
+            f"Val: {get_count(dataset_obj_list_val)}\n"
+            f"Test: {get_count(dataset_obj_list_test)}\n"
+            f"Other: {get_count(dataset_obj_list_other)}"
+        )
+
+        QMessageBox.information(
+            self,
+            "Stats Count",
+            text
+        )
 
 
 if __name__ == "__main__":
