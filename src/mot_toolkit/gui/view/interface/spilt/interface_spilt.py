@@ -295,6 +295,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     def reload_data(self):
         json_path = self.settings_json_path
 
+        logger.info(f"Load Data From: {json_path}")
+
         if os.path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 json_dict: dict = json.load(f)
@@ -558,12 +560,27 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
             return count
 
+        train_count = get_count(dataset_obj_list_train)
+        val_count = get_count(dataset_obj_list_val)
+        test_count = get_count(dataset_obj_list_test)
+        other_count = get_count(dataset_obj_list_other)
+
+        used_count = train_count + val_count + test_count
+
+        train_rate = round((train_count / used_count) * 100, 2)
+        val_rate = round((val_count / used_count) * 100, 2)
+        test_rate = round((test_count / used_count) * 100, 2)
+
         text = (
-            f"Train: {get_count(dataset_obj_list_train)}\n"
-            f"Val: {get_count(dataset_obj_list_val)}\n"
-            f"Test: {get_count(dataset_obj_list_test)}\n"
-            f"Other: {get_count(dataset_obj_list_other)}"
-        )
+            f"Train: {train_count}({train_rate}%))\n"
+            f"Val: {val_count}({val_rate}%))\n"
+            f"Test: {test_count}({test_rate}%))\n"
+            f"Other: {other_count}\n"
+            "\n"
+            f"Used: {used_count}\n"
+            f"Train+Val: {train_count + val_count}\n"
+            f"Total: {used_count + other_count}\n"
+        ).strip()
 
         QMessageBox.information(
             self,

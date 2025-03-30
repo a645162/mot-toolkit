@@ -122,7 +122,7 @@ def handle_sequence_dir(
     if resize:
         first_file_obj = annotation_directory.annotation_file_list[0]
         image_width, image_height = first_file_obj.image_width, first_file_obj.image_height
-        target_width, target_height = 640, 640
+        target_width, target_height = 640, 480
         width_ratio = target_width / image_width
         height_ratio = target_height / image_height
 
