@@ -2,39 +2,26 @@ import os
 import json
 from typing import List
 
-from mot_toolkit.datatype.dataset.dataset_spilt import (
-    DatasetSpilt, SpiltType
-)
+from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt, SpiltType
 from mot_toolkit.gui.view.interface.spilt.core.spilt_dancetrack import SpiltDanceTrack
 from mot_toolkit.gui.view.interface.spilt.core.spilt_yolo import SpiltYolo
+from mot_toolkit.gui.view.interface.spilt.core.spilt_coco import SpiltCoco
 from mot_toolkit.utils.logs import get_logger
 
 logger = get_logger()
 
 json_dict_example: dict = {
-    "all": {
-        "dataset_list": [],
-        "path_str_list": []
-    },
-    "train": {
-        "dataset_list": [],
-        "path_str_list": []
-    },
-    "val": {
-        "dataset_list": [],
-        "path_str_list": []
-    },
-    "test": {
-        "dataset_list": [],
-        "path_str_list": []
-    },
+    "all": {"dataset_list": [], "path_str_list": []},
+    "train": {"dataset_list": [], "path_str_list": []},
+    "val": {"dataset_list": [], "path_str_list": []},
+    "test": {"dataset_list": [], "path_str_list": []},
 }
 
 
 def spilt_dataset(
-        dataset_base_dir: str,
-        output_base_dir: str,
-        spilt_config: str = "default.spilt.json"
+    dataset_base_dir: str,
+    output_base_dir: str,
+    spilt_config: str = "default.spilt.json",
 ):
     if not (os.path.exists(dataset_base_dir) and os.path.isdir(dataset_base_dir)):
         logger.error("Dataset base dir not found: " + dataset_base_dir)
@@ -80,7 +67,7 @@ def spilt_dataset(
             path=path_str,
             base_dir_path=dataset_base_dir,
             spilt_type=SpiltType.TRAIN,
-            depth=depth
+            depth=depth,
         )
         dataset_train_list.append(obj)
     for path_str in dataset_val_str_list:
@@ -88,7 +75,7 @@ def spilt_dataset(
             path=path_str,
             base_dir_path=dataset_base_dir,
             spilt_type=SpiltType.VAL,
-            depth=depth
+            depth=depth,
         )
         dataset_val_list.append(obj)
     for path_str in dataset_test_str_list:
@@ -96,24 +83,26 @@ def spilt_dataset(
             path=path_str,
             base_dir_path=dataset_base_dir,
             spilt_type=SpiltType.TEST,
-            depth=depth
+            depth=depth,
         )
         dataset_test_list.append(obj)
 
     output_dance_track_dir = os.path.join(output_base_dir, "DanceTrack")
     output_yolo_dir = os.path.join(output_base_dir, "YOLO")
+    output_coco_dir = os.path.join(output_base_dir, "COCO")  # 新增COCO输出目录
 
     os.makedirs(output_dance_track_dir, exist_ok=True)
     os.makedirs(output_yolo_dir, exist_ok=True)
+    os.makedirs(output_coco_dir, exist_ok=True)  # 创建COCO输出目录
 
-    # DanceTrack
-    spilt_dance_track = SpiltDanceTrack()
-    spilt_dance_track.output_dance_track(
-        output_dance_track_dir=output_dance_track_dir,
-        dataset_train_list=dataset_train_list,
-        dataset_val_list=dataset_val_list,
-        dataset_test_list=dataset_test_list,
-    )
+    # # DanceTrack
+    # spilt_dance_track = SpiltDanceTrack()
+    # spilt_dance_track.output_dance_track(
+    #     output_dance_track_dir=output_dance_track_dir,
+    #     dataset_train_list=dataset_train_list,
+    #     dataset_val_list=dataset_val_list,
+    #     dataset_test_list=dataset_test_list,
+    # )
 
     # YOLO
     # spilt_yolo = SpiltYolo()
@@ -124,18 +113,27 @@ def spilt_dataset(
     #     dataset_test_list=dataset_test_list,
     # )
 
+    # COCO
+    spilt_coco = SpiltCoco()
+    spilt_coco.output_coco(
+        output_coco_dir=output_coco_dir,
+        dataset_train_list=dataset_train_list,
+        dataset_val_list=dataset_val_list,
+        dataset_test_list=dataset_test_list,
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     # dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
     # output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
     dataset_base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
     output_base_dir = r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full"
 
     # config = "test.spilt.json"
-    config = "20241208.spilt.json"
+    config = "20250322.spilt.json"
 
     spilt_dataset(
         dataset_base_dir=dataset_base_dir,
         output_base_dir=output_base_dir,
-        spilt_config=config
+        spilt_config=config,
     )
