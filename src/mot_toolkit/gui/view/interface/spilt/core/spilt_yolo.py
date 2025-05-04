@@ -1,5 +1,6 @@
 import multiprocessing
 import os
+import profile
 import shutil
 from enum import Enum
 from sys import prefix
@@ -38,10 +39,10 @@ class SpiltYolo:
         self.process_count = io_cpu_count
 
     def handle_yolo_sequence(
-            self,
-            sequence_dir: str,
-            target_dir: str,
-            profile_name: str = "train",
+        self,
+        sequence_dir: str,
+        target_dir: str,
+        profile_name: str = "train",
     ):
         if not os.path.exists(sequence_dir):
             logger.error("Source Sequence Dir Not Found: " + sequence_dir)
@@ -98,34 +99,32 @@ class SpiltYolo:
                 w_ratio = round(w_ratio, round_count)
                 h_ratio = round(h_ratio, round_count)
 
-                line = (f"{rect_obj.group_id} "
-                        f"{x_ratio} "
-                        f"{y_ratio} "
-                        f"{w_ratio} "
-                        f"{h_ratio}")
+                line = (
+                    f"{rect_obj.group_id} "
+                    f"{x_ratio} "
+                    f"{y_ratio} "
+                    f"{w_ratio} "
+                    f"{h_ratio}"
+                )
                 yolo_text_list.append(line)
 
             yolo_text = "\n".join(yolo_text_list)
-            target_path_txt = target_path_jpeg.replace(".jpg", ".txt")
+            # 修改此处，使用相同的文件名但保存到labels目录
+            label_file_name = file_name.replace(".jpg", ".txt")
+            target_path_txt = os.path.join(yolo_label, label_file_name)
             with open(target_path_txt, "w") as f:
                 f.write(yolo_text)
 
     def handle_yolo_sequence_param(
-            self,
-            sequence_dir: str,
-            target_dir: str,
-            profile_name: str = "train"
+        self, sequence_dir: str, target_dir: str, profile_name: str = "train"
     ):
-        return (
-            sequence_dir,
-            target_dir
-        )
+        return (sequence_dir, target_dir, profile_name)
 
     def handle_yolo_dir(
-            self,
-            dataset_dir_obj: DatasetSpilt,
-            output_dir: str,
-            profile_name: str = "train"
+        self,
+        dataset_dir_obj: DatasetSpilt,
+        output_dir: str,
+        profile_name: str = "train",
     ):
         # print(str(dataset_dir_obj))
         source_dir = dataset_dir_obj.abs_path
@@ -137,10 +136,7 @@ class SpiltYolo:
         # logger.debug("Source Dir: " + source_dir)
         # logger.debug("Target Dir: " + target_dir)
 
-        sequence_path_list = get_dataset_dir_list(
-            dataset_dir_path=source_dir,
-            depth=1
-        )
+        sequence_path_list = get_dataset_dir_list(dataset_dir_path=source_dir, depth=1)
         for sequence_path in sequence_path_list:
             # self.handle_dance_track_sequence(
             #     sequence_dir=sequence_path,
@@ -151,15 +147,15 @@ class SpiltYolo:
                 self.handle_yolo_sequence_param(
                     sequence_dir=sequence_path,
                     target_dir=output_dir,
-                    profile_name=profile_name
+                    profile_name=profile_name,
                 )
             )
 
     def output_yolo_spilt(
-            self,
-            dataset_list: List[DatasetSpilt],
-            output_dir: str,
-            profile_name: str = "train"
+        self,
+        dataset_list: List[DatasetSpilt],
+        output_dir: str,
+        profile_name: str = "train",
     ):
         logger.info("Output DanceTrack")
         logger.info("Dataset List Count: " + str(len(dataset_list)))
@@ -169,35 +165,35 @@ class SpiltYolo:
             self.handle_yolo_dir(
                 dataset_dir_obj=dataset_obj,
                 output_dir=output_dir,
-                profile_name=profile_name
+                profile_name=profile_name,
             )
 
     def output_yolo(
-            self,
-            output_yolo_dir: str,
-            dataset_train_list: List[DatasetSpilt],
-            dataset_val_list: List[DatasetSpilt],
-            dataset_test_list: List[DatasetSpilt],
+        self,
+        output_yolo_dir: str,
+        dataset_train_list: List[DatasetSpilt],
+        dataset_val_list: List[DatasetSpilt],
+        dataset_test_list: List[DatasetSpilt],
     ):
         ## Train
         self.output_yolo_spilt(
             dataset_list=dataset_train_list,
             output_dir=output_yolo_dir,
-            profile_name="train"
+            profile_name="train",
         )
 
         ## Val
         self.output_yolo_spilt(
             dataset_list=dataset_val_list,
             output_dir=output_yolo_dir,
-            profile_name="val"
+            profile_name="val",
         )
 
         ## Test
         self.output_yolo_spilt(
             dataset_list=dataset_test_list,
             output_dir=output_yolo_dir,
-            profile_name="test"
+            profile_name="test",
         )
 
         task_count = len(self.multiprocess_task_params)
@@ -208,10 +204,7 @@ class SpiltYolo:
         logger.info("Start task on " + str(self.process_count) + " CPU Cores")
         if self.multiprocess_mode and self.process_count > 1:
             with multiprocessing.Pool(processes=self.process_count) as pool:
-                pool.starmap(
-                    self.handle_yolo_sequence,
-                    self.multiprocess_task_params
-                )
+                pool.starmap(self.handle_yolo_sequence, self.multiprocess_task_params)
         else:
             for param in self.multiprocess_task_params:
                 self.handle_yolo_sequence(*param)

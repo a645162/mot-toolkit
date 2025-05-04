@@ -3,6 +3,7 @@ requirements-dev.lock
 uv.lock
 
 TrackEval/
+runs/
 
 *.pt
 

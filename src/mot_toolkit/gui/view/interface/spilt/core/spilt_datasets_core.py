@@ -96,22 +96,22 @@ def spilt_dataset(
     os.makedirs(output_coco_dir, exist_ok=True)  # 创建COCO输出目录
 
     # # DanceTrack
-    # spilt_dance_track = SpiltDanceTrack()
-    # spilt_dance_track.output_dance_track(
-    #     output_dance_track_dir=output_dance_track_dir,
-    #     dataset_train_list=dataset_train_list,
-    #     dataset_val_list=dataset_val_list,
-    #     dataset_test_list=dataset_test_list,
-    # )
+    spilt_dance_track = SpiltDanceTrack()
+    spilt_dance_track.output_dance_track(
+        output_dance_track_dir=output_dance_track_dir,
+        dataset_train_list=dataset_train_list,
+        dataset_val_list=dataset_val_list,
+        dataset_test_list=dataset_test_list,
+    )
 
     # YOLO
-    # spilt_yolo = SpiltYolo()
-    # spilt_yolo.output_yolo(
-    #     output_yolo_dir=output_yolo_dir,
-    #     dataset_train_list=dataset_train_list,
-    #     dataset_val_list=dataset_val_list,
-    #     dataset_test_list=dataset_test_list,
-    # )
+    spilt_yolo = SpiltYolo()
+    spilt_yolo.output_yolo(
+        output_yolo_dir=output_yolo_dir,
+        dataset_train_list=dataset_train_list,
+        dataset_val_list=dataset_val_list,
+        dataset_test_list=dataset_test_list,
+    )
 
     # COCO
     spilt_coco = SpiltCoco()
@@ -126,8 +126,10 @@ def spilt_dataset(
 if __name__ == "__main__":
     # dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
     # output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
-    dataset_base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
-    output_base_dir = r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full"
+    # dataset_base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
+    dataset_base_dir = r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe"
+    # output_base_dir = r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full_20250413"
+    output_base_dir = r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250413"
 
     # config = "test.spilt.json"
     config = "20250322.spilt.json"

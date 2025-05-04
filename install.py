@@ -129,6 +129,12 @@ def install_eval():
     print("Install Eval Done!")
 
 
+def install_llms():
+    install_pip_requirements_txt("r-llms-requirements.txt")
+
+    print("Install LLMs Done!")
+
+
 def install_labelme():
     os.system("pip install labelme")
 
@@ -175,6 +181,7 @@ def get_options():
     )
     parser.add_argument("--gui", action="store_true", help="Install GUI Dependencies")
     parser.add_argument("--dl", action="store_true", help="Install Torch Dependencies")
+    parser.add_argument("--llms", action="store_true", help="Install LLMs Dependencies")
 
     parser.add_argument(
         "--crawler", action="store_true", help="Install Crawler Dependencies"
@@ -203,6 +210,7 @@ if __name__ == "__main__":
         args.dev = True
         args.gui = True
         args.dl = True
+        args.llms = True
         args.crawler = True
         args.dataset = True
         args.eval = True
@@ -215,6 +223,7 @@ if __name__ == "__main__":
     print(f"Dev: {args.dev}")
     print(f"GUI: {args.gui}")
     print(f"Deep Learning: {args.dl}")
+    print(f"LLMs: {args.llms}")
     print(f"Crawler: {args.crawler}")
     print(f"Dataset: {args.dataset}")
     print(f"Eval: {args.eval}")
@@ -230,6 +239,8 @@ if __name__ == "__main__":
         install_gui()
     if args.dl:
         install_dl()
+    if args.llms:
+        install_llms()
     if args.crawler:
         install_crawler()
     if args.dataset:

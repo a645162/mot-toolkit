@@ -1,0 +1,17 @@
+path: /home/konghaomin/Datasets/MaritimeTrack_Full_20250413/YOLO
+
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+names:
+  0: Ship
+  1: Cargo Ship
+  2: Fishing Boat
+  3: Container Ship
+  4: Passenger Ship
+  5: Island
+  6: Buoy
+  7: Obstacle
+  8: Tugboat

@@ -1,0 +1,13 @@
+# LangChain
+langchain
+
+# OpenAI
+openai
+langchain-openai
+
+# Hugging Face
+huggingface-hub
+transformers
+
+# ModelScope
+modelscope
