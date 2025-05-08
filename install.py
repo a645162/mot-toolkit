@@ -10,7 +10,7 @@ def setup_mirrors():
 
 
 def install_conda_packages(
-    packages: Union[str, List[str]] = "numpy",
+        packages: Union[str, List[str]] = "numpy",
 ):
     if isinstance(packages, str):
         packages = [packages]
@@ -21,7 +21,7 @@ def install_conda_packages(
 
 
 def install_pip_packages(
-    packages: Union[str, List[str]],
+        packages: Union[str, List[str]],
 ):
     if isinstance(packages, str):
         packages = [packages]
@@ -32,7 +32,7 @@ def install_pip_packages(
 
 
 def install_pip_requirements_txt(
-    file_paths: Union[str, List[str]] = "requirements.txt",
+        file_paths: Union[str, List[str]] = "requirements.txt",
 ) -> bool:
     if isinstance(file_paths, str):
         file_paths = [file_paths]
@@ -49,7 +49,7 @@ def install_pip_requirements_txt(
 
 
 def install_package(
-    package_name: Union[str, List[str]] = "pip", update: bool = False
+        package_name: Union[str, List[str]] = "pip", update: bool = False
 ) -> bool:
     if isinstance(package_name, str):
         package_name = [package_name]
@@ -197,6 +197,8 @@ def get_options():
         "--all", "-a", action="store_true", help="Install All Dependencies"
     )
 
+    parser.add_argument("--upgrade", "-U", action="store_true", help="Upgrade All Dependencies")
+
     return parser.parse_args()
 
 
@@ -255,3 +257,6 @@ if __name__ == "__main__":
         print("Intel CPU Platform Detected!")
         print("Installing numpy with conda(with MKL Support)...")
         install_conda_packages("numpy")
+
+    if args.upgrade:
+        upgrade()
