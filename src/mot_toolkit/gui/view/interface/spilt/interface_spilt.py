@@ -226,6 +226,32 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
                     SpiltType.NONE
                 )
             )
+            
+            # 连接移动全部菜单项
+            list_widget.menu_move_all_to_train.triggered.connect(
+                lambda: self.items_move_all(
+                    list_widget.spilt_type,
+                    SpiltType.TRAIN
+                )
+            )
+            list_widget.menu_move_all_to_val.triggered.connect(
+                lambda: self.items_move_all(
+                    list_widget.spilt_type,
+                    SpiltType.VAL
+                )
+            )
+            list_widget.menu_move_all_to_test.triggered.connect(
+                lambda: self.items_move_all(
+                    list_widget.spilt_type,
+                    SpiltType.TEST
+                )
+            )
+            list_widget.menu_move_all_to_other.triggered.connect(
+                lambda: self.items_move_all(
+                    list_widget.spilt_type,
+                    SpiltType.NONE
+                )
+            )
 
         __connect_list_menu(self.dataset_train_list_widget)
         __connect_list_menu(self.dataset_val_list_widget)
@@ -544,6 +570,22 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
                 dataset_obj.spilt_type = target_spilt_type
                 break
 
+        self.update_spilt_list_widget()
+
+    def items_move_all(
+            self,
+            source_spilt_type: SpiltType,
+            target_spilt_type: SpiltType
+    ):
+        logger.debug(f"Move all from {source_spilt_type} to {target_spilt_type}")
+        
+        if source_spilt_type == target_spilt_type:
+            return
+        
+        for dataset_obj in self.dataset_dir_list:
+            if dataset_obj.spilt_type == source_spilt_type:
+                dataset_obj.spilt_type = target_spilt_type
+        
         self.update_spilt_list_widget()
 
     def stats_count(self):
