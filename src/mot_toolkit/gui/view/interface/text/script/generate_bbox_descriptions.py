@@ -101,8 +101,10 @@ def handle_sequence(args):
               - motion_length: 运动分析帧长度
               - analyzer_config: 单个分析器的配置元组
               - class_map: 类别ID到类别名称的映射字典
+              - sequence_index: 当前序列索引
+              - total_sequences: 总序列数
     """
-    sequence_dir_path, sample_count, motion_length, analyzer_config, class_map = args
+    sequence_dir_path, sample_count, motion_length, analyzer_config, class_map, sequence_index, total_sequences = args
 
     # 在每个进程内部创建自己的 OpenAIImageAnalyzer 实例
     # 这样可以避免跨进程共享对象的问题
@@ -142,7 +144,9 @@ def handle_sequence(args):
         logger.error(f"无法为序列创建分析器: {sequence_dir_path}")
         return
 
-    logger.info(f"开始处理序列: {sequence_dir_path}")
+    sequence_name = os.path.basename(sequence_dir_path)
+    print(f"开始处理序列 [{sequence_index+1}/{total_sequences}]: {sequence_name}")
+
     success = update_bbox_descriptions(
         dataset_dir_path=sequence_dir_path,
         sample_count=sample_count,
@@ -152,9 +156,9 @@ def handle_sequence(args):
     )
 
     if success:
-        logger.info(f"成功更新序列描述信息: {sequence_dir_path}")
+        print(f"已完成序列 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列")
     else:
-        logger.error(f"更新序列描述信息失败: {sequence_dir_path}")
+        print(f"处理序列失败 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列")
 
 
 def set_process_start_mode():
@@ -236,7 +240,10 @@ def generate_descriptions(
         logger.info("未提供类别映射，将使用原始类别ID")
         class_map = {}
 
-    # 准备任务参数
+    # 准备任务参数，添加序列索引和总数
+    total_sequences = len(dataset_dir_path)
+    print(f"准备处理 {total_sequences} 个序列")
+
     args_list = []
     for i, path in enumerate(dataset_dir_path):
         # 分配 analyzer 配置给每个序列目录（轮询分配）
@@ -248,14 +255,17 @@ def generate_descriptions(
                 motion_length,
                 analyzer_configs[analyzer_idx],  # 传递配置而不是实例
                 class_map,
+                i,  # 序列索引
+                total_sequences,  # 总序列数
             )
         )
 
-    logger.info(f"总共需要处理 {len(args_list)} 个序列目录")
+    logger.info(f"总共需要处理 {total_sequences} 个序列目录")
 
     # 使用多进程处理序列目录
     if process_count > 1:
         with multiprocessing.Pool(processes=process_count) as pool:
+            # 处理所有序列
             pool.map(handle_sequence, args_list)
     else:
         # 单进程处理
@@ -263,11 +273,17 @@ def generate_descriptions(
             handle_sequence(args)
 
     logger.info("所有序列处理完成")
+    print(f"\n成功完成所有 {total_sequences} 个序列的处理！")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="为边界框生成描述信息")
-    parser.add_argument("--dataset", type=str, required=True, help="数据集目录路径")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
+        help="数据集目录路径",
+    )
     parser.add_argument("--depth", type=int, default=1, help="目录深度")
     parser.add_argument(
         "--threads", type=int, default=io_cpu_count, help="处理线程数"
@@ -285,11 +301,6 @@ if __name__ == "__main__":
         "--max-tokens", type=int, nargs="+", help="最大输出 token 数列表"
     )
     parser.add_argument("--class-map", type=str, help="类别ID到名称的映射JSON文件路径")
-    parser.add_argument(
-        "--use-default-map",
-        action="store_true",
-        help="当JSON文件不存在时使用默认类别映射",
-    )
 
     args = parser.parse_args()
 
@@ -310,19 +321,16 @@ if __name__ == "__main__":
                 print(f"成功从文件加载了 {len(class_map)} 个类别映射")
             except Exception as e:
                 print(f"加载类别映射文件失败: {e}")
-                if args.use_default_map:
-                    class_map = DEFAULT_CLASS_MAP.copy()
-                    print(f"使用默认类别映射: {len(class_map)} 个类别")
-        else:
-            print(f"类别映射文件 '{args.class_map}' 不存在")
-            if args.use_default_map:
                 class_map = DEFAULT_CLASS_MAP.copy()
                 print(f"使用默认类别映射: {len(class_map)} 个类别")
-    elif args.use_default_map:
+        else:
+            print(f"类别映射文件 '{args.class_map}' 不存在")
+            class_map = DEFAULT_CLASS_MAP.copy()
+            print(f"使用默认类别映射: {len(class_map)} 个类别")
+    else:
+        print("未提供类别映射，将使用默认类别映射")
         class_map = DEFAULT_CLASS_MAP.copy()
         print(f"使用默认类别映射: {len(class_map)} 个类别")
-    else:
-        print("未提供类别映射，将使用原始类别ID")
 
     # 输出类别映射信息
     if class_map:

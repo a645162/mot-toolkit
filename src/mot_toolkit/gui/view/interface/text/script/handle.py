@@ -3,6 +3,7 @@ import os
 import random
 import base64
 from typing import List, Dict, Any, Tuple, Optional
+from tqdm import tqdm  # 导入进度条库
 
 import cv2
 import numpy as np
@@ -866,15 +867,27 @@ def update_bbox_descriptions(
         # 存储修改过的标注对象
         modified_annotations = []
 
-        # 顺序处理每个任务（OpenAI API 不支持多并发调用）
-        logger.info(f"开始顺序处理 {len(tasks)} 个标注文件")
-        for task in tasks:
-            try:
-                annotation_obj, modified = process_annotation_task(task)
-                if modified:
-                    modified_annotations.append(annotation_obj)
-            except Exception as e:
-                logger.error(f"处理标注文件时出错: {e}")
+        # 顺序处理每个任务，使用tqdm显示进度条
+        sequence_name = os.path.basename(dataset_dir_path)
+        logger.info(f"开始处理序列: {sequence_name}, 共 {len(tasks)} 个标注文件")
+
+        # 使用tqdm创建进度条
+        with tqdm(
+            total=len(tasks),
+            desc=f"处理序列 '{sequence_name}'",
+            unit="帧",
+            ncols=100,
+            leave=True,
+        ) as pbar:
+            for task in tasks:
+                try:
+                    annotation_obj, modified = process_annotation_task(task)
+                    if modified:
+                        modified_annotations.append(annotation_obj)
+                    pbar.update(1)  # 更新进度条
+                except Exception as e:
+                    logger.error(f"处理标注文件时出错: {e}")
+                    pbar.update(1)  # 即使出错也要更新进度条
 
         # 保存所有被修改过的标注文件
         logger.info(f"开始保存 {len(modified_annotations)} 个已修改的标注文件")

@@ -93,7 +93,9 @@ def get_dataset_dir_list(
 
 
 if __name__ == "__main__":
-    datasets_dir_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
+    datasets_dir_path = (
+        r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe"
+    )
 
     dir_list = get_dataset_dir_list(
         dataset_dir_path=datasets_dir_path,
