@@ -2,6 +2,8 @@ import os
 import multiprocessing
 import json
 
+import tqdm
+
 from mot_toolkit.config.program_path import path_project
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory, XAnyLabelingAnnotation
 from mot_toolkit.dl.common.torch_devices import wait_gpu_memory
@@ -60,7 +62,7 @@ def handle_sequence(
     )
 
     previous_file_obj: XAnyLabelingAnnotation | None = None
-    for annotation_file_obj in annotation_directory.annotation_file_list:
+    for annotation_file_obj in tqdm.tqdm(annotation_directory.annotation_file_list):
         current_file_name = annotation_file_obj.file_name_no_extension
         current_file_index = int(current_file_name)
 
