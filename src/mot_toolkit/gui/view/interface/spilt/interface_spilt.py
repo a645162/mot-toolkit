@@ -568,6 +568,10 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         used_count = train_count + val_count + test_count
 
+        if used_count == 0:
+            QMessageBox.information(self, "Stats Count", "No data found.")
+            return
+
         train_rate = round((train_count / used_count) * 100, 2)
         val_rate = round((val_count / used_count) * 100, 2)
         test_rate = round((test_count / used_count) * 100, 2)
