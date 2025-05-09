@@ -144,7 +144,7 @@ def handle_sequence(
                 annotation_file_obj.modifying()
                 # annotation_file_obj.save()
             else:
-                print("No result for", f"Object:{rect_obj.label}", image_path)
+                print(f"No result for Object:{rect_obj.label}", image_path)
 
         previous_file_obj = annotation_file_obj
 
