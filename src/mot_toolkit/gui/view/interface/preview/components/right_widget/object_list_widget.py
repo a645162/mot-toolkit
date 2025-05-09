@@ -98,6 +98,14 @@ class ObjectListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
+        self.menu_operate_fix_disappear = \
+            QAction(
+                "Fix Disappear BBox(0,0,10,10)",
+                q_menu
+            )
+        q_menu.addAction(self.menu_operate_fix_disappear)
+        select_enable_list.append(self.menu_operate_fix_disappear)
+
         self.menu_operate_del = \
             QAction(
                 "Delete the target",

@@ -702,6 +702,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_object_list_widget.menu_linear_interpolation_previous \
             .triggered.connect(self.__action_obj_linear_interpolation_previous)
 
+        self.r_object_list_widget.menu_operate_fix_disappear \
+            .triggered.connect(self.__action_obj_fix_disappear)
         self.r_object_list_widget.menu_operate_del \
             .triggered.connect(self.__action_obj_del_target)
         self.r_object_list_widget.menu_operate_del_subsequent \
@@ -1849,6 +1851,39 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         rect_widget.y1_original = previous_rect_obj.y1
 
         rect_widget.modify()
+
+    def __action_obj_fix_disappear(self):
+        reply = QMessageBox.question(
+            self,
+            "Warning",
+            "Are you sure you want to fix disappear?",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        
+        index = self.r_object_list_widget.selection_index
+        if index == -1:
+            return
+        
+        # Reset BBox to 0,0,10,10
+        rect_annotation_list = self.current_annotation_object.rect_annotation_list
+        
+        obj = rect_annotation_list[index]
+        
+        obj.x1 = 0
+        obj.y1 = 0
+        obj.width = 10
+        obj.height = 10
+        
+        obj.modifying()
+        
+        self.update_annotation_object_display()
+        
+        # Update Widget
+        self.main_image_view.annotation_widget_rect_list[index].update()
 
     def __action_obj_del_target(self):
         reply = QMessageBox.question(
