@@ -91,7 +91,7 @@ class SpiltDanceTrack:
 
             yolo_text_list = []
             for rect_obj in file_obj.rect_annotation_list:
-                group_id = rect_obj.group_id.strip()
+                group_id = str(rect_obj.group_id).strip()
 
                 if group_id == "":
                     logger.error(f"Object({rect_obj.label}) Group ID is Empty! {file_obj.file_path}")

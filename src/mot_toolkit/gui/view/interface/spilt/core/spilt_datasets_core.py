@@ -104,38 +104,74 @@ def spilt_dataset(
         dataset_test_list=dataset_test_list,
     )
 
-    # YOLO
-    spilt_yolo = SpiltYolo()
-    spilt_yolo.output_yolo(
-        output_yolo_dir=output_yolo_dir,
-        dataset_train_list=dataset_train_list,
-        dataset_val_list=dataset_val_list,
-        dataset_test_list=dataset_test_list,
-    )
+    # # YOLO
+    # spilt_yolo = SpiltYolo()
+    # spilt_yolo.output_yolo(
+    #     output_yolo_dir=output_yolo_dir,
+    #     dataset_train_list=dataset_train_list,
+    #     dataset_val_list=dataset_val_list,
+    #     dataset_test_list=dataset_test_list,
+    # )
 
-    # COCO
-    spilt_coco = SpiltCoco()
-    spilt_coco.output_coco(
-        output_coco_dir=output_coco_dir,
-        dataset_train_list=dataset_train_list,
-        dataset_val_list=dataset_val_list,
-        dataset_test_list=dataset_test_list,
-    )
+    # # COCO
+    # spilt_coco = SpiltCoco()
+    # spilt_coco.output_coco(
+    #     output_coco_dir=output_coco_dir,
+    #     dataset_train_list=dataset_train_list,
+    #     dataset_val_list=dataset_val_list,
+    #     dataset_test_list=dataset_test_list,
+    # )
+
+
+def spilt_datasets_list(dataset_configs: List[dict]):
+    """
+    对多个数据集进行划分
+    
+    Args:
+        dataset_configs: 列表，每个元素是一个字典，包含以下键：
+            - dataset_base_dir: 数据集基础目录
+            - output_base_dir: 输出基础目录
+            - spilt_config: 划分配置文件名，默认为"default.spilt.json"
+    """
+    for config in dataset_configs:
+        if not config.get("enable", True):
+            continue
+        
+        dataset_base_dir = config.get("dataset_base_dir")
+        output_base_dir = config.get("output_base_dir")
+        spilt_config = config.get("spilt_config", "default.spilt.json")
+        
+        logger.info(f"Processing dataset: {dataset_base_dir}")
+        spilt_dataset(
+            dataset_base_dir=dataset_base_dir,
+            output_base_dir=output_base_dir,
+            spilt_config=spilt_config
+        )
 
 
 if __name__ == "__main__":
-    # dataset_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
-    # output_base_dir = r"/mnt/h/Datasets/TrackShipOnlineVideo/ShipTrackSpilt"
-    # dataset_base_dir = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
-    dataset_base_dir = r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe"
-    # output_base_dir = r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full_20250413"
-    output_base_dir = r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250413"
+    # spilt_dataset(
+    #     dataset_base_dir=dataset_base_dir,
+    #     output_base_dir=output_base_dir,
+    #     spilt_config=config,
+    # )
 
-    # config = "test.spilt.json"
-    config = "20250322.spilt.json"
+    # 使用列表方式调用多个数据集划分
+    datasets_config = [
+        {
+            "enable": False,
+            "dataset_base_dir": r"/home/konghaomin/datasets/SMD_LabelMe",
+            "output_base_dir": r"/home/konghaomin/Datasets/SMD_New_20250509",
+            "spilt_config": "20250509.spilt.json",
+        },
+        {
+            "enable": False,
+            "dataset_base_dir": r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
+            "output_base_dir": r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250322",
+            "spilt_config": "20250322.spilt.json",
+        },
+        # 可以添加更多数据集配置
+    ]
 
-    spilt_dataset(
-        dataset_base_dir=dataset_base_dir,
-        output_base_dir=output_base_dir,
-        spilt_config=config,
-    )
+    # 注释掉以下行以避免在导入时执行
+    spilt_datasets_list(datasets_config)
