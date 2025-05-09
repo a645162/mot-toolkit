@@ -1651,11 +1651,21 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             )
             return
 
+        # 添加"跳过已存在"选项
+        skip_exist = QMessageBox.question(
+            self,
+            "Skip Existing",
+            "是否跳过已存在相同标签的帧？",
+            QMessageBox.StandardButton.Yes,
+            QMessageBox.StandardButton.No
+        ) == QMessageBox.StandardButton.Yes
+
         ok = QMessageBox.question(
             self,
             "Warning",
             "Are you sure you want to copy between target?"
             f"\nFrom {frame_start} to {frame_end}"
+            f"\n跳过已存在: {skip_exist}"
             "\n\nThis operation is irreversible!",
             QMessageBox.StandardButton.Yes,
             QMessageBox.StandardButton.No
@@ -1663,10 +1673,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         if ok != QMessageBox.StandardButton.Yes:
             return
+        
+        target_label = selected_rect_obj.label
+        
+        def process_frame(annotation_obj, i):
+            if frame_start_index <= i <= frame_end_index:
+                # 如果设置跳过已存在，则检查是否已有相同标签
+                if skip_exist:
+                    for rect in annotation_obj.rect_annotation_list:
+                        if rect.label == target_label:
+                            logger.info(f"跳过帧 {annotation_obj.file_name_no_extension}: 已存在标签 {target_label}")
+                            return
+                
+                # 没有相同标签或不跳过，则添加或更新矩形
+                annotation_obj.add_or_update_rect(selected_rect_obj)
+            return None
 
         self.annotation_directory.do_for_each_file(
-            func=lambda annotation_obj, i: annotation_obj.add_or_update_rect(selected_rect_obj)
-            if frame_start_index <= i <= frame_end_index else None,
+            func=process_frame,
             start_index=frame_start_index,
             end_index=frame_end_index
         )
