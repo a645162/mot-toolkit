@@ -1,7 +1,6 @@
 from typing import List
 
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
-from mot_toolkit.dl.utils.value_calc import calculate_iou
 
 
 class RectDataAnnotation(ObjectAnnotation):
@@ -289,6 +288,8 @@ class RectDataAnnotation(ObjectAnnotation):
         self.y2 = rect_data_annotation.y2
 
     def get_iou(self, other: "RectDataAnnotation")->float:
+        from mot_toolkit.dl.utils.value_calc import calculate_iou
+
         return calculate_iou(
             box1=self.get_xyxy_list(),
             box2=other.get_xyxy_list()
