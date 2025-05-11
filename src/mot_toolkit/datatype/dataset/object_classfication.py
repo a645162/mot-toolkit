@@ -16,16 +16,10 @@ class ObjectClass:
         return f"[{self.class_id}] {self.class_name}"
 
     def is_valid(self) -> bool:
-        return (
-                len(self.class_id) > 0 and
-                len(self.class_name) > 0
-        )
+        return len(self.class_id) > 0 and len(self.class_name) > 0
 
     def to_dict(self) -> dict:
-        return {
-            "class_id": self.class_id,
-            "class_name": self.class_name
-        }
+        return {"class_id": self.class_id, "class_name": self.class_name}
 
     def from_dict(self, dict_obj: dict):
         self.class_id = dict_obj.get("class_id", "")
@@ -37,23 +31,25 @@ class ObjectClassConfigure:
 
     __file_path: str = ""
 
-    def __init__(
-            self,
-            object_classes: Optional[List[ObjectClass]] = None
-    ):
+    def __init__(self, object_classes: Optional[List[ObjectClass]] = None):
         if object_classes is None:
             object_classes = []
 
         self.object_classes = object_classes
+
+    @property
+    def object_classes_sorted(self) -> List[ObjectClass]:
+        return sorted(self.object_classes, key=lambda x: int(x.class_id))
+
+    def sort(self):
+        self.object_classes = self.object_classes_sorted
 
     def to_dict(self) -> dict:
         object_classes = []
         for obj_class in self.object_classes:
             object_classes.append(obj_class.to_dict())
 
-        return {
-            "object_classes": object_classes
-        }
+        return {"object_classes": object_classes}
 
     def from_dict(self, dict_obj: dict):
         object_classes_dict_list = dict_obj.get("object_classes", [])
