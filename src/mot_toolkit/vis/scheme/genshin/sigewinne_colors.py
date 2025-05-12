@@ -3,7 +3,7 @@
 """
 
 from typing import List, Tuple, Dict, Any
-from .base_colors import BaseColorScheme
+from mot_toolkit.vis.common.base_colors import BaseColorScheme
 
 
 class SIGEWINNEColorScheme(BaseColorScheme):

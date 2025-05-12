@@ -14,9 +14,8 @@ from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
-from mot_toolkit.vis.base_colors import BaseColorScheme
-from mot_toolkit.vis.sigewinne_colors import SIGEWINNEColorScheme
-from mot_toolkit.vis.varesa_colors import VARESAColorScheme
+from mot_toolkit.vis.common.base_colors import BaseColorScheme
+from mot_toolkit.vis.scheme import genshin
 
 
 def setup_figure_style():
@@ -60,7 +59,7 @@ def create_color_palette_demo(scheme, output_dir):
 def create_ridge_plot(scheme, output_dir):
     """创建示波图(Ridge Plot)"""
     scheme_name = scheme.__class__.__name__
-    
+
     # 设置样本名称
     samples = [
         "Samp A",
@@ -144,7 +143,7 @@ def create_ridge_plot(scheme, output_dir):
 def create_bar_chart(scheme, output_dir):
     """创建柱状图示例"""
     scheme_name = scheme.__class__.__name__
-    
+
     categories = ["S1", "S2", "S3", "S4"]
     values = [0.34, 0.49, 0.32, 0.42]
 
@@ -166,7 +165,7 @@ def create_bar_chart(scheme, output_dir):
 def create_stacked_area_chart(scheme, output_dir):
     """创建堆叠面积图"""
     scheme_name = scheme.__class__.__name__
-    
+
     x = np.arange(1, 11)
     data1 = np.array([1, 2, 4, 8, 12, 16, 14, 10, 7, 3])
     data2 = np.array([2, 5, 8, 12, 15, 18, 15, 14, 10, 5])
@@ -212,7 +211,7 @@ def create_stacked_area_chart(scheme, output_dir):
 def create_line_chart(scheme, output_dir):
     """创建多序列折线图"""
     scheme_name = scheme.__class__.__name__
-    
+
     x = np.arange(1, 9)
     y1 = np.array([55, 20, 33, 15, 10, 15, 25, 5])
     y2 = np.array([7, 45, 20, 10, 55, 25, 15, 10])
@@ -242,7 +241,7 @@ def create_line_chart(scheme, output_dir):
 def create_pie_chart(scheme, output_dir):
     """创建饼图"""
     scheme_name = scheme.__class__.__name__
-    
+
     labels = ["North", "South", "East", "West"]
     sizes = [25, 25, 19, 31]
 
@@ -269,7 +268,7 @@ def create_pie_chart(scheme, output_dir):
 def create_heatmap(scheme, output_dir):
     """创建热力图"""
     scheme_name = scheme.__class__.__name__
-    
+
     # 创建连续色彩映射，从浅蓝到深粉
     colors_for_map = [
         scheme.hex_colors()[1],
@@ -277,7 +276,9 @@ def create_heatmap(scheme, output_dir):
         scheme.hex_colors()[3],
         scheme.hex_colors()[4],
     ]
-    cmap = LinearSegmentedColormap.from_list(f"{scheme_name.lower()}", colors_for_map, N=100)
+    cmap = LinearSegmentedColormap.from_list(
+        f"{scheme_name.lower()}", colors_for_map, N=100
+    )
 
     # 创建随机数据
     np.random.seed(42)
@@ -306,7 +307,7 @@ def create_heatmap(scheme, output_dir):
 def create_dashboard(scheme, output_dir):
     """创建仪表盘演示"""
     scheme_name = scheme.__class__.__name__
-    
+
     setup_figure_style()
 
     fig = plt.figure(figsize=(16, 12))
@@ -464,18 +465,18 @@ def create_comparison_dashboard(schemes, output_dir):
     if len(schemes) < 2:
         print("需要至少两个配色方案进行比较")
         return
-    
+
     setup_figure_style()
-    
+
     fig = plt.figure(figsize=(16, 10 * len(schemes)))
     fig.suptitle("多配色方案对比", fontsize=24, y=0.99)
-    
+
     # 为每个配色方案创建子图
     gs = gridspec.GridSpec(len(schemes), 3)
-    
+
     for i, scheme in enumerate(schemes):
         scheme_name = scheme.__class__.__name__
-        
+
         # 添加配色方案展示
         ax_palette = fig.add_subplot(gs[i, 0])
         for j, color in enumerate(scheme.hex_colors()):
@@ -493,7 +494,7 @@ def create_comparison_dashboard(schemes, output_dir):
         ax_palette.set_ylim(-0.2, 1.2)
         ax_palette.set_title(f"{scheme.name}色板", fontsize=14)
         ax_palette.axis("off")
-        
+
         # 添加折线图
         ax_line = fig.add_subplot(gs[i, 1])
         x = np.arange(1, 9)
@@ -509,7 +510,7 @@ def create_comparison_dashboard(schemes, output_dir):
         ax_line.set_title(f"{scheme.name} - 折线图", fontsize=14)
         ax_line.grid(True, linestyle="--", alpha=0.3)
         ax_line.legend()
-        
+
         # 添加堆叠面积图
         ax_area = fig.add_subplot(gs[i, 2])
         x = np.arange(1, 11)
@@ -543,7 +544,7 @@ def create_comparison_dashboard(schemes, output_dir):
         ax_area.set_xlim(1, 10)
         ax_area.set_title(f"{scheme.name} - 面积图", fontsize=14)
         ax_area.legend()
-        
+
     plt.tight_layout(rect=[0, 0, 1, 0.98])
     output_path = os.path.join(output_dir, "comparison_dashboard.png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -555,32 +556,34 @@ def create_comparison_dashboard(schemes, output_dir):
 def auto_discover_color_schemes():
     """自动发现所有继承自BaseColorScheme的配色方案类"""
     color_schemes = []
-    
+
     # 获取当前模块路径
     current_dir = os.path.dirname(os.path.abspath(__file__))
     # 获取所有.py文件
-    py_files = [f[:-3] for f in os.listdir(current_dir) if f.endswith('_colors.py')]
-    
+    py_files = [f[:-3] for f in os.listdir(current_dir) if f.endswith("_colors.py")]
+
     for module_name in py_files:
-        if module_name == 'base_colors':
+        if module_name == "base_colors":
             continue
-        
+
         try:
             # 动态导入模块
             module_path = f"mot_toolkit.vis.{module_name}"
             module = importlib.import_module(module_path)
-            
+
             # 获取模块中的所有类
             for name, obj in inspect.getmembers(module, inspect.isclass):
                 # 检查是否是ColorScheme的子类，但不是BaseColorScheme本身
-                if (issubclass(obj, BaseColorScheme) and 
-                    obj != BaseColorScheme and 
-                    obj.__module__ == module.__name__):
+                if (
+                    issubclass(obj, BaseColorScheme)
+                    and obj != BaseColorScheme
+                    and obj.__module__ == module.__name__
+                ):
                     color_schemes.append(obj())
                     print(f"发现配色方案: {obj().name}")
         except (ImportError, AttributeError) as e:
             print(f"导入模块 {module_name} 时出错: {e}")
-    
+
     return color_schemes
 
 
@@ -589,41 +592,40 @@ def main():
     setup_figure_style()
 
     print("正在加载配色方案...")
-    
+
     # 方法1：手动指定配色方案
-    schemes = [
-        SIGEWINNEColorScheme(),
-        VARESAColorScheme()
-    ]
-    
+    schemes = []
+
+    schemes.extend(genshin.init_all())
+
     # 方法2：自动发现所有配色方案（你可以取消注释此行，替代方法1）
     # schemes = auto_discover_color_schemes()
-    
+
     if not schemes:
         print("未找到配色方案，请检查导入路径")
         return
-    
+
     print(f"找到 {len(schemes)} 个配色方案")
     for i, scheme in enumerate(schemes):
         print(f"{i+1}. {scheme.name}")
-    
+
     # 为每个配色方案创建输出目录
     output_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(output_dir, "demo")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    
+
     print(f"图片输出目录: {output_dir}")
-    
+
     # 为每个配色方案生成演示图表
     for scheme in schemes:
         scheme_name = scheme.__class__.__name__
         scheme_dir = os.path.join(output_dir, scheme_name)
         if not os.path.exists(scheme_dir):
             os.makedirs(scheme_dir, exist_ok=True)
-        
+
         print(f"\n生成 {scheme.name} 配色方案演示...")
-        
+
         # 创建各种图表
         create_color_palette_demo(scheme, scheme_dir)
         create_ridge_plot(scheme, scheme_dir)
@@ -633,10 +635,10 @@ def main():
         create_stacked_area_chart(scheme, scheme_dir)
         create_heatmap(scheme, scheme_dir)
         create_dashboard(scheme, scheme_dir)
-    
+
     # 创建配色方案对比图
     create_comparison_dashboard(schemes, output_dir)
-    
+
     print("\n所有演示图表已创建完成!")
     print(f"图表已保存到目录: {output_dir}")
 
