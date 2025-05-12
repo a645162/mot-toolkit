@@ -541,11 +541,11 @@ def output_summary(
     ocpmd_threshold: float,
     total_static_bbox_count: int,
     total_bbox_count: int,
-    output_txt_path: str = None
+    output_txt_path: str = None,
 ) -> str:
     """
     输出数据集统计的总结信息，并可选择保存到文本文件
-    
+
     Args:
         result_list: 包含所有序列统计结果的列表
         class_config: 类别配置对象
@@ -554,7 +554,7 @@ def output_summary(
         total_static_bbox_count: 静止目标BBox总数
         total_bbox_count: BBox总数
         output_txt_path: 输出文本文件路径，如果为None则不保存
-        
+
     Returns:
         str: 总结信息文本
     """
@@ -623,10 +623,12 @@ def output_summary(
     summary_lines.append(f"\t大目标: {total_large_count}")
     summary_lines.append("目标运动特性:")
     summary_lines.append(f"\t静止目标(<{ocpmd_threshold}): {total_static_object_count}")
-    summary_lines.append(f"\t移动目标(>={ocpmd_threshold}): {total_moving_object_count}")
+    summary_lines.append(
+        f"\t移动目标(>={ocpmd_threshold}): {total_moving_object_count}"
+    )
     summary_lines.append(f"\t静止BBox数: {total_static_bbox_count}")
     summary_lines.append(f"\t总BBox数: {total_bbox_count}")
-    
+
     static_bbox_ratio = "0.00%"
     if total_bbox_count > 0:
         static_bbox_ratio = f"{total_static_bbox_count/total_bbox_count*100:.2f}%"
@@ -636,7 +638,9 @@ def output_summary(
     if class_config and class_config.object_classes:
         summary_lines.append("各类别目标数量:")
         for idx, count in enumerate(total_class_counts):
-            summary_lines.append(f"\t[{idx}] {class_config.object_classes[idx].class_name}: {count}")
+            summary_lines.append(
+                f"\t[{idx}] {class_config.object_classes[idx].class_name}: {count}"
+            )
     else:
         summary_lines.append("已跳过类别统计.")
     summary_lines.append("=" * 60)
@@ -670,16 +674,20 @@ def output_summary(
         )
 
         if moving_objects:
-            summary_lines.append(f"\t移动目标平均移动距离: {sum(moving_objects)/moving_obj_count:.4f}")
+            summary_lines.append(
+                f"\t移动目标平均移动距离: {sum(moving_objects)/moving_obj_count:.4f}"
+            )
             summary_lines.append(f"\t移动目标最大移动距离: {max(moving_objects):.4f}")
             summary_lines.append(f"\t移动目标最小移动距离: {min(moving_objects):.4f}")
 
         summary_lines.append(f"\t静止BBox总数: {total_static_bbox_count}")
         static_bbox_ratio_text = "0.00%"
         if total_bbox_count > 0:
-            static_bbox_ratio_text = f"{total_static_bbox_count/total_bbox_count*100:.2f}%"
+            static_bbox_ratio_text = (
+                f"{total_static_bbox_count/total_bbox_count*100:.2f}%"
+            )
         summary_lines.append(f"\t静止BBox占比: {static_bbox_ratio_text}")
-        
+
         if static_obj_count > 0:
             summary_lines.append(
                 f"\t每个静止目标平均BBox数: {total_static_bbox_count/static_obj_count:.2f}"
@@ -691,16 +699,16 @@ def output_summary(
 
     # 将总结信息合并为字符串
     summary_text = "\n".join(summary_lines)
-    
+
     # 打印总结信息
     print("\n" + summary_text)
-    
+
     # 如果提供了输出路径，则保存到文本文件
     if output_txt_path:
         with open(output_txt_path, "w", encoding="utf-8") as f:
             f.write(summary_text)
         print(f"已将总结信息保存到: {output_txt_path}")
-    
+
     return summary_text
 
 
@@ -779,6 +787,9 @@ def main():
 
     # 输出目录为当前py目录
     output_dir_path = os.path.dirname(os.path.abspath(__file__))
+
+    output_dir_path = os.path.join(output_dir_path, "output")
+
     # 获取base_path的两级目录名level1
     level1 = os.path.basename(base_path)
     level2 = os.path.basename(os.path.dirname(base_path))
@@ -879,17 +890,19 @@ def main():
 
     # 绘制移动特性分布直方图
     if all_movement_data:
-        plot_movement_histogram(all_movement_data, movement_hist_output_path, ocpmd_threshold)
+        plot_movement_histogram(
+            all_movement_data, movement_hist_output_path, ocpmd_threshold
+        )
 
     # 输出总结统计信息并保存到文本文件
     output_summary(
-        result_list, 
-        class_config, 
-        all_movement_data, 
+        result_list,
+        class_config,
+        all_movement_data,
         ocpmd_threshold,
         total_static_bbox_count,
         total_bbox_count,
-        output_txt_path
+        output_txt_path,
     )
 
     end_time = time.time()
