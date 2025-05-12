@@ -235,11 +235,13 @@ def get_global_appearance(
         prompt = (
             f"这些是同一个目标的 {len(images)} 个不同时刻的图像。"
             f"请详细描述这个目标的整体外观特征，包括但不限于："
-            f"1. 外形特征（如人物、车辆、动物等）\n"
+            f"1. 外形特征（主要都是水上目标）\n"
             f"2. 主要颜色和颜色分布\n"
-            f"3. 特征细节（如衣着、标志、独特形状）\n"
-            f"{target_type_info}"
-            f"\n请提供详尽准确的描述，这将用作参考标准。"
+            f"3. 特征细节（如标志、独特形状、是否有窗户）\n"
+            f"4. 环境细节（如是否存在水波、水面反射）"
+            f"{target_type_info}\n"
+            f"请提供详尽准确的描述，这将用作参考标准。\n"
+            f"只需要输出对目标的外观的描述，不要输出其他的乱七八糟的。"
         )
 
         response = analyzer.ask_question_about_image(grid_image, prompt)
@@ -327,7 +329,7 @@ def combine_appearance_descriptions(
         for i, desc in enumerate(frame_descriptions, 1):
             prompt += f"时刻 {i}:\n{desc}\n\n"
 
-        prompt += "请综合以上信息，提供最终的外观描述:"
+        prompt += "请综合以上信息，提供最终的外观描述，只要精炼的表述，不要额外的内容:"
 
         # 使用文本模式调用API
         response = analyzer.ask_question_about_image(None, prompt)
@@ -406,7 +408,15 @@ def summarize_descriptions(
         prompt = "以下是关于同一个目标的多个外观描述，请你仔细阅读这些描述，并总结出其中反复提及、出现频率最高的共同视觉特征。\n\n"
         for i, desc in enumerate(descriptions, 1):
             prompt += f'描述{i}: "{desc}"\n\n'
-        prompt += "请总结共同特征："
+        prompt += "要求：\n"
+        prompt += " 请直接输出目标的特征，不要提及如“所有描述”，“可以总结出以下共同特征”等指令回答。\n"
+        prompt += " 如果目标外观上有什么文本，必须大部分都有这个描述，也就是只能有1个没有提到文本，否则就认为他没有文本"
+        prompt += " 不需要总结意义（如“这些颜色特征有助于船只的识别和导航”）\n"
+        prompt += " “规则排列的窗户和舱口：这些描述中提到船只的窗户和舱口排列整齐，是其设计的显著特征”你只需要回答“船只的窗户和舱口排列整齐”即可!\n"
+        prompt += " “稳定和坚固的结构：船体的设计和结构表明其具有稳定的航行能力，适合在水面上行驶”这种废话就别说了，人家都航行在水上了，不用你介绍！"
+        prompt += " 也就是你只需要回答，这个船，比如有多层甲板，然后颜色是什么，有没有开灯，不需要分点，一句话直接简练概括所有特征！尽可能简练，不要有多余描述与分析！"
+        prompt += "\n\n你的输出必须是一句话，简体中文，只描述他的就行了！不要带任何回答问题样式的其他内容！\n"
+        prompt += "\n请总结共同特征（只输出特征）："
 
         # 使用 OpenAIImageAnalyzer 的纯文本查询能力（传入None作为图像）
         response = analyzer.ask_question_about_image(None, prompt)
@@ -570,6 +580,7 @@ def generate_object_description(
     grid_rows: int = DEFAULT_GRID_ROWS,
     grid_cols: int = DEFAULT_GRID_COLS,
     class_map: dict = None,
+    appearance_repeat: int = 1,  # 新增参数，表示采样n次
 ) -> Dict[str, Any]:
     """
     为目标生成完整描述信息，使用提供的 OpenAIImageAnalyzer 实例
@@ -584,6 +595,7 @@ def generate_object_description(
         grid_rows: 图像网格行数
         grid_cols: 图像网格列数
         class_map: 类别ID到类别名称的映射字典
+        appearance_repeat: 连续采样appearance_repeat次，每次sample_count帧
 
     Returns:
         包含 appearance、position 和 motion 三个字段的描述信息字典
@@ -591,25 +603,25 @@ def generate_object_description(
     处理流程:
     1. 生成位置描述 -> position
     2. 生成运动描述 -> motion
-    3. 生成外观描述 -> appearance
-       a. 收集目标在多个帧中的裁剪图像
-       b. 先获取全局外观特征作为参考
-       c. 对选定的关键帧进行单独分析
-       d. 综合全局外观和各帧分析生成最终描述
+    3. 生成外观描述
+       a. 连续采样appearance_repeat次，每次sample_count帧，分别生成appearance描述
+       b. 综合所有appearance描述，生成最终appearance
     """
     description_data = {
         "appearance": "",  # 外观描述
         "position": "",  # 位置描述
         "motion": "",  # 运动描述
-        "class_id": rect_obj.label,  # 原始类别ID
+        "class_id": str(rect_obj.label),  # 原始类别ID
         "class_name": "",  # 类别名称
     }
 
     # 获取类别名称（如果有类别映射）
-    class_id = rect_obj.label
+    class_id = rect_obj.group_id
     class_name = ""
     if class_map and class_id in class_map:
         class_name = class_map[class_id]
+        # Only for debug
+        print(f"目标类别ID {class_id} 映射到类别名称: {class_name}")
         description_data["class_name"] = class_name
         logger.info(f"目标类别ID {class_id} 映射到类别名称: {class_name}")
 
@@ -631,7 +643,7 @@ def generate_object_description(
             annotation_directory, current_index, rect_obj.label, motion_length
         )
 
-        # 3. 生成外观描述 - 改进的流程
+        # 3. 生成外观描述（连续采样appearance_repeat次，每次sample_count帧）
         # 从所有帧中获取该目标的所有可用帧
         available_frames = []
         for idx, anno_obj in enumerate(annotation_directory.annotation_file_list):
@@ -654,51 +666,67 @@ def generate_object_description(
             logger.warning("无法调整图像大小")
             return description_data
 
-        # 3.1 获取全局外观特征描述作为参考
-        logger.info(f"正在获取目标 {rect_obj.label} 的全局外观特征...")
-        global_appearance = get_global_appearance(
-            resized_crops, analyzer, class_id=class_id, class_name=class_name
-        )
-
-        # 3.2 选择具有代表性的帧进行单独分析
         frame_count = len(resized_crops)
-        frame_descriptions = []
+        appearance_descriptions = []
 
-        if frame_count <= sample_count:
-            # 帧数少，使用所有帧
-            selected_frames = resized_crops
-        else:
-            # 使用均匀间隔采样或随机采样
-            if sample_count >= 5:
-                # 均匀间隔采样以覆盖整个序列
-                step = frame_count // sample_count
-                selected_indices = [i * step for i in range(sample_count)]
-                # 确保最后一帧被包含
-                if selected_indices[-1] != frame_count - 1:
-                    selected_indices[-1] = frame_count - 1
+        # 连续采样appearance_repeat次，每次sample_count帧
+        for repeat_idx in range(appearance_repeat):
+            if frame_count <= sample_count:
+                selected_frames = resized_crops
             else:
-                # 帧数太少时随机采样
-                selected_indices = random.sample(range(frame_count), sample_count)
+                # 均匀采样
+                step = frame_count // sample_count
+                selected_indices = [i * step + repeat_idx for i in range(sample_count)]
+                # 保证索引不越界
+                selected_indices = [
+                    min(idx, frame_count - 1) for idx in selected_indices
+                ]
+                # 去重
+                selected_indices = list(dict.fromkeys(selected_indices))
+                # 如果采样数不足，补齐
+                while len(selected_indices) < sample_count:
+                    selected_indices.append(frame_count - 1)
+                selected_frames = [resized_crops[i] for i in selected_indices]
 
-            selected_frames = [resized_crops[i] for i in selected_indices]
+            # 组合为网格
+            grid_image = combine_images_grid(selected_frames, grid_rows, grid_cols)
+            if grid_image is None:
+                appearance_descriptions.append("无法组合图像")
+                continue
 
-        # 3.3 对选定的每一帧进行分析
-        logger.info(f"正在分析 {len(selected_frames)} 帧的具体外观...")
-        analysis_count = min(5, len(selected_frames))  # 限制分析帧数以节省API调用
-        for i in range(analysis_count):
-            frame_desc = analyze_frame_appearance(
-                selected_frames[i], global_appearance, analyzer, class_name=class_name
+            # 构建提示词
+            target_type_info = ""
+            if class_name:
+                target_type_info = (
+                    f"\n这个目标的类别是: {class_name}。请考虑这个类别的典型特征。"
+                )
+            elif class_id:
+                target_type_info = f"\n这个目标的类别ID是: {class_id}。"
+
+            prompt = (
+                f"这些是同一个目标的 {len(selected_frames)} 个不同时刻的图像。"
+                f"请详细描述这个目标的整体外观特征，包括但不限于："
+                f"1. 外形特征（主要都是水上目标）\n"
+                f"2. 主要颜色和颜色分布\n"
+                f"3. 特征细节（如标志、独特形状、是否有窗户、有没有人）\n"
+                f"4. 环境细节（如是否存在水波、水面反射）"
+                f"{target_type_info}\n"
+                f"请提供详尽准确的描述，这将用作参考标准。\n"
+                f"只需要输出对目标的外观的描述，不要输出其他的乱七八糟的。"
             )
-            frame_descriptions.append(frame_desc)
 
-        # 3.4 综合全局外观和各帧分析，生成最终描述
-        if frame_descriptions:
-            logger.info("正在综合全局外观和各帧分析...")
-            final_appearance = combine_appearance_descriptions(
-                frame_descriptions, global_appearance, analyzer
+            response = analyzer.ask_question_about_image(grid_image, prompt)
+            logger.info(f"第{repeat_idx+1}次appearance采样完成")
+            appearance_descriptions.append(
+                response if response else "模型未能生成有效的外观描述"
             )
+
+        # 3.4 综合所有appearance描述
+        if appearance_descriptions:
+            logger.info("正在综合多次appearance采样的描述...")
+            final_appearance = summarize_descriptions(appearance_descriptions, analyzer)
         else:
-            final_appearance = global_appearance
+            final_appearance = ""
 
         # 添加类别信息到描述中
         if class_name:
@@ -746,6 +774,7 @@ def process_annotation_task(task_args):
         motion_length,
         analyzer,
         class_map,
+        appearance_repeat,
     ) = task_args
     modified = False
 
@@ -759,6 +788,7 @@ def process_annotation_task(task_args):
             sample_count,
             motion_length,
             class_map=class_map,
+            appearance_repeat=appearance_repeat,
         )
 
         # 将描述信息序列化为JSON字符串
@@ -774,6 +804,9 @@ def process_annotation_task(task_args):
         logger.info(f"更新了文件描述信息: {annotation_obj.file_path}")
         annotation_obj.modifying()
 
+    # For debug
+    annotation_obj.save()
+
     return annotation_obj, modified
 
 
@@ -783,6 +816,7 @@ def update_bbox_descriptions(
     motion_length: int = DEFAULT_MOTION_LENGTH,
     analyzers: List[OpenAIImageAnalyzer] = None,
     class_map: dict = None,
+    appearance_repeat=1,
 ) -> bool:
     """
     更新数据集中所有边界框的描述信息，使用单线程处理每个标注文件
@@ -861,6 +895,7 @@ def update_bbox_descriptions(
                     motion_length,
                     analyzers[analyzer_idx],
                     class_map,
+                    appearance_repeat,
                 )
             )
 

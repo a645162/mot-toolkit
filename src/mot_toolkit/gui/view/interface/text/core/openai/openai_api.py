@@ -205,7 +205,7 @@ class OpenAIImageAnalyzer:
         对指定图片进行提问。
 
         Args:
-            image_source: 图片来源，可以是文件路径 (str)、PIL.Image 对象或 OpenCV 图像 (numpy.ndarray)。
+            image_source: 图片来源，可以是文件路径 (str)、PIL.Image 对象或 OpenCV 图像 (numpy.ndarray)。如果为 None，则只提问文本。
             question: 关于图片的问题。
 
         Returns:
@@ -215,16 +215,20 @@ class OpenAIImageAnalyzer:
             print("错误：ChatOpenAI 客户端未成功初始化。无法处理请求。")
             return None
         try:
-            # 使用新的编码方法
-            base64_image, mime_type = self.encode_image(image_source)
-            image_url = f"data:{mime_type};base64,{base64_image}"
+            if image_source is None:
+                # 只发送文本消息
+                message = HumanMessage(content=question)
+            else:
+                # 使用新的编码方法
+                base64_image, mime_type = self.encode_image(image_source)
+                image_url = f"data:{mime_type};base64,{base64_image}"
 
-            message = HumanMessage(
-                content=[
-                    {"type": "text", "text": question},
-                    {"type": "image_url", "image_url": {"url": image_url}},
-                ]
-            )
+                message = HumanMessage(
+                    content=[
+                        {"type": "text", "text": question},
+                        {"type": "image_url", "image_url": {"url": image_url}},
+                    ]
+                )
 
             response = self.chat.invoke([message])
             return response.content
@@ -238,6 +242,12 @@ class OpenAIImageAnalyzer:
             print("详细错误信息：")
             traceback.print_exc()
             return None
+
+    def analyze_image(self, image_source, prompt="Describe this image."):
+        """
+        简单分析图片，返回模型输出。用于可用性测试。
+        """
+        return self.ask_question_about_image(image_source, prompt)
 
     def update_config(
         self,

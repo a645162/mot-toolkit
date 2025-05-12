@@ -104,7 +104,16 @@ def handle_sequence(args):
               - sequence_index: 当前序列索引
               - total_sequences: 总序列数
     """
-    sequence_dir_path, sample_count, motion_length, analyzer_config, class_map, sequence_index, total_sequences = args
+    (
+        sequence_dir_path,
+        sample_count,
+        motion_length,
+        analyzer_config,
+        class_map,
+        sequence_index,
+        total_sequences,
+        appearance_repeat,
+    ) = args
 
     # 在每个进程内部创建自己的 OpenAIImageAnalyzer 实例
     # 这样可以避免跨进程共享对象的问题
@@ -153,12 +162,17 @@ def handle_sequence(args):
         motion_length=motion_length,
         analyzers=[analyzer],  # 只使用一个分析器实例
         class_map=class_map,
+        appearance_repeat=appearance_repeat,
     )
 
     if success:
-        print(f"已完成序列 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列")
+        print(
+            f"已完成序列 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列"
+        )
     else:
-        print(f"处理序列失败 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列")
+        print(
+            f"处理序列失败 [{sequence_index+1}/{total_sequences}]: {sequence_name}，剩余 {total_sequences-sequence_index-1} 个序列"
+        )
 
 
 def set_process_start_mode():
@@ -181,6 +195,7 @@ def generate_descriptions(
     motion_length: int = 15,
     analyzer_configs: List[tuple] = None,
     class_map: Dict[str, str] = None,
+    appearance_repeat=1,
 ):
     """
     为数据集中的所有边界框生成描述信息
@@ -257,6 +272,7 @@ def generate_descriptions(
                 class_map,
                 i,  # 序列索引
                 total_sequences,  # 总序列数
+                appearance_repeat,
             )
         )
 
@@ -276,26 +292,115 @@ def generate_descriptions(
     print(f"\n成功完成所有 {total_sequences} 个序列的处理！")
 
 
+def test_analyzer_availability(analyzer_configs):
+    """
+    测试每个大模型配置是否可用，返回可用的配置列表和数量
+    """
+    available_configs = []
+    import tempfile
+    from PIL import Image as PILImage
+
+    # 创建一个最小的白色图片用于测试
+    test_image_path = None
+    try:
+        with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
+            img = PILImage.new("RGB", (8, 8), color=(255, 255, 255))
+            img.save(tmp, format="JPEG")
+            test_image_path = tmp.name
+
+        for idx, config in enumerate(analyzer_configs):
+            try:
+                # 解析配置元组
+                if len(config) >= 4:
+                    api_key, model, api_base_url, max_tokens = config
+                elif len(config) == 3:
+                    api_key, model, api_base_url = config
+                    max_tokens = None
+                elif len(config) == 2:
+                    api_key, model = config
+                    api_base_url = None
+                    max_tokens = None
+                else:
+                    api_key = config[0]
+                    model = "gpt-4o"
+                    api_base_url = None
+                    max_tokens = None
+
+                analyzer_params = {"api_key": api_key, "model": model}
+                if api_base_url:
+                    analyzer_params["api_base_url"] = api_base_url
+                if max_tokens:
+                    analyzer_params["max_tokens"] = max_tokens
+
+                analyzer = OpenAIImageAnalyzer(**analyzer_params)
+                # 尝试调用一次简单的API（如模型元信息或最小图片分析）
+                try:
+                    if hasattr(analyzer, "test_connection"):
+                        analyzer.test_connection()
+                    else:
+                        analyzer.analyze_image(test_image_path, prompt="test")
+                    available_configs.append(config)
+                    print(f"模型[{idx}] ({model}) 可用")
+                except Exception as e:
+                    print(f"模型[{idx}] ({model}) 不可用: {e}")
+            except Exception as e:
+                print(f"模型[{idx}] 配置错误: {e}")
+        print(f"\n实际可用的大模型数量: {len(available_configs)} / {len(analyzer_configs)}")
+    finally:
+        if test_image_path and os.path.exists(test_image_path):
+            os.remove(test_image_path)
+    return available_configs
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="为边界框生成描述信息")
     parser.add_argument(
         "--dataset",
         type=str,
-        default="/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
+        default=r"H:\Datasets\MaritimeTrackAllData\TextTest",
         help="数据集目录路径",
     )
     parser.add_argument("--depth", type=int, default=1, help="目录深度")
+    # io_cpu_count
     parser.add_argument(
-        "--threads", type=int, default=io_cpu_count, help="处理线程数"
+        "--threads", type=int, default=8, help="处理线程数"
     )  # 改为threads
-    parser.add_argument("--samples", type=int, default=20, help="外观采样帧数")
-    parser.add_argument("--motion-length", type=int, default=15, help="运动分析帧长度")
-    parser.add_argument("--api-keys", type=str, nargs="+", help="OpenAI API 密钥列表")
+    # --samples 参数：指定每个目标采样多少帧用于外观描述，帧数越多，描述越全面，但处理速度越慢
+    parser.add_argument(
+        "--samples",
+        type=int,
+        default=20,
+        help="外观采样帧数。每个目标采样多少帧用于外观描述，帧数越多，描述越全面，但处理速度越慢。"
+    )
+    parser.add_argument(
+        "--samples-times",
+        type=int,
+        default=5,
+        help="外观采样次数。",
+    )
+    # --motion-length 参数：指定用于运动分析的连续帧长度，帧数越多，运动描述越准确，但处理速度越慢
+    parser.add_argument(
+        "--motion-length",
+        type=int,
+        default=15,
+        help="运动分析帧长度。用于运动分析的连续帧长度，帧数越多，运动描述越准确，但处理速度越慢。"
+    )
+    parser.add_argument(
+        "--api-keys",
+        type=str,
+        nargs="+",
+        default=["sk-none"],
+        help="OpenAI API 密钥列表",
+    )
     parser.add_argument(
         "--models", type=str, nargs="+", default=["gpt-4o"], help="使用的模型列表"
     )
     parser.add_argument(
-        "--api-base-urls", type=str, nargs="+", help="自定义 API 基础 URL 列表"
+        "--api-base-urls",
+        type=str,
+        nargs="+",
+        default=["http://127.0.0.1:8002/v1"],
+        help="自定义 API 基础 URL 列表",
     )
     parser.add_argument(
         "--max-tokens", type=int, nargs="+", help="最大输出 token 数列表"
@@ -340,8 +445,6 @@ if __name__ == "__main__":
         if len(class_map) > 10:
             print(f"  - ... 以及其他 {len(class_map) - 10} 个类别")
 
-    input("按回车键继续...")
-
     # 构建分析器配置
     analyzer_configs = []
     if args.api_keys:
@@ -368,13 +471,85 @@ if __name__ == "__main__":
         for i in range(n_configs):
             analyzer_configs.append((args.api_keys[i], models[i], urls[i], tokens[i]))
 
+    # 新增：测试大模型可用性
+    print("正在测试大模型可用性...")
+    available_analyzer_configs = test_analyzer_availability(analyzer_configs)
+    print(f"可用大模型数量: {len(available_analyzer_configs)}")
+    if not available_analyzer_configs:
+        print("没有可用的大模型，程序终止。")
+        exit(1)
+
+    # 仅用于测试：调用大语言模型，问他hello，并输出结果
+    try:
+        # 构建第一个可用的 analyzer（如有）
+        if "analyzer_configs" not in locals():
+            analyzer_configs = []
+        if not analyzer_configs:
+            # 构建一份默认配置（如环境变量有API KEY）
+            api_key = os.environ.get("OPENAI_API_KEY")
+            if api_key:
+                analyzer_configs = [(api_key, "gpt-4o", None, None)]
+        if analyzer_configs:
+            # 取第一个配置
+            config = analyzer_configs[0]
+            if len(config) >= 4:
+                api_key, model, api_base_url, max_tokens = config
+            elif len(config) == 3:
+                api_key, model, api_base_url = config
+                max_tokens = None
+            elif len(config) == 2:
+                api_key, model = config
+                api_base_url = None
+                max_tokens = None
+            else:
+                api_key = config[0]
+                model = "gpt-4o"
+                api_base_url = None
+                max_tokens = None
+
+            analyzer_params = {"api_key": api_key, "model": model}
+            if api_base_url:
+                analyzer_params["api_base_url"] = api_base_url
+            if max_tokens:
+                analyzer_params["max_tokens"] = max_tokens
+
+            analyzer = OpenAIImageAnalyzer(**analyzer_params)
+            # 直接问大模型 hello
+            result = analyzer.ask_question_about_image(
+                image_source=None, question="hello"  # 不传图片，仅文本
+            )
+            print("大模型返回：", result)
+        else:
+            print("未找到可用的大模型配置，无法测试大模型hello。")
+    except Exception as e:
+        print("大模型hello测试异常：", e)
+
+    # 打印超参数信息
+    print("\n运行参数:")
+    print(f"- 数据集路径: {args.dataset}")
+    print(f"- 目录深度: {args.depth}")
+    print(f"- 处理线程数: {args.threads}")
+    print(f"- 外观采样帧数: {args.samples}")
+    print(f"- 外观采样次数: {args.samples_times}")
+    print(f"- 运动分析帧长度: {args.motion_length}")
+    print(f"- 配置的API密钥数量: {len(args.api_keys)}")
+    print(f"- 配置的模型数量: {len(args.models)}")
+    print(f"- 配置的API基础URL数量: {len(args.api_base_urls) if args.api_base_urls else 0}")
+    print(f"- 配置的最大token数量: {len(args.max_tokens) if args.max_tokens else 0}")
+    print(f"- 可用大模型数量: {len(available_analyzer_configs)}")
+    print(f"- 找到序列数量: {len(sequence_path_list)}")
+    print(f"- 类别映射大小: {len(class_map)}")
+
+    input("按回车键继续...")
+
     print("开始生成边界框描述信息...")
     generate_descriptions(
         dataset_dir_path=sequence_path_list,
         process_count=args.threads,  # 使用线程数参数
         sample_count=args.samples,
         motion_length=args.motion_length,
-        analyzer_configs=analyzer_configs,
+        analyzer_configs=available_analyzer_configs,  # 只用可用的
         class_map=class_map,
+        appearance_repeat=args.samples_times,  # 外观采样次数
     )
     print("边界框描述信息生成完成！")
