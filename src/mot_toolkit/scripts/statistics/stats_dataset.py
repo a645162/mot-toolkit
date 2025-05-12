@@ -534,6 +534,176 @@ def plot_movement_histogram(
     print(f"移动距离范围: [{min_value:.4f}, {max_value:.4f}], 平均: {avg_value:.4f}")
 
 
+def output_summary(
+    result_list: List,
+    class_config: ObjectClassConfigure,
+    all_movement_data: Dict,
+    ocpmd_threshold: float,
+    total_static_bbox_count: int,
+    total_bbox_count: int,
+    output_txt_path: str = None
+) -> str:
+    """
+    输出数据集统计的总结信息，并可选择保存到文本文件
+    
+    Args:
+        result_list: 包含所有序列统计结果的列表
+        class_config: 类别配置对象
+        all_movement_data: 目标移动数据字典
+        ocpmd_threshold: 静止目标阈值
+        total_static_bbox_count: 静止目标BBox总数
+        total_bbox_count: BBox总数
+        output_txt_path: 输出文本文件路径，如果为None则不保存
+        
+    Returns:
+        str: 总结信息文本
+    """
+    # 计算并打印总计统计信息
+    total_frame_count = 0
+    total_object_count = 0
+    total_object_instance_count = 0
+    total_small_count = 0
+    total_medium_count = 0
+    total_large_count = 0
+    total_static_object_count = 0
+    total_moving_object_count = 0
+
+    # 每个类别的总数
+    total_class_counts = [0 for _ in range(len(class_config.object_classes))]
+
+    # 统计有效行（跳过空行）
+    valid_sequences = 0
+
+    for row in result_list:
+        if not row:  # 跳过空行
+            continue
+
+        valid_sequences += 1
+
+        # 帧数在索引3，目标数在索引4，实例数在索引5
+        total_frame_count += row[3] if len(row) > 3 and isinstance(row[3], int) else 0
+        total_object_count += row[4] if len(row) > 4 and isinstance(row[4], int) else 0
+        total_object_instance_count += (
+            row[5] if len(row) > 5 and isinstance(row[5], int) else 0
+        )
+
+        # 小、中、大目标数量在索引8, 9, 10
+        total_small_count += row[8] if len(row) > 8 and isinstance(row[8], int) else 0
+        total_medium_count += row[9] if len(row) > 9 and isinstance(row[9], int) else 0
+        total_large_count += (
+            row[10] if len(row) > 10 and isinstance(row[10], int) else 0
+        )
+
+        # 静止和移动目标数在索引13, 14
+        total_static_object_count += (
+            row[13] if len(row) > 13 and isinstance(row[13], int) else 0
+        )
+        total_moving_object_count += (
+            row[14] if len(row) > 14 and isinstance(row[14], int) else 0
+        )
+
+        # 各类别目标数从索引17开始
+        for i in range(len(total_class_counts)):
+            idx = 17 + i
+            if len(row) > idx and isinstance(row[idx], int):
+                total_class_counts[i] += row[idx]
+
+    # 生成总结文本
+    summary_lines = []
+    summary_lines.append("=" * 60)
+    summary_lines.append("总计统计:")
+    summary_lines.append("=" * 60)
+    summary_lines.append(f"总序列数: {valid_sequences}")
+    summary_lines.append(f"总帧数: {total_frame_count}")
+    summary_lines.append(f"总目标数: {total_object_count}")
+    summary_lines.append(f"总实例数: {total_object_instance_count}")
+    summary_lines.append("目标尺寸分布:")
+    summary_lines.append(f"\t小目标: {total_small_count}")
+    summary_lines.append(f"\t中目标: {total_medium_count}")
+    summary_lines.append(f"\t大目标: {total_large_count}")
+    summary_lines.append("目标运动特性:")
+    summary_lines.append(f"\t静止目标(<{ocpmd_threshold}): {total_static_object_count}")
+    summary_lines.append(f"\t移动目标(>={ocpmd_threshold}): {total_moving_object_count}")
+    summary_lines.append(f"\t静止BBox数: {total_static_bbox_count}")
+    summary_lines.append(f"\t总BBox数: {total_bbox_count}")
+    
+    static_bbox_ratio = "0.00%"
+    if total_bbox_count > 0:
+        static_bbox_ratio = f"{total_static_bbox_count/total_bbox_count*100:.2f}%"
+    summary_lines.append(f"\t静止BBox占比: {static_bbox_ratio}")
+
+    # 如果有类别配置且类别列表不为空，才输出类别统计
+    if class_config and class_config.object_classes:
+        summary_lines.append("各类别目标数量:")
+        for idx, count in enumerate(total_class_counts):
+            summary_lines.append(f"\t[{idx}] {class_config.object_classes[idx].class_name}: {count}")
+    else:
+        summary_lines.append("已跳过类别统计.")
+    summary_lines.append("=" * 60)
+
+    # 在总计统计中添加更多关于移动特性的详情
+    if all_movement_data:
+        movement_values = list(all_movement_data.values())
+        static_objects = [v for v in movement_values if v < ocpmd_threshold]
+        moving_objects = [v for v in movement_values if v >= ocpmd_threshold]
+
+        # 计算各种数量，避免重复调用 len()
+        total_obj_count = len(movement_values)
+        static_obj_count = len(static_objects)
+        moving_obj_count = len(moving_objects)
+
+        # 计算百分比
+        static_percent = (
+            static_obj_count / total_obj_count * 100 if total_obj_count else 0
+        )
+        moving_percent = (
+            moving_obj_count / total_obj_count * 100 if total_obj_count else 0
+        )
+
+        summary_lines.append("移动特性详细统计:")
+        summary_lines.append(f"\t目标总数: {total_obj_count}")
+        summary_lines.append(
+            f"\t静止目标(<{ocpmd_threshold}): {static_obj_count} ({static_percent:.2f}%)"
+        )
+        summary_lines.append(
+            f"\t移动目标(>={ocpmd_threshold}): {moving_obj_count} ({moving_percent:.2f}%)"
+        )
+
+        if moving_objects:
+            summary_lines.append(f"\t移动目标平均移动距离: {sum(moving_objects)/moving_obj_count:.4f}")
+            summary_lines.append(f"\t移动目标最大移动距离: {max(moving_objects):.4f}")
+            summary_lines.append(f"\t移动目标最小移动距离: {min(moving_objects):.4f}")
+
+        summary_lines.append(f"\t静止BBox总数: {total_static_bbox_count}")
+        static_bbox_ratio_text = "0.00%"
+        if total_bbox_count > 0:
+            static_bbox_ratio_text = f"{total_static_bbox_count/total_bbox_count*100:.2f}%"
+        summary_lines.append(f"\t静止BBox占比: {static_bbox_ratio_text}")
+        
+        if static_obj_count > 0:
+            summary_lines.append(
+                f"\t每个静止目标平均BBox数: {total_static_bbox_count/static_obj_count:.2f}"
+            )
+        if moving_obj_count > 0:
+            summary_lines.append(
+                f"\t每个移动目标平均BBox数: {(total_bbox_count-total_static_bbox_count)/moving_obj_count:.2f}"
+            )
+
+    # 将总结信息合并为字符串
+    summary_text = "\n".join(summary_lines)
+    
+    # 打印总结信息
+    print("\n" + summary_text)
+    
+    # 如果提供了输出路径，则保存到文本文件
+    if output_txt_path:
+        with open(output_txt_path, "w", encoding="utf-8") as f:
+            f.write(summary_text)
+        print(f"已将总结信息保存到: {output_txt_path}")
+    
+    return summary_text
+
+
 def parse_args():
     """
     解析命令行参数
@@ -618,6 +788,11 @@ def main():
     if not os.path.exists(output_dir_path):
         os.makedirs(output_dir_path, exist_ok=True)
 
+    # 确保所有输出文件保存到output_dir_path目录
+    output_csv_path = os.path.join(output_dir_path, output_csv)
+    movement_hist_output_path = os.path.join(output_dir_path, movement_hist_path)
+    output_txt_path = os.path.join(output_dir_path, "results_summary.txt")
+
     # 用于收集所有序列中目标的移动数据
     all_movement_data = {}
 
@@ -700,144 +875,27 @@ def main():
         if empty_line_spilt:
             result_list.append([])
 
-    save_to_csv(result_list, class_config, output_csv)
+    save_to_csv(result_list, class_config, output_csv_path)
 
     # 绘制移动特性分布直方图
     if all_movement_data:
-        plot_movement_histogram(all_movement_data, movement_hist_path, ocpmd_threshold)
+        plot_movement_histogram(all_movement_data, movement_hist_output_path, ocpmd_threshold)
 
-    # 计算并打印总计统计信息
-    total_frame_count = 0
-    total_object_count = 0
-    total_object_instance_count = 0
-    total_small_count = 0
-    total_medium_count = 0
-    total_large_count = 0
-    total_static_object_count = 0
-    total_moving_object_count = 0
-
-    # 每个类别的总数
-    total_class_counts = [0 for _ in range(len(class_config.object_classes))]
-
-    # 统计有效行（跳过空行）
-    valid_sequences = 0
-
-    for row in result_list:
-        if not row:  # 跳过空行
-            continue
-
-        valid_sequences += 1
-
-        # 帧数在索引3，目标数在索引4，实例数在索引5
-        total_frame_count += row[3] if len(row) > 3 and isinstance(row[3], int) else 0
-        total_object_count += row[4] if len(row) > 4 and isinstance(row[4], int) else 0
-        total_object_instance_count += (
-            row[5] if len(row) > 5 and isinstance(row[5], int) else 0
-        )
-
-        # 小、中、大目标数量在索引8, 9, 10
-        total_small_count += row[8] if len(row) > 8 and isinstance(row[8], int) else 0
-        total_medium_count += row[9] if len(row) > 9 and isinstance(row[9], int) else 0
-        total_large_count += (
-            row[10] if len(row) > 10 and isinstance(row[10], int) else 0
-        )
-
-        # 静止和移动目标数在索引13, 14
-        total_static_object_count += (
-            row[13] if len(row) > 13 and isinstance(row[13], int) else 0
-        )
-        total_moving_object_count += (
-            row[14] if len(row) > 14 and isinstance(row[14], int) else 0
-        )
-
-        # 各类别目标数从索引15开始
-        for i in range(len(total_class_counts)):
-            idx = 17 + i
-            if len(row) > idx and isinstance(row[idx], int):
-                total_class_counts[i] += row[idx]
-
-    # 打印总计统计信息
-    print("\n" + "=" * 60)
-    print("总计统计:")
-    print("=" * 60)
-    print(f"总序列数: {valid_sequences}")
-    print(f"总帧数: {total_frame_count}")
-    print(f"总目标数: {total_object_count}")
-    print(f"总实例数: {total_object_instance_count}")
-    print("目标尺寸分布:")
-    print(f"\t小目标: {total_small_count}")
-    print(f"\t中目标: {total_medium_count}")
-    print(f"\t大目标: {total_large_count}")
-    print("目标运动特性:")
-    print(f"\t静止目标(<{ocpmd_threshold}): {total_static_object_count}")
-    print(f"\t移动目标(>={ocpmd_threshold}): {total_moving_object_count}")
-    print(f"\t静止BBox数: {total_static_bbox_count}")
-    print(f"\t总BBox数: {total_bbox_count}")
-    print(
-        f"\t静止BBox占比: {total_static_bbox_count/total_bbox_count*100:.2f}%"
-        if total_bbox_count > 0
-        else "\t静止BBox占比: 0.00%"
+    # 输出总结统计信息并保存到文本文件
+    output_summary(
+        result_list, 
+        class_config, 
+        all_movement_data, 
+        ocpmd_threshold,
+        total_static_bbox_count,
+        total_bbox_count,
+        output_txt_path
     )
-
-    # 如果有类别配置且类别列表不为空，才输出类别统计
-    if class_config and class_config.object_classes:
-        print("各类别目标数量:")
-        for idx, count in enumerate(total_class_counts):
-            print(f"\t[{idx}] {class_config.object_classes[idx].class_name}: {count}")
-    else:
-        print("已跳过类别统计.")
-    print("=" * 60)
-
-    # 在总计统计中添加更多关于移动特性的详情
-    if all_movement_data:
-        movement_values = list(all_movement_data.values())
-        static_objects = [v for v in movement_values if v < ocpmd_threshold]
-        moving_objects = [v for v in movement_values if v >= ocpmd_threshold]
-
-        # 计算各种数量，避免重复调用 len()
-        total_obj_count = len(movement_values)
-        static_obj_count = len(static_objects)
-        moving_obj_count = len(moving_objects)
-
-        # 计算百分比
-        static_percent = (
-            static_obj_count / total_obj_count * 100 if total_obj_count else 0
-        )
-        moving_percent = (
-            moving_obj_count / total_obj_count * 100 if total_obj_count else 0
-        )
-
-        print("移动特性详细统计:")
-        print(f"\t目标总数: {total_obj_count}")
-        print(
-            f"\t静止目标(<{ocpmd_threshold}): {static_obj_count} ({static_percent:.2f}%)"
-        )
-        print(
-            f"\t移动目标(>={ocpmd_threshold}): {moving_obj_count} ({moving_percent:.2f}%)"
-        )
-
-        if moving_objects:
-            print(f"\t移动目标平均移动距离: {sum(moving_objects)/moving_obj_count:.4f}")
-            print(f"\t移动目标最大移动距离: {max(moving_objects):.4f}")
-            print(f"\t移动目标最小移动距离: {min(moving_objects):.4f}")
-
-        print(f"\t静止BBox总数: {total_static_bbox_count}")
-        print(
-            f"\t静止BBox占比: {total_static_bbox_count/total_bbox_count*100:.2f}%"
-            if total_bbox_count > 0
-            else "0.00%"
-        )
-        if static_obj_count > 0:
-            print(
-                f"\t每个静止目标平均BBox数: {total_static_bbox_count/static_obj_count:.2f}"
-            )
-        if moving_obj_count > 0:
-            print(
-                f"\t每个移动目标平均BBox数: {(total_bbox_count-total_static_bbox_count)/moving_obj_count:.2f}"
-            )
 
     end_time = time.time()
 
+    print(f"已将CSV文件保存到: {output_csv_path}")
+    print(f"已将移动特性分布直方图保存到: {movement_hist_output_path}")
     print("完成")
 
     print("耗时:", round(end_time - start_time, 2), "秒")
