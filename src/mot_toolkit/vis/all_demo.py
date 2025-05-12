@@ -102,18 +102,19 @@ def create_ridge_plot(scheme, output_dir):
 
     # 创建颜色映射
     colors = scheme.hex_colors()
-    # 反向排列以便底部为红色，顶部为蓝色
+    # 反向排列以便底部为深色，顶部为浅色
     colors = colors[::-1]
 
     # 定义各样本的峰值位置和宽度
     centers = [35, 32, 40, 42, 50, 55, 45, 50, 45, 35]
     widths = [8, 10, 15, 12, 18, 15, 10, 8, 12, 5]
-    heights = [0.4, 0.35, 0.3, 0.25, 0.2, 0.15, 0.15, 0.12, 0.1, 0.1]
+    # 让下方的波形更高，且高度足以跨越上层，产生明显重叠
+    heights = [3.5, 3.0, 2.5, 2.0, 1.7, 1.4, 1.1, 0.8, 0.6, 0.4]
+    y_gap = 1.2  # 行间距小于最大高度，保证重叠
 
     # 绘制每个样本的波形
     for i, sample in enumerate(samples):
-        # 使用高斯分布生成波形
-        y_base = i * 1.0  # 设置基线位置
+        y_base = i * y_gap  # 设置基线位置，保证重叠
 
         mu = centers[i]
         sigma = widths[i]
@@ -122,25 +123,33 @@ def create_ridge_plot(scheme, output_dir):
         # 创建主波形
         y = y_base + height * np.exp(-0.5 * ((x - mu) / sigma) ** 2)
 
-        # 添加次波形（如有）
-        if i < 5:  # 只给前几个样本添加次波形
+        # 添加次波形（如有）——只给前几个样本添加
+        if i < 5:
             mu2 = mu + 20
             sigma2 = sigma * 0.7
             height2 = height * 0.7
             y += height2 * np.exp(-0.5 * ((x - mu2) / sigma2) ** 2)
 
-        # 填充区域
-        ax.fill_between(x, y_base, y, color=colors[min(i, len(colors) - 1)], alpha=0.8)
+        # 颜色循环使用，增加透明度
+        color = colors[i % len(colors)]
+        ax.fill_between(
+            x,
+            y_base,
+            y,
+            color=color,
+            alpha=0.6,
+            zorder=10 - i,
+        )
 
         # 绘制波形线条
-        ax.plot(x, y, color="black", linewidth=1)
+        ax.plot(x, y, color="black", linewidth=1, zorder=20 - i)
 
         # 添加样本标签
-        ax.text(0, y_base + 0.05, sample, fontsize=9, va="bottom")
+        ax.text(0, y_base + 0.05, sample, fontsize=9, va="bottom", zorder=30 - i)
 
     # 设置图表属性
     ax.set_xlim(0, 90)
-    ax.set_ylim(-0.5, len(samples))
+    ax.set_ylim(-0.5, y_base + heights[-1] + 1.5)
     ax.set_xticks(np.arange(0, 91, 10))
     ax.set_yticks([])
     ax.spines["right"].set_visible(False)
