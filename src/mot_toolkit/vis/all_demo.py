@@ -1,10 +1,12 @@
 """
-希格雯配色方案演示脚本
+多配色方案演示程序
 
-这个脚本展示如何使用希格雯配色方案绘制各种类型的图表
+这个脚本可以同时绘制多个配色方案的演示图表，便于比较不同配色方案的效果
 """
 
 import os
+import importlib
+import inspect
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,7 +14,9 @@ from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
-from mot_toolkit.vis.sigewinne_colors import SIGEWINNEColorScheme as ColorScheme
+from mot_toolkit.vis.base_colors import BaseColorScheme
+from mot_toolkit.vis.sigewinne_colors import SIGEWINNEColorScheme
+from mot_toolkit.vis.varesa_colors import VARESAColorScheme
 
 
 def setup_figure_style():
@@ -30,9 +34,10 @@ def create_color_palette_demo(scheme, output_dir):
     """创建配色方案展示图"""
     colors = scheme.colors
     hex_colors = scheme.hex_colors()
+    scheme_name = scheme.__class__.__name__
 
     fig, axes = plt.subplots(1, 5, figsize=(12, 2))
-    fig.suptitle("希格雯配色方案示例", fontsize=16)
+    fig.suptitle(f"{scheme.name}示例", fontsize=16)
 
     for i, (color, hex_color) in enumerate(zip(colors, hex_colors)):
         axes[i].add_patch(plt.Rectangle((0, 0), 1, 1, color=hex_color, ec="black"))
@@ -45,14 +50,17 @@ def create_color_palette_demo(scheme, output_dir):
         axes[i].axis("off")
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_colors.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_colors.png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_ridge_plot(scheme, output_dir):
     """创建示波图(Ridge Plot)"""
+    scheme_name = scheme.__class__.__name__
+    
     # 设置样本名称
     samples = [
         "Samp A",
@@ -123,17 +131,20 @@ def create_ridge_plot(scheme, output_dir):
     ax.spines["top"].set_visible(False)
     ax.spines["left"].set_visible(False)
 
-    ax.set_title("原神希格雯配色示波图", fontsize=14)
+    ax.set_title(f"{scheme.name}示波图", fontsize=14)
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_ridge_plot.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_ridge_plot.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_bar_chart(scheme, output_dir):
     """创建柱状图示例"""
+    scheme_name = scheme.__class__.__name__
+    
     categories = ["S1", "S2", "S3", "S4"]
     values = [0.34, 0.49, 0.32, 0.42]
 
@@ -145,14 +156,17 @@ def create_bar_chart(scheme, output_dir):
     ax.grid(True, linestyle="--", alpha=0.3)
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_bar.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_bar.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_stacked_area_chart(scheme, output_dir):
     """创建堆叠面积图"""
+    scheme_name = scheme.__class__.__name__
+    
     x = np.arange(1, 11)
     data1 = np.array([1, 2, 4, 8, 12, 16, 14, 10, 7, 3])
     data2 = np.array([2, 5, 8, 12, 15, 18, 15, 14, 10, 5])
@@ -188,14 +202,17 @@ def create_stacked_area_chart(scheme, output_dir):
     ax.set_title("多序列趋势分析")
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_area.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_area.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_line_chart(scheme, output_dir):
     """创建多序列折线图"""
+    scheme_name = scheme.__class__.__name__
+    
     x = np.arange(1, 9)
     y1 = np.array([55, 20, 33, 15, 10, 15, 25, 5])
     y2 = np.array([7, 45, 20, 10, 55, 25, 15, 10])
@@ -215,14 +232,17 @@ def create_line_chart(scheme, output_dir):
     ax.grid(True, linestyle="--", alpha=0.3)
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_line.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_line.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_pie_chart(scheme, output_dir):
     """创建饼图"""
+    scheme_name = scheme.__class__.__name__
+    
     labels = ["North", "South", "East", "West"]
     sizes = [25, 25, 19, 31]
 
@@ -239,14 +259,17 @@ def create_pie_chart(scheme, output_dir):
     ax.set_title("区域分布")
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_pie.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_pie.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_heatmap(scheme, output_dir):
     """创建热力图"""
+    scheme_name = scheme.__class__.__name__
+    
     # 创建连续色彩映射，从浅蓝到深粉
     colors_for_map = [
         scheme.hex_colors()[1],
@@ -254,7 +277,7 @@ def create_heatmap(scheme, output_dir):
         scheme.hex_colors()[3],
         scheme.hex_colors()[4],
     ]
-    cmap = LinearSegmentedColormap.from_list("sigewinne", colors_for_map, N=100)
+    cmap = LinearSegmentedColormap.from_list(f"{scheme_name.lower()}", colors_for_map, N=100)
 
     # 创建随机数据
     np.random.seed(42)
@@ -273,126 +296,21 @@ def create_heatmap(scheme, output_dir):
     ax.set_yticklabels(y_labels)
 
     plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_heatmap.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_heatmap.png")
     plt.savefig(output_path, dpi=300)
     print(f"保存图片: {output_path}")
-    return fig
-
-
-def create_stacked_bar_chart(scheme, output_dir):
-    """创建堆叠柱状图"""
-    categories = range(1, 16)
-    data1 = np.array([10, 12, 14, 10, 12, 15, 18, 20, 15, 12, 11, 13, 10, 12, 11])
-    data2 = np.array([20, 18, 15, 20, 18, 17, 16, 25, 22, 20, 18, 17, 19, 18, 16])
-    data3 = np.array([15, 20, 18, 15, 17, 14, 13, 12, 16, 17, 15, 14, 18, 15, 13])
-    data4 = np.array([25, 22, 20, 25, 23, 24, 22, 18, 17, 21, 24, 21, 23, 25, 30])
-
-    fig, ax = plt.subplots(figsize=(12, 6))
-    ax.bar(categories, data1, color=scheme.hex_colors()[0], label="S1")
-    ax.bar(categories, data2, bottom=data1, color=scheme.hex_colors()[1], label="S2")
-    ax.bar(
-        categories,
-        data3,
-        bottom=data1 + data2,
-        color=scheme.hex_colors()[3],
-        label="S3",
-    )
-    ax.bar(
-        categories,
-        data4,
-        bottom=data1 + data2 + data3,
-        color=scheme.hex_colors()[4],
-        label="S4",
-    )
-
-    ax.set_xlabel("样本序号")
-    ax.set_ylabel("累计数值")
-    ax.set_title("多序列堆叠对比")
-    ax.legend()
-    ax.grid(True, linestyle="--", alpha=0.3)
-
-    plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_stacked_bar.png")
-    plt.savefig(output_path, dpi=300)
-    print(f"保存图片: {output_path}")
-    return fig
-
-
-def create_horizontal_bar_chart(scheme, output_dir):
-    """创建水平堆叠条形图"""
-    categories = range(1, 10)
-    data = np.array(
-        [
-            [0.1, 0.4, 0.3, 0.5, 0.2, 0.3, 0.1, 0.2, 0.1],  # S1
-            [0.2, 0.4, 0.2, 0.3, 0.3, 0.5, 0.4, 0.3, 0.2],  # S2
-            [0.4, 0.2, 0.3, 0.1, 0.4, 0.1, 0.2, 0.3, 0.3],  # S3
-            [0.3, 0.3, 0.2, 0.2, 0.2, 0.4, 0.5, 0.3, 0.4],  # S4
-            [0.5, 0.4, 0.3, 0.2, 0.3, 0.2, 0.3, 0.3, 0.5],  # S5
-            [0.4, 0.5, 0.4, 0.3, 0.2, 0.3, 0.2, 0.2, 0.1],  # S6
-        ]
-    )
-
-    labels = [f"S{i+1}" for i in range(data.shape[0])]
-    colors = scheme.hex_colors() + scheme.hex_colors()  # 重复颜色以满足需要
-
-    fig, ax = plt.subplots(figsize=(10, 6))
-    left = np.zeros(len(categories))
-
-    for i, d in enumerate(data):
-        ax.barh(categories, d, left=left, color=colors[i], label=labels[i])
-        left += d
-
-    ax.set_yticks(categories)
-    ax.set_xlabel("累计值")
-    ax.set_ylabel("序列号")
-    ax.set_title("多变量水平堆叠分析")
-    ax.legend(loc="upper right")
-
-    plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_horizontal_bar.png")
-    plt.savefig(output_path, dpi=300)
-    print(f"保存图片: {output_path}")
-    return fig
-
-
-def create_grouped_bar_chart(scheme, output_dir):
-    """创建分组柱状图"""
-    labels = ["s1", "s2", "s3", "s4"]
-    group_a = [0.44, 0.31, 0.45, 0.19]
-    group_b = [0.49, 0.35, 0.48, 0.33]
-    group_c = [0.47, 0.34, 0.49, 0.26]
-    group_d = [0.46, 0.33, 0.44, 0.24]
-
-    x = np.arange(len(labels))
-    width = 0.2
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    ax.bar(x - 1.5 * width, group_a, width, label="A", color=scheme.hex_colors()[0])
-    ax.bar(x - 0.5 * width, group_b, width, label="B", color=scheme.hex_colors()[1])
-    ax.bar(x + 0.5 * width, group_c, width, label="C", color=scheme.hex_colors()[3])
-    ax.bar(x + 1.5 * width, group_d, width, label="D", color=scheme.hex_colors()[4])
-
-    ax.set_ylim(0, 0.6)
-    ax.set_ylabel("相对数值")
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels)
-    ax.legend()
-    ax.set_title("多组变量对比")
-    ax.grid(True, linestyle="--", alpha=0.3, axis="y")
-
-    plt.tight_layout()
-    output_path = os.path.join(output_dir, "sigewinne_grouped_bar.png")
-    plt.savefig(output_path, dpi=300)
-    print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
 
 
 def create_dashboard(scheme, output_dir):
     """创建仪表盘演示"""
+    scheme_name = scheme.__class__.__name__
+    
     setup_figure_style()
 
     fig = plt.figure(figsize=(16, 12))
-    fig.suptitle("SCI论文插图 - 希格雯配色方案演示", fontsize=20, y=0.98)
+    fig.suptitle(f"SCI论文插图 - {scheme.name}演示", fontsize=20, y=0.98)
 
     # 使用GridSpec来安排子图
     gs = gridspec.GridSpec(3, 3)
@@ -412,7 +330,7 @@ def create_dashboard(scheme, output_dir):
         )
     ax_palette.set_xlim(-0.2, 5)
     ax_palette.set_ylim(-0.2, 1.2)
-    ax_palette.set_title("希格雯配色方案色板", fontsize=12)
+    ax_palette.set_title(f"{scheme.name}色板", fontsize=12)
     ax_palette.axis("off")
 
     # 添加柱状图
@@ -527,51 +445,199 @@ def create_dashboard(scheme, output_dir):
     ax_hbar.barh(3, 1.2, color=scheme.hex_colors()[2], label="S3")
     ax_hbar.barh(4, 1.5, color=scheme.hex_colors()[3], label="S4")
     ax_hbar.barh(5, 1.8, color=scheme.hex_colors()[4], label="S5")
-    ax_hbar.barh(6, 2.0, color=scheme.hex_colors()[4], label="S6")
+    ax_hbar.barh(6, 2.0, color=scheme.hex_colors()[0], label="S6")
 
     ax_hbar.set_yticks(range(1, 7))
     ax_hbar.set_title("水平条形图", fontsize=12)
     ax_hbar.legend(fontsize=8)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
-    output_path = os.path.join(output_dir, "sigewinne_dashboard.png")
+    output_path = os.path.join(output_dir, f"{scheme_name}_dashboard.png")
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
     print(f"保存图片: {output_path}")
+    plt.close(fig)
     return fig
+
+
+def create_comparison_dashboard(schemes, output_dir):
+    """创建多配色方案对比仪表盘"""
+    if len(schemes) < 2:
+        print("需要至少两个配色方案进行比较")
+        return
+    
+    setup_figure_style()
+    
+    fig = plt.figure(figsize=(16, 10 * len(schemes)))
+    fig.suptitle("多配色方案对比", fontsize=24, y=0.99)
+    
+    # 为每个配色方案创建子图
+    gs = gridspec.GridSpec(len(schemes), 3)
+    
+    for i, scheme in enumerate(schemes):
+        scheme_name = scheme.__class__.__name__
+        
+        # 添加配色方案展示
+        ax_palette = fig.add_subplot(gs[i, 0])
+        for j, color in enumerate(scheme.hex_colors()):
+            ax_palette.add_patch(plt.Rectangle((j, 0), 0.8, 1, color=color, ec="black"))
+            r, g, b = scheme.colors[j]
+            ax_palette.text(
+                j + 0.4,
+                0.5,
+                f"R:{r:03d}\nG:{g:03d}\nB:{b:03d}",
+                ha="center",
+                va="center",
+                fontsize=9,
+            )
+        ax_palette.set_xlim(-0.2, 5)
+        ax_palette.set_ylim(-0.2, 1.2)
+        ax_palette.set_title(f"{scheme.name}色板", fontsize=14)
+        ax_palette.axis("off")
+        
+        # 添加折线图
+        ax_line = fig.add_subplot(gs[i, 1])
+        x = np.arange(1, 9)
+        y1 = np.array([55, 20, 33, 15, 10, 15, 25, 5])
+        y2 = np.array([7, 45, 20, 10, 55, 25, 15, 10])
+        y3 = np.array([30, 50, 25, 15, 10, 20, 25, 20])
+        y4 = np.array([40, 10, 15, 5, 10, 30, 20, 30])
+
+        ax_line.plot(x, y1, "o-", color=scheme.hex_colors()[0], label="A")
+        ax_line.plot(x, y2, "s-", color=scheme.hex_colors()[1], label="B")
+        ax_line.plot(x, y3, "^-", color=scheme.hex_colors()[3], label="C")
+        ax_line.plot(x, y4, "D-", color=scheme.hex_colors()[4], label="D")
+        ax_line.set_title(f"{scheme.name} - 折线图", fontsize=14)
+        ax_line.grid(True, linestyle="--", alpha=0.3)
+        ax_line.legend()
+        
+        # 添加堆叠面积图
+        ax_area = fig.add_subplot(gs[i, 2])
+        x = np.arange(1, 11)
+        data1 = np.array([1, 2, 4, 8, 12, 16, 14, 10, 7, 3])
+        data2 = np.array([2, 5, 8, 12, 15, 18, 15, 14, 10, 5])
+        data3 = np.array([1, 3, 6, 14, 17, 19, 16, 12, 8, 4])
+        data4 = np.array([1, 4, 8, 15, 20, 22, 18, 15, 10, 6])
+
+        ax_area.fill_between(
+            x, 0, data1, alpha=0.8, color=scheme.hex_colors()[0], label="S1"
+        )
+        ax_area.fill_between(
+            x, data1, data1 + data2, alpha=0.8, color=scheme.hex_colors()[1], label="S2"
+        )
+        ax_area.fill_between(
+            x,
+            data1 + data2,
+            data1 + data2 + data3,
+            alpha=0.8,
+            color=scheme.hex_colors()[2],
+            label="S3",
+        )
+        ax_area.fill_between(
+            x,
+            data1 + data2 + data3,
+            data1 + data2 + data3 + data4,
+            alpha=0.8,
+            color=scheme.hex_colors()[3],
+            label="S4",
+        )
+        ax_area.set_xlim(1, 10)
+        ax_area.set_title(f"{scheme.name} - 面积图", fontsize=14)
+        ax_area.legend()
+        
+    plt.tight_layout(rect=[0, 0, 1, 0.98])
+    output_path = os.path.join(output_dir, "comparison_dashboard.png")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    print(f"保存图片: {output_path}")
+    plt.close(fig)
+    return fig
+
+
+def auto_discover_color_schemes():
+    """自动发现所有继承自BaseColorScheme的配色方案类"""
+    color_schemes = []
+    
+    # 获取当前模块路径
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # 获取所有.py文件
+    py_files = [f[:-3] for f in os.listdir(current_dir) if f.endswith('_colors.py')]
+    
+    for module_name in py_files:
+        if module_name == 'base_colors':
+            continue
+        
+        try:
+            # 动态导入模块
+            module_path = f"mot_toolkit.vis.{module_name}"
+            module = importlib.import_module(module_path)
+            
+            # 获取模块中的所有类
+            for name, obj in inspect.getmembers(module, inspect.isclass):
+                # 检查是否是ColorScheme的子类，但不是BaseColorScheme本身
+                if (issubclass(obj, BaseColorScheme) and 
+                    obj != BaseColorScheme and 
+                    obj.__module__ == module.__name__):
+                    color_schemes.append(obj())
+                    print(f"发现配色方案: {obj().name}")
+        except (ImportError, AttributeError) as e:
+            print(f"导入模块 {module_name} 时出错: {e}")
+    
+    return color_schemes
 
 
 def main():
     """主函数"""
-    scheme = ColorScheme()
     setup_figure_style()
 
-    print("正在创建希格雯配色方案演示...")
-
-    # Current Py directory
+    print("正在加载配色方案...")
+    
+    # 方法1：手动指定配色方案
+    schemes = [
+        SIGEWINNEColorScheme(),
+        VARESAColorScheme()
+    ]
+    
+    # 方法2：自动发现所有配色方案（你可以取消注释此行，替代方法1）
+    # schemes = auto_discover_color_schemes()
+    
+    if not schemes:
+        print("未找到配色方案，请检查导入路径")
+        return
+    
+    print(f"找到 {len(schemes)} 个配色方案")
+    for i, scheme in enumerate(schemes):
+        print(f"{i+1}. {scheme.name}")
+    
+    # 为每个配色方案创建输出目录
     output_dir = os.path.dirname(os.path.abspath(__file__))
     output_dir = os.path.join(output_dir, "demo")
-    output_dir = os.path.join(output_dir, scheme.__class__.__name__)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-
+    
     print(f"图片输出目录: {output_dir}")
-
-    # 创建单独的图表
-    create_color_palette_demo(scheme, output_dir)
-    create_ridge_plot(scheme, output_dir)  # 添加新的示波图
-    create_bar_chart(scheme, output_dir)
-    create_line_chart(scheme, output_dir)
-    create_pie_chart(scheme, output_dir)
-    create_stacked_area_chart(scheme, output_dir)
-    create_heatmap(scheme, output_dir)
-    create_stacked_bar_chart(scheme, output_dir)
-    create_grouped_bar_chart(scheme, output_dir)
-    create_horizontal_bar_chart(scheme, output_dir)
-
-    # 创建组合仪表盘
-    create_dashboard(scheme, output_dir)
-
-    print("所有演示图表已创建完成!")
+    
+    # 为每个配色方案生成演示图表
+    for scheme in schemes:
+        scheme_name = scheme.__class__.__name__
+        scheme_dir = os.path.join(output_dir, scheme_name)
+        if not os.path.exists(scheme_dir):
+            os.makedirs(scheme_dir, exist_ok=True)
+        
+        print(f"\n生成 {scheme.name} 配色方案演示...")
+        
+        # 创建各种图表
+        create_color_palette_demo(scheme, scheme_dir)
+        create_ridge_plot(scheme, scheme_dir)
+        create_bar_chart(scheme, scheme_dir)
+        create_line_chart(scheme, scheme_dir)
+        create_pie_chart(scheme, scheme_dir)
+        create_stacked_area_chart(scheme, scheme_dir)
+        create_heatmap(scheme, scheme_dir)
+        create_dashboard(scheme, scheme_dir)
+    
+    # 创建配色方案对比图
+    create_comparison_dashboard(schemes, output_dir)
+    
+    print("\n所有演示图表已创建完成!")
     print(f"图表已保存到目录: {output_dir}")
 
 
