@@ -7,6 +7,9 @@
 import os
 import importlib
 import inspect
+import multiprocessing
+from multiprocessing import Pool
+import traceback
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -15,7 +18,9 @@ import matplotlib.gridspec as gridspec
 import seaborn as sns
 
 from mot_toolkit.vis.common.base_colors import BaseColorScheme
-from mot_toolkit.vis.scheme import genshin
+from mot_toolkit.vis import scheme as all_schemes
+
+# from mot_toolkit.vis.scheme import genshin
 
 
 def setup_figure_style():
@@ -36,7 +41,7 @@ def create_color_palette_demo(scheme, output_dir):
     scheme_name = scheme.__class__.__name__
 
     fig, axes = plt.subplots(1, 5, figsize=(12, 2))
-    fig.suptitle(f"{scheme.name}示例", fontsize=16)
+    fig.suptitle(f"{scheme.name} Example", fontsize=16)
 
     for i, (color, hex_color) in enumerate(zip(colors, hex_colors)):
         axes[i].add_patch(plt.Rectangle((0, 0), 1, 1, color=hex_color, ec="black"))
@@ -130,7 +135,7 @@ def create_ridge_plot(scheme, output_dir):
     ax.spines["top"].set_visible(False)
     ax.spines["left"].set_visible(False)
 
-    ax.set_title(f"{scheme.name}示波图", fontsize=14)
+    ax.set_title(f"{scheme.name} Ridge Plot", fontsize=14)
 
     plt.tight_layout()
     output_path = os.path.join(output_dir, f"{scheme_name}_ridge_plot.png")
@@ -150,8 +155,8 @@ def create_bar_chart(scheme, output_dir):
     fig, ax = plt.subplots(figsize=(6, 4))
     ax.bar(categories, values, color=scheme.hex_colors()[:4])
     ax.set_ylim(0, 0.6)
-    ax.set_title("样本数据分布")
-    ax.set_ylabel("相对频率")
+    ax.set_title("Sample Distribution")
+    ax.set_ylabel("Relative Frequency")
     ax.grid(True, linestyle="--", alpha=0.3)
 
     plt.tight_layout()
@@ -198,7 +203,7 @@ def create_stacked_area_chart(scheme, output_dir):
     ax.set_ylim(0, 75)
     ax.legend(loc="upper left")
     ax.grid(True, linestyle="--", alpha=0.3)
-    ax.set_title("多序列趋势分析")
+    ax.set_title("Multi-Series Trend Analysis")
 
     plt.tight_layout()
     output_path = os.path.join(output_dir, f"{scheme_name}_area.png")
@@ -227,7 +232,7 @@ def create_line_chart(scheme, output_dir):
     ax.set_xlim(0, 8)
     ax.set_ylim(0, 60)
     ax.legend()
-    ax.set_title("多序列波动对比")
+    ax.set_title("Multi-series Variation Comparison")
     ax.grid(True, linestyle="--", alpha=0.3)
 
     plt.tight_layout()
@@ -255,7 +260,7 @@ def create_pie_chart(scheme, output_dir):
         wedgeprops={"edgecolor": "w"},
     )
     ax.axis("equal")
-    ax.set_title("区域分布")
+    ax.set_title("Region Distribution")
 
     plt.tight_layout()
     output_path = os.path.join(output_dir, f"{scheme_name}_pie.png")
@@ -286,12 +291,13 @@ def create_heatmap(scheme, output_dir):
 
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.heatmap(data, cmap=cmap, annot=True, fmt=".2f", linewidths=0.5, ax=ax)
-    ax.set_title("相关性分析热力图")
-    ax.set_xlabel("K序列")
-    ax.set_ylabel("A序列")
+    ax.set_title("Correlation Analysis Heatmap")
+    ax.set_xlabel("K Series")
+    ax.set_ylabel("A Series")
 
     # 修改x轴和y轴刻度标签
     x_labels = [f"K{i+1}" for i in range(data.shape[1])]
+
     y_labels = [f"A{i+1}" for i in range(data.shape[0])]
     ax.set_xticklabels(x_labels)
     ax.set_yticklabels(y_labels)
@@ -311,7 +317,7 @@ def create_dashboard(scheme, output_dir):
     setup_figure_style()
 
     fig = plt.figure(figsize=(16, 12))
-    fig.suptitle(f"SCI论文插图 - {scheme.name}演示", fontsize=20, y=0.98)
+    fig.suptitle(f"SCI Paper Visualization - {scheme.name} Demo", fontsize=20, y=0.98)
 
     # 使用GridSpec来安排子图
     gs = gridspec.GridSpec(3, 3)
@@ -331,7 +337,7 @@ def create_dashboard(scheme, output_dir):
         )
     ax_palette.set_xlim(-0.2, 5)
     ax_palette.set_ylim(-0.2, 1.2)
-    ax_palette.set_title(f"{scheme.name}色板", fontsize=12)
+    ax_palette.set_title(f"{scheme.name} Color Palette", fontsize=12)
     ax_palette.axis("off")
 
     # 添加柱状图
@@ -340,7 +346,7 @@ def create_dashboard(scheme, output_dir):
     values = [0.34, 0.49, 0.32, 0.42]
     ax_bar.bar(categories, values, color=scheme.hex_colors()[:4])
     ax_bar.set_ylim(0, 0.6)
-    ax_bar.set_title("样本柱状图", fontsize=12)
+    ax_bar.set_title("Sample Bar Chart", fontsize=12)
     ax_bar.grid(True, linestyle="--", alpha=0.3, axis="y")
 
     # 添加折线图
@@ -355,13 +361,13 @@ def create_dashboard(scheme, output_dir):
     ax_line.plot(x, y2, "s-", color=scheme.hex_colors()[1], label="B")
     ax_line.plot(x, y3, "^-", color=scheme.hex_colors()[3], label="C")
     ax_line.plot(x, y4, "D-", color=scheme.hex_colors()[4], label="D")
-    ax_line.set_title("多序列对比", fontsize=12)
+    ax_line.set_title("Multi-series Comparison", fontsize=12)
     ax_line.grid(True, linestyle="--", alpha=0.3)
     ax_line.legend(fontsize=8)
 
     # 添加饼图
     ax_pie = fig.add_subplot(gs[1, 2])
-    labels = ["北", "南", "东", "西"]
+    labels = ["North", "South", "East", "West"]
     sizes = [25, 25, 19, 31]
     ax_pie.pie(
         sizes,
@@ -372,7 +378,7 @@ def create_dashboard(scheme, output_dir):
         wedgeprops={"edgecolor": "w"},
     )
     ax_pie.axis("equal")
-    ax_pie.set_title("区域分布", fontsize=12)
+    ax_pie.set_title("Region Distribution", fontsize=12)
 
     # 添加堆叠面积图
     ax_area = fig.add_subplot(gs[2, 0])
@@ -405,7 +411,7 @@ def create_dashboard(scheme, output_dir):
         label="S4",
     )
     ax_area.set_xlim(1, 10)
-    ax_area.set_title("累积趋势", fontsize=12)
+    ax_area.set_title("Cumulative Trend", fontsize=12)
     ax_area.legend(fontsize=8)
 
     # 添加分组柱状图
@@ -436,7 +442,7 @@ def create_dashboard(scheme, output_dir):
     ax_grouped.set_xticks(x)
     ax_grouped.set_xticklabels(labels)
     ax_grouped.legend(fontsize=8)
-    ax_grouped.set_title("多组对比", fontsize=12)
+    ax_grouped.set_title("Group Comparison", fontsize=12)
 
     # 添加水平堆叠条形图
     ax_hbar = fig.add_subplot(gs[2, 2])
@@ -449,7 +455,7 @@ def create_dashboard(scheme, output_dir):
     ax_hbar.barh(6, 2.0, color=scheme.hex_colors()[0], label="S6")
 
     ax_hbar.set_yticks(range(1, 7))
-    ax_hbar.set_title("水平条形图", fontsize=12)
+    ax_hbar.set_title("Horizontal Bar Chart", fontsize=12)
     ax_hbar.legend(fontsize=8)
 
     plt.tight_layout(rect=[0, 0, 1, 0.96])
@@ -469,7 +475,7 @@ def create_comparison_dashboard(schemes, output_dir):
     setup_figure_style()
 
     fig = plt.figure(figsize=(16, 10 * len(schemes)))
-    fig.suptitle("多配色方案对比", fontsize=24, y=0.99)
+    fig.suptitle("Color Scheme Comparison", fontsize=24, y=0.99)
 
     # 为每个配色方案创建子图
     gs = gridspec.GridSpec(len(schemes), 3)
@@ -492,7 +498,7 @@ def create_comparison_dashboard(schemes, output_dir):
             )
         ax_palette.set_xlim(-0.2, 5)
         ax_palette.set_ylim(-0.2, 1.2)
-        ax_palette.set_title(f"{scheme.name}色板", fontsize=14)
+        ax_palette.set_title(f"{scheme.name} Color Palette", fontsize=14)
         ax_palette.axis("off")
 
         # 添加折线图
@@ -507,7 +513,7 @@ def create_comparison_dashboard(schemes, output_dir):
         ax_line.plot(x, y2, "s-", color=scheme.hex_colors()[1], label="B")
         ax_line.plot(x, y3, "^-", color=scheme.hex_colors()[3], label="C")
         ax_line.plot(x, y4, "D-", color=scheme.hex_colors()[4], label="D")
-        ax_line.set_title(f"{scheme.name} - 折线图", fontsize=14)
+        ax_line.set_title(f"{scheme.name} - Line Chart", fontsize=14)
         ax_line.grid(True, linestyle="--", alpha=0.3)
         ax_line.legend()
 
@@ -542,7 +548,7 @@ def create_comparison_dashboard(schemes, output_dir):
             label="S4",
         )
         ax_area.set_xlim(1, 10)
-        ax_area.set_title(f"{scheme.name} - 面积图", fontsize=14)
+        ax_area.set_title(f"{scheme.name} - Area Chart", fontsize=14)
         ax_area.legend()
 
     plt.tight_layout(rect=[0, 0, 1, 0.98])
@@ -587,6 +593,35 @@ def auto_discover_color_schemes():
     return color_schemes
 
 
+def process_scheme(scheme_info):
+    """在单独进程中处理一个配色方案"""
+    scheme, output_dir = scheme_info
+    scheme_name = scheme.__class__.__name__
+    scheme_dir = os.path.join(output_dir, scheme_name)
+
+    try:
+        if not os.path.exists(scheme_dir):
+            os.makedirs(scheme_dir, exist_ok=True)
+
+        print(f"\n生成 {scheme.name} 配色方案演示...")
+
+        # 创建各种图表
+        create_color_palette_demo(scheme, scheme_dir)
+        create_ridge_plot(scheme, scheme_dir)
+        create_bar_chart(scheme, scheme_dir)
+        create_line_chart(scheme, scheme_dir)
+        create_pie_chart(scheme, scheme_dir)
+        create_stacked_area_chart(scheme, scheme_dir)
+        create_heatmap(scheme, scheme_dir)
+        create_dashboard(scheme, scheme_dir)
+
+        return scheme_name, True, None
+    except Exception as e:
+        error_msg = f"处理 {scheme.name} 时发生错误: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        return scheme_name, False, error_msg
+
+
 def main():
     """主函数"""
     setup_figure_style()
@@ -596,7 +631,11 @@ def main():
     # 方法1：手动指定配色方案
     schemes = []
 
-    schemes.extend(genshin.init_all())
+    try:
+        schemes.extend(all_schemes.init_all())
+    except Exception as e:
+        print(f"加载配色方案时出错: {e}")
+        return
 
     # 方法2：自动发现所有配色方案（你可以取消注释此行，替代方法1）
     # schemes = auto_discover_color_schemes()
@@ -617,29 +656,35 @@ def main():
 
     print(f"图片输出目录: {output_dir}")
 
-    # 为每个配色方案生成演示图表
-    for scheme in schemes:
-        scheme_name = scheme.__class__.__name__
-        scheme_dir = os.path.join(output_dir, scheme_name)
-        if not os.path.exists(scheme_dir):
-            os.makedirs(scheme_dir, exist_ok=True)
+    # 创建进程池，最多使用12个进程
+    max_workers = min(12, multiprocessing.cpu_count())
+    print(f"使用 {max_workers} 个进程并行处理配色方案")
 
-        print(f"\n生成 {scheme.name} 配色方案演示...")
+    # 准备参数
+    scheme_params = [(scheme, output_dir) for scheme in schemes]
 
-        # 创建各种图表
-        create_color_palette_demo(scheme, scheme_dir)
-        create_ridge_plot(scheme, scheme_dir)
-        create_bar_chart(scheme, scheme_dir)
-        create_line_chart(scheme, scheme_dir)
-        create_pie_chart(scheme, scheme_dir)
-        create_stacked_area_chart(scheme, scheme_dir)
-        create_heatmap(scheme, scheme_dir)
-        create_dashboard(scheme, scheme_dir)
+    # 使用进程池并行处理配色方案
+    with Pool(processes=max_workers) as pool:
+        results = pool.map(process_scheme, scheme_params)
 
-    # 创建配色方案对比图
-    create_comparison_dashboard(schemes, output_dir)
+    # 检查结果
+    successful = [r[0] for r in results if r[1]]
+    failed = [r[0] for r in results if not r[1]]
 
-    print("\n所有演示图表已创建完成!")
+    print(f"\n成功处理 {len(successful)} 个配色方案")
+    if failed:
+        print(f"处理失败 {len(failed)} 个配色方案: {', '.join(failed)}")
+
+    # 创建配色方案对比图，使用异常处理
+    try:
+        print("\n创建配色方案对比图...")
+        create_comparison_dashboard(schemes, output_dir)
+        print("配色方案对比图创建成功")
+    except Exception as e:
+        print(f"创建配色方案对比图时发生错误: {e}")
+        print(traceback.format_exc())
+
+    print("\n所有演示图表处理完成!")
     print(f"图表已保存到目录: {output_dir}")
 
 

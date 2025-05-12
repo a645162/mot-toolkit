@@ -1,5 +1,8 @@
-"""玲芽之旅主题配色方案实现
+"""
+玲芽之旅主题配色方案实现
 基于动漫风格图片中提取的自然色彩配色方案
+
+https://mp.weixin.qq.com/s/olsLIEcnxDwcQ5z6idHpQQ
 """
 
 from typing import List, Tuple, Dict, Any

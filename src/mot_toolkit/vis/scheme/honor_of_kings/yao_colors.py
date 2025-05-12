@@ -6,7 +6,7 @@ from typing import List, Tuple, Dict, Any
 from mot_toolkit.vis.common.base_colors import BaseColorScheme
 
 
-class HonorOfKingsYaoColorScheme(BaseColorScheme):
+class YaoColorScheme(BaseColorScheme):
     """王者荣耀瑶主题配色方案"""
 
     @property
