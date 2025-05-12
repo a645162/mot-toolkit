@@ -27,7 +27,7 @@ def setup_figure_style():
     """设置全局图表样式"""
     plt.style.use("default")
     # 设置全局字体为微软雅黑
-    plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "Arial"]
+    plt.rcParams["font.sans-serif"] = ["Arial"]
     plt.rcParams["axes.unicode_minus"] = False  # 正确显示负号
     # 设置其他参数
     plt.rcParams["figure.figsize"] = (10, 8)
@@ -40,17 +40,29 @@ def create_color_palette_demo(scheme, output_dir):
     hex_colors = scheme.hex_colors()
     scheme_name = scheme.__class__.__name__
 
-    fig, axes = plt.subplots(1, 5, figsize=(12, 2))
+    n_colors = len(colors)
+    n_subplots = max(n_colors, 5)  # 至少5个，防止布局太紧凑
+
+    fig, axes = plt.subplots(1, n_subplots, figsize=(2.4 * n_subplots, 2))
+    if n_subplots == 1:
+        axes = [axes]
     fig.suptitle(f"{scheme.name} Example", fontsize=16)
 
-    for i, (color, hex_color) in enumerate(zip(colors, hex_colors)):
-        axes[i].add_patch(plt.Rectangle((0, 0), 1, 1, color=hex_color, ec="black"))
-        r, g, b = color
-        axes[i].text(0.5, -0.2, f"R: {r:03d}", ha="center", transform=axes[i].transAxes)
-        axes[i].text(
-            0.5, -0.35, f"G: {g:03d}", ha="center", transform=axes[i].transAxes
-        )
-        axes[i].text(0.5, -0.5, f"B: {b:03d}", ha="center", transform=axes[i].transAxes)
+    for i in range(n_subplots):
+        if i < n_colors:
+            color = colors[i]
+            hex_color = hex_colors[i]
+            axes[i].add_patch(plt.Rectangle((0, 0), 1, 1, color=hex_color, ec="black"))
+            r, g, b = color
+            axes[i].text(
+                0.5, -0.2, f"R: {r:03d}", ha="center", transform=axes[i].transAxes
+            )
+            axes[i].text(
+                0.5, -0.35, f"G: {g:03d}", ha="center", transform=axes[i].transAxes
+            )
+            axes[i].text(
+                0.5, -0.5, f"B: {b:03d}", ha="center", transform=axes[i].transAxes
+            )
         axes[i].axis("off")
 
     plt.tight_layout()
@@ -481,7 +493,7 @@ def create_comparison_dashboard(schemes, output_dir):
     gs = gridspec.GridSpec(len(schemes), 3)
 
     for i, scheme in enumerate(schemes):
-        scheme_name = scheme.__class__.__name__
+        # scheme_name = scheme.__class__.__name__
 
         # 添加配色方案展示
         ax_palette = fig.add_subplot(gs[i, 0])

@@ -2,8 +2,17 @@ from typing import List
 
 from .angela_colors import AngelaColorScheme
 from .yao_colors import YaoColorScheme
+from .da_qiao_colors import DaQiaoColorScheme
+from .lady_sun_colors import LadySunColorScheme
+from .xiao_qiao_colors import XiaoQiaoColorScheme
 
-all = [YaoColorScheme]
+all = [
+    AngelaColorScheme,
+    YaoColorScheme,
+    DaQiaoColorScheme,
+    LadySunColorScheme,
+    XiaoQiaoColorScheme,
+]
 
 
 def init_all() -> List:
