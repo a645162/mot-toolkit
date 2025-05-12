@@ -106,6 +106,8 @@ def save_to_csv(
         "Valid AOCPMD Object Count",  # 有效的AOCPMD目标数量
         "Static Object Count (<T)",  # 静止目标数量
         "Moving Object Count (>=T)",  # 移动目标数量
+        "Static BBox Count",  # 静止目标BBox数量
+        "Static BBox Ratio (%)",  # 静止目标BBox占比
     ]
 
     # Append Class Title
@@ -179,6 +181,9 @@ def handle_sequence_dir(
     # 用于跟踪每个目标的位置历史
     object_position_history: Dict[str, List[Dict]] = {}
 
+    # 记录每个目标出现的帧数
+    object_frame_counts = {}
+
     # 遍历所有标注文件（按时间顺序）
     for frame_idx, annotation_file in enumerate(
         annotation_directory.annotation_file_list
@@ -194,6 +199,11 @@ def handle_sequence_dir(
 
             if object_id not in id_list:
                 id_list.append(object_id)
+
+            # 统计每个目标的帧数
+            if object_id not in object_frame_counts:
+                object_frame_counts[object_id] = 0
+            object_frame_counts[object_id] += 1
 
             if object_id not in object_id_dict.keys():
                 object_id_dict[object_id] = {}
@@ -277,7 +287,7 @@ def handle_sequence_dir(
 
             # 计算累计移动距离
             object_id_dict[obj_id]["total_movement"] = sum(ocpmds)
-            
+
             # 收集全局移动数据
             if collect_movement_data is not None:
                 global_id = f"{sequence_dir_path}_{obj_id}"
@@ -301,6 +311,7 @@ def handle_sequence_dir(
         sequence_aocpmd_sum = sum(valid_aocpmd_list)
 
     # 根据累计移动距离判断静止和运动目标
+    static_object_ids = []  # 记录所有静止目标的ID
     for obj_id in object_id_dict:
         if "total_movement" in object_id_dict[obj_id]:
             total_movement = object_id_dict[obj_id]["total_movement"]
@@ -309,6 +320,37 @@ def handle_sequence_dir(
                 moving_object_count += 1
             else:
                 static_object_count += 1
+                static_object_ids.append(obj_id)  # 添加到静止目标列表
+
+    # 计算静止目标的总BBox数
+    static_bbox_count = 0
+    for obj_id in static_object_ids:
+        if obj_id in object_frame_counts:
+            static_bbox_count += object_frame_counts[obj_id]
+
+    # 计算静止目标BBox数占总BBox数(实例数)的比例
+    static_bbox_ratio = (
+        static_bbox_count / object_instance_count if object_instance_count > 0 else 0
+    )
+
+    # 计算静止目标的总帧数
+    static_object_frame_count = 0
+    for obj_id in static_object_ids:
+        if obj_id in object_frame_counts:
+            static_object_frame_count += object_frame_counts[obj_id]
+
+    # 计算静止目标帧数占总帧数的比例
+    total_object_frame_count = sum(object_frame_counts.values())
+    static_frame_ratio = (
+        static_object_frame_count / total_object_frame_count
+        if total_object_frame_count > 0
+        else 0
+    )
+
+    # 将静止目标信息添加到目标字典中
+    for obj_id in static_object_ids:
+        object_id_dict[obj_id]["is_static"] = True
+        object_id_dict[obj_id]["frame_count"] = object_frame_counts.get(obj_id, 0)
 
     # Find not 0 class count
     class_count_list_no_zero = [count for count in class_count_list if count != 0]
@@ -375,6 +417,12 @@ def handle_sequence_dir(
     return_list.append(static_object_count)  # 静止目标数量
     return_list.append(moving_object_count)  # 移动目标数量
 
+    # 添加静止目标相关统计
+    return_list.append(static_object_frame_count)  # 静止目标帧数
+    return_list.append(round(static_frame_ratio * 100, 2))  # 静止目标帧数占比(%)
+    return_list.append(static_bbox_count)  # 静止目标BBox数
+    return_list.append(round(static_bbox_ratio * 100, 2))  # 静止目标BBox占比(%)
+
     return_list.extend(class_count_list)
 
     print("\t\tFrame Count:", return_list[0])
@@ -389,9 +437,17 @@ def handle_sequence_dir(
     print("\t\tValid AOCPMD Object Count:", return_list[9])
     print("\t\tStatic Object Count", f"(<{ocpmd_threshold}):", return_list[10])
     print("\t\tMoving Object Count", f"(>={ocpmd_threshold}):", return_list[11])
+    print("\t\tStatic Object Frame Count:", static_object_frame_count)
+    print("\t\tStatic Frame Ratio:", f"{static_frame_ratio * 100:.2f}%")
+    print(
+        f"\t\tStatic BBox Count: {static_bbox_count} / {object_instance_count} ({static_bbox_ratio*100:.2f}%)"
+    )
+
     if class_config.object_classes:
         print("\t\tClass Instance Count List:")
-        for idx, count in enumerate(return_list[12:]):
+        for idx, count in enumerate(
+            return_list[16:]
+        ):  # 索引调整为16，因为增加了2个字段
             print(
                 f"\t\t\t[{idx}] {class_config.object_classes[idx].class_name}: {count}"
             )
@@ -399,10 +455,12 @@ def handle_sequence_dir(
     return return_list
 
 
-def plot_movement_histogram(movement_data: Dict, output_path: str, ocpmd_threshold: float):
+def plot_movement_histogram(
+    movement_data: Dict, output_path: str, ocpmd_threshold: float
+):
     """
     绘制目标移动特性的分布直方图
-    
+
     Args:
         movement_data: 包含目标ID和总移动距离的字典
         output_path: 输出图像的路径
@@ -410,18 +468,18 @@ def plot_movement_histogram(movement_data: Dict, output_path: str, ocpmd_thresho
     """
     # 提取移动数据值
     movement_values = list(movement_data.values())
-    
+
     # 确保数据不为空
     if not movement_values:
         print("警告: 没有移动数据可供绘图")
         return
-    
+
     # 创建图形
     plt.figure(figsize=(12, 8))
-    
+
     # 计算数据的最大值，以确定直方图范围
     max_value = max(movement_values)
-    
+
     # 设置直方图区间，从0到数据最大值，分成100个区间
     # 如果最大值小于1，则使用更精细的区间
     if max_value < 1:
@@ -430,39 +488,48 @@ def plot_movement_histogram(movement_data: Dict, output_path: str, ocpmd_thresho
         # 向上取整到最接近的整数，再加1确保包含所有数据
         max_bin = math.ceil(max_value) + 0.5
         bins = np.linspace(0, max_bin, 101)
-    
+
     # 绘制直方图
-    n, bins, patches = plt.hist(movement_values, bins=bins, alpha=0.7, color='blue', edgecolor='black')
-    
+    n, bins, patches = plt.hist(
+        movement_values, bins=bins, alpha=0.7, color="blue", edgecolor="black"
+    )
+
     # 标记静止/移动阈值
-    plt.axvline(x=ocpmd_threshold, color='r', linestyle='--', linewidth=2, 
-                label=f'Static/Moving Threshold ({ocpmd_threshold})')
-    
+    plt.axvline(
+        x=ocpmd_threshold,
+        color="r",
+        linestyle="--",
+        linewidth=2,
+        label=f"Static/Moving Threshold ({ocpmd_threshold})",
+    )
+
     # 计算静止和移动的比例
     static_count = sum(1 for v in movement_values if v < ocpmd_threshold)
     moving_count = len(movement_values) - static_count
     static_percent = static_count / len(movement_values) * 100 if movement_values else 0
     moving_percent = moving_count / len(movement_values) * 100 if movement_values else 0
-    
+
     # 添加数据范围信息
     min_value = min(movement_values)
     avg_value = sum(movement_values) / len(movement_values)
-    
+
     # 添加标题和标签 - 使用英文替代中文
-    plt.title(f'Object Movement Distribution Histogram\n'
-              f'Static Objects (<{ocpmd_threshold}): {static_count} ({static_percent:.1f}%)\n'
-              f'Moving Objects (≥{ocpmd_threshold}): {moving_count} ({moving_percent:.1f}%)\n'
-              f'Range: [{min_value:.4f}, {max_value:.4f}], Avg: {avg_value:.4f}', 
-              fontsize=14)
-    plt.xlabel('Normalized Cumulative Movement Distance', fontsize=12)
-    plt.ylabel('Object Count', fontsize=12)
-    plt.grid(True, linestyle='--', alpha=0.7)
+    plt.title(
+        f"Object Movement Distribution Histogram\n"
+        f"Static Objects (<{ocpmd_threshold}): {static_count} ({static_percent:.1f}%)\n"
+        f"Moving Objects (≥{ocpmd_threshold}): {moving_count} ({moving_percent:.1f}%)\n"
+        f"Range: [{min_value:.4f}, {max_value:.4f}], Avg: {avg_value:.4f}",
+        fontsize=14,
+    )
+    plt.xlabel("Normalized Cumulative Movement Distance", fontsize=12)
+    plt.ylabel("Object Count", fontsize=12)
+    plt.grid(True, linestyle="--", alpha=0.7)
     plt.legend()
-    
+
     # 保存图像
-    plt.savefig(output_path, dpi=300, bbox_inches='tight')
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
     plt.close()
-    
+
     print(f"已保存移动特性分布直方图到: {output_path}")
     print(f"移动距离范围: [{min_value:.4f}, {max_value:.4f}], 平均: {avg_value:.4f}")
 
@@ -509,7 +576,7 @@ def parse_args():
         action="store_true",
         help="跳过类别统计，即使未找到类别配置文件也不退出",
     )
-    
+
     parser.add_argument(
         "--movement-hist",
         type=str,
@@ -519,8 +586,8 @@ def parse_args():
 
     opt = parser.parse_args()
 
-    opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
-    # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
+    # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
+    opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
 
     return opt
 
@@ -531,7 +598,7 @@ def main():
     """
     args = parse_args()
 
-    base_path = args.base_path
+    base_path = os.path.abspath(args.base_path)
     output_csv = args.output_csv
     config_file_name = args.config_file
     ocpmd_threshold = args.ocpmd_threshold
@@ -540,8 +607,25 @@ def main():
     skip_class_stats = args.skip_class_stats
     movement_hist_path = args.movement_hist
 
+    # 输出目录为当前py目录
+    output_dir_path = os.path.dirname(os.path.abspath(__file__))
+    # 获取base_path的两级目录名level1
+    level1 = os.path.basename(base_path)
+    level2 = os.path.basename(os.path.dirname(base_path))
+
+    # 拼接输出目录路径
+    output_dir_path = os.path.join(output_dir_path, level1, level2)
+    if not os.path.exists(output_dir_path):
+        os.makedirs(output_dir_path, exist_ok=True)
+
     # 用于收集所有序列中目标的移动数据
     all_movement_data = {}
+
+    # 记录总的静止目标信息
+    total_static_object_frame_count = 0
+    total_object_frame_count = 0
+    total_static_bbox_count = 0
+    total_bbox_count = 0  # 总BBox数
 
     start_time = time.time()
 
@@ -583,10 +667,33 @@ def main():
             print("\t" + sequence_name)
 
             seq_result = handle_sequence_dir(
-                sequence_dir_path, class_config, 
+                sequence_dir_path,
+                class_config,
                 ocpmd_threshold=ocpmd_threshold,
-                collect_movement_data=all_movement_data  # 传入收集数据的字典
+                collect_movement_data=all_movement_data,  # 传入收集数据的字典
             )
+
+            # 累加静止目标帧数统计
+            if len(seq_result) > 15 and isinstance(seq_result[14], int):  # 静止目标帧数
+                total_static_object_frame_count += seq_result[14]
+
+            # 累加总目标帧数
+            if len(seq_result) > 5 and isinstance(
+                seq_result[5], int
+            ):  # 实例数(总bbox数)
+                total_object_frame_count += seq_result[5]
+
+            # 累加静止目标BBox数统计
+            if len(seq_result) > 14 and isinstance(
+                seq_result[14], int
+            ):  # 静止目标BBox数
+                total_static_bbox_count += seq_result[14]
+
+            # 累加总BBox数
+            if len(seq_result) > 2 and isinstance(
+                seq_result[2], int
+            ):  # object_instance_count
+                total_bbox_count += seq_result[2]
 
             result_list.append([video_name, sequence_count, sequence_name, *seq_result])
 
@@ -645,7 +752,7 @@ def main():
 
         # 各类别目标数从索引15开始
         for i in range(len(total_class_counts)):
-            idx = 15 + i
+            idx = 17 + i
             if len(row) > idx and isinstance(row[idx], int):
                 total_class_counts[i] += row[idx]
 
@@ -664,6 +771,13 @@ def main():
     print("目标运动特性:")
     print(f"\t静止目标(<{ocpmd_threshold}): {total_static_object_count}")
     print(f"\t移动目标(>={ocpmd_threshold}): {total_moving_object_count}")
+    print(f"\t静止BBox数: {total_static_bbox_count}")
+    print(f"\t总BBox数: {total_bbox_count}")
+    print(
+        f"\t静止BBox占比: {total_static_bbox_count/total_bbox_count*100:.2f}%"
+        if total_bbox_count > 0
+        else "\t静止BBox占比: 0.00%"
+    )
 
     # 如果有类别配置且类别列表不为空，才输出类别统计
     if class_config and class_config.object_classes:
@@ -679,15 +793,48 @@ def main():
         movement_values = list(all_movement_data.values())
         static_objects = [v for v in movement_values if v < ocpmd_threshold]
         moving_objects = [v for v in movement_values if v >= ocpmd_threshold]
-        
-        print(f"移动特性详细统计:")
-        print(f"\t目标总数: {len(movement_values)}")
-        print(f"\t静止目标(<{ocpmd_threshold}): {len(static_objects)} ({len(static_objects)/len(movement_values)*100:.2f}%)")
-        print(f"\t移动目标(>={ocpmd_threshold}): {len(moving_objects)} ({len(moving_objects)/len(movement_values)*100:.2f}%)")
+
+        # 计算各种数量，避免重复调用 len()
+        total_obj_count = len(movement_values)
+        static_obj_count = len(static_objects)
+        moving_obj_count = len(moving_objects)
+
+        # 计算百分比
+        static_percent = (
+            static_obj_count / total_obj_count * 100 if total_obj_count else 0
+        )
+        moving_percent = (
+            moving_obj_count / total_obj_count * 100 if total_obj_count else 0
+        )
+
+        print("移动特性详细统计:")
+        print(f"\t目标总数: {total_obj_count}")
+        print(
+            f"\t静止目标(<{ocpmd_threshold}): {static_obj_count} ({static_percent:.2f}%)"
+        )
+        print(
+            f"\t移动目标(>={ocpmd_threshold}): {moving_obj_count} ({moving_percent:.2f}%)"
+        )
+
         if moving_objects:
-            print(f"\t移动目标平均移动距离: {sum(moving_objects)/len(moving_objects):.4f}")
+            print(f"\t移动目标平均移动距离: {sum(moving_objects)/moving_obj_count:.4f}")
             print(f"\t移动目标最大移动距离: {max(moving_objects):.4f}")
             print(f"\t移动目标最小移动距离: {min(moving_objects):.4f}")
+
+        print(f"\t静止BBox总数: {total_static_bbox_count}")
+        print(
+            f"\t静止BBox占比: {total_static_bbox_count/total_bbox_count*100:.2f}%"
+            if total_bbox_count > 0
+            else "0.00%"
+        )
+        if static_obj_count > 0:
+            print(
+                f"\t每个静止目标平均BBox数: {total_static_bbox_count/static_obj_count:.2f}"
+            )
+        if moving_obj_count > 0:
+            print(
+                f"\t每个移动目标平均BBox数: {(total_bbox_count-total_static_bbox_count)/moving_obj_count:.2f}"
+            )
 
     end_time = time.time()
 
