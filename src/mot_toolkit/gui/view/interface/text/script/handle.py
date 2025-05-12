@@ -155,7 +155,7 @@ def combine_images_grid(
 
     处理流程:
     1. 确保图像数量不超过网格容量
-    2. 必要时用黑色图像填补空缺
+    2. 必要时通过随机挑选已有图像填补空缺
     3. 计算拼接后的图像尺寸
     4. 创建空白画布并填充图像
     """
@@ -166,10 +166,15 @@ def combine_images_grid(
     n_images = min(len(images), rows * cols)
     images = images[:n_images]
 
-    # 如果图像不够填满网格，用黑色图像填充
+    # 如果图像不够填满网格，随机挑选已有图像进行填充
     if n_images < rows * cols:
-        black_img = np.zeros_like(images[0])
-        images.extend([black_img] * (rows * cols - n_images))
+        # 计算需要填充的数量
+        fill_count = rows * cols - n_images
+        # 从已有图像中随机选择进行填充
+        fill_images = [
+            images[random.randint(0, n_images - 1)] for _ in range(fill_count)
+        ]
+        images.extend(fill_images)
 
     # 计算拼接后的图像大小
     img_height, img_width = images[0].shape[:2]
@@ -188,69 +193,6 @@ def combine_images_grid(
         grid_img[y_start : y_start + img_height, x_start : x_start + img_width] = img
 
     return grid_img
-
-
-def get_global_appearance(
-    images: List[np.ndarray],
-    analyzer: OpenAIImageAnalyzer,
-    class_id: str = "",
-    class_name: str = "",
-) -> str:
-    """
-    获取目标的全局外观特征描述
-
-    Args:
-        images: 目标在多个帧中的裁剪图像列表
-        analyzer: OpenAIImageAnalyzer 实例
-        class_id: 目标的类别ID
-        class_name: 目标的类别名称
-
-    Returns:
-        全局外观特征描述文本
-
-    处理流程:
-    1. 将图像组合为网格
-    2. 构建提示词，请求详细分析目标的整体外观特征
-    3. 调用 OpenAIImageAnalyzer 获取全局外观描述
-    """
-    if not images:
-        return "没有提供图像"
-
-    try:
-        # 将图像作为网格组合在一起
-        grid_image = combine_images_grid(images, DEFAULT_GRID_ROWS, DEFAULT_GRID_COLS)
-        if grid_image is None:
-            return "无法组合图像"
-
-        # 构建目标类型信息
-        target_type_info = ""
-        if class_name:
-            target_type_info = (
-                f"\n这个目标的类别是: {class_name}。请考虑这个类别的典型特征。"
-            )
-        elif class_id:
-            target_type_info = f"\n这个目标的类别ID是: {class_id}。"
-
-        # 构建提示词，要求详细描述目标的整体外观特征
-        prompt = (
-            f"这些是同一个目标的 {len(images)} 个不同时刻的图像。"
-            f"请详细描述这个目标的整体外观特征，包括但不限于："
-            f"1. 外形特征（主要都是水上目标）\n"
-            f"2. 主要颜色和颜色分布\n"
-            f"3. 特征细节（如标志、独特形状、是否有窗户）\n"
-            f"4. 环境细节（如是否存在水波、水面反射）"
-            f"{target_type_info}\n"
-            f"请提供详尽准确的描述，这将用作参考标准。\n"
-            f"只需要输出对目标的外观的描述，不要输出其他的乱七八糟的。"
-        )
-
-        response = analyzer.ask_question_about_image(grid_image, prompt)
-        logger.info("已生成目标的全局外观特征描述")
-
-        return response if response else "模型未能生成有效的全局外观描述"
-    except Exception as e:
-        logger.error(f"生成全局外观描述时出错: {str(e)}")
-        return "无法生成全局外观描述"
 
 
 def analyze_frame_appearance(
