@@ -159,6 +159,12 @@ if __name__ == "__main__":
     # 使用列表方式调用多个数据集划分
     datasets_config = [
         {
+            "enable": True,
+            "dataset_base_dir": r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509",
+            "output_base_dir": r"/home/konghaomin/Datasets/SMD_Fix_20250509",
+            "spilt_config": "20250509.spilt.json",
+        },
+        {
             "enable": False,
             "dataset_base_dir": r"/home/konghaomin/datasets/SMD_LabelMe",
             "output_base_dir": r"/home/konghaomin/Datasets/SMD_New_20250509",
