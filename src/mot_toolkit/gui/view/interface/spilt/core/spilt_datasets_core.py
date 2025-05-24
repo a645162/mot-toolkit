@@ -4,6 +4,7 @@ from typing import List
 
 from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt, SpiltType
 from mot_toolkit.gui.view.interface.spilt.core.spilt_dancetrack import SpiltDanceTrack
+from mot_toolkit.gui.view.interface.spilt.core.spilt_mot17 import SpiltMOT17
 from mot_toolkit.gui.view.interface.spilt.core.spilt_yolo import SpiltYolo
 from mot_toolkit.gui.view.interface.spilt.core.spilt_coco import SpiltCoco
 from mot_toolkit.utils.logs import get_logger
@@ -88,10 +89,12 @@ def spilt_dataset(
         dataset_test_list.append(obj)
 
     output_dance_track_dir = os.path.join(output_base_dir, "DanceTrack")
+    output_mot17_dir = os.path.join(output_base_dir, "MOT17")
     output_yolo_dir = os.path.join(output_base_dir, "YOLO")
     output_coco_dir = os.path.join(output_base_dir, "COCO")  # 新增COCO输出目录
 
     os.makedirs(output_dance_track_dir, exist_ok=True)
+    os.makedirs(output_mot17_dir, exist_ok=True)
     os.makedirs(output_yolo_dir, exist_ok=True)
     os.makedirs(output_coco_dir, exist_ok=True)  # 创建COCO输出目录
 
@@ -99,6 +102,15 @@ def spilt_dataset(
     spilt_dance_track = SpiltDanceTrack()
     spilt_dance_track.output_dance_track(
         output_dance_track_dir=output_dance_track_dir,
+        dataset_train_list=dataset_train_list,
+        dataset_val_list=dataset_val_list,
+        dataset_test_list=dataset_test_list,
+    )
+
+    # MOT17
+    spilt_mot17 = SpiltMOT17()
+    spilt_mot17.output_mot17(
+        output_mot17_dir=output_mot17_dir,
         dataset_train_list=dataset_train_list,
         dataset_val_list=dataset_val_list,
         dataset_test_list=dataset_test_list,
@@ -126,7 +138,7 @@ def spilt_dataset(
 def spilt_datasets_list(dataset_configs: List[dict]):
     """
     对多个数据集进行划分
-    
+
     Args:
         dataset_configs: 列表，每个元素是一个字典，包含以下键：
             - dataset_base_dir: 数据集基础目录
@@ -136,16 +148,16 @@ def spilt_datasets_list(dataset_configs: List[dict]):
     for config in dataset_configs:
         if not config.get("enable", True):
             continue
-        
+
         dataset_base_dir = config.get("dataset_base_dir")
         output_base_dir = config.get("output_base_dir")
         spilt_config = config.get("spilt_config", "default.spilt.json")
-        
+
         logger.info(f"Processing dataset: {dataset_base_dir}")
         spilt_dataset(
             dataset_base_dir=dataset_base_dir,
             output_base_dir=output_base_dir,
-            spilt_config=spilt_config
+            spilt_config=spilt_config,
         )
 
 

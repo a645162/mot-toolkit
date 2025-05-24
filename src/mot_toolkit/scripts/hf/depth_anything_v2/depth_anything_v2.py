@@ -5,6 +5,9 @@ import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import List, Dict
+
+import tqdm
+
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 
 # 导出环境变量，避免NVIDIA任务通知
@@ -30,6 +33,21 @@ task_count_per_gpu = min(
 
 if task_count_per_gpu < 1:
     raise ValueError("当前可用内存不足，无法处理任务。请检查内存设置。")
+
+# 创建一个全局的进度条对象
+progress_bar = None
+completed_tasks = 0
+total_tasks = 0
+progress_lock = threading.Lock()
+
+
+def update_progress():
+    """更新全局进度条"""
+    global completed_tasks, progress_bar
+    with progress_lock:
+        completed_tasks += 1
+        if progress_bar is not None:
+            progress_bar.update(1)
 
 
 def process_sequence(gpu_id: int, sequence_path: str) -> None:
@@ -59,6 +77,9 @@ def process_sequence(gpu_id: int, sequence_path: str) -> None:
     ]
     # 启动子进程执行序列处理
     subprocess.run(cmd, env=env)
+
+    # 更新进度
+    update_progress()
 
 
 def worker_for_gpu(gpu_id: int, sequence_paths: List[str]) -> None:
@@ -101,6 +122,11 @@ def main() -> None:
 
     print(f"找到 {len(sequence_path_list)} 个需要处理的序列目录")
 
+    # 初始化全局进度条
+    global progress_bar, total_tasks
+    total_tasks = len(sequence_path_list)
+    progress_bar = tqdm.tqdm(total=total_tasks, desc="处理序列进度", unit="seq")
+
     # 将任务分配到不同的GPU，使用字典存储每个GPU分配的序列
     gpu_tasks: Dict[int, List[str]] = {}
     for i, seq_path in enumerate(sequence_path_list):
@@ -127,6 +153,9 @@ def main() -> None:
     # 等待所有GPU的工作线程完成
     for thread in threads:
         thread.join()
+
+    # 确保进度条完成
+    progress_bar.close()
 
     # 计算并显示总运行时间
     end_time = time.time()

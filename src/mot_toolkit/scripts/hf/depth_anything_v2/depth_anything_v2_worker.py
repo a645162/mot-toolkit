@@ -16,6 +16,16 @@ def set_process_start_mode():
 def process_image(image_path, pipe):
     """处理单张图片，生成深度信息并保存为.pt文件"""
     try:
+        depth_path = (
+            str(image_path).replace(".jpg", ".depth.pt").replace(".png", ".depth.pt")
+        )
+        if os.path.exists(depth_path):
+            # Existing depth data
+
+            # print(f"深度数据已存在: {depth_path}")
+
+            return True
+
         # 读取图片
         image = Image.open(image_path)
 
@@ -24,9 +34,6 @@ def process_image(image_path, pipe):
         predicted_depth = output["predicted_depth"]
 
         # 生成并保存深度数据
-        depth_path = (
-            str(image_path).replace(".jpg", ".depth.pt").replace(".png", ".depth.pt")
-        )
         torch.save(predicted_depth, depth_path)
 
         return True
