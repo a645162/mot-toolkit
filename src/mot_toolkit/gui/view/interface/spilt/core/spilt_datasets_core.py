@@ -100,6 +100,7 @@ def spilt_dataset(
 
     # # DanceTrack
     spilt_dance_track = SpiltDanceTrack()
+    spilt_dance_track.file_name_length = 8
     spilt_dance_track.output_dance_track(
         output_dance_track_dir=output_dance_track_dir,
         dataset_train_list=dataset_train_list,
@@ -108,7 +109,9 @@ def spilt_dataset(
     )
 
     # MOT17
-    spilt_mot17 = SpiltMOT17()
+    # spilt_mot17 = SpiltMOT17()
+    spilt_mot17 = SpiltDanceTrack()
+    spilt_mot17.file_name_length = 6
     spilt_mot17.output_mot17(
         output_mot17_dir=output_mot17_dir,
         dataset_train_list=dataset_train_list,
