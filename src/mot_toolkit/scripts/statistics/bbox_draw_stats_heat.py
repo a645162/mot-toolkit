@@ -8,11 +8,13 @@ import torch
 import cv2
 import numpy as np
 import tqdm
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"  # 设置可见的GPU设备
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"  # 设置可见的GPU设备
 
 
 def walk_dir_get_dir_list(dir_path: str) -> List[str]:
@@ -34,15 +36,15 @@ def walk_dir_get_dir_list(dir_path: str) -> List[str]:
 
 def get_sequence_bbox_info(
     sequence_dir_path: str,
-) -> Tuple[List[Tuple[float, float]], str]:
+) -> Tuple[List[Tuple[float, float, float, float]], str]:
     """
-    获取序列中所有bbox的归一化尺寸信息
+    获取序列中所有bbox的归一化信息
 
     Args:
         sequence_dir_path: 序列目录路径
 
     Returns:
-        Tuple[List[Tuple[float, float]], str]: (归一化尺寸列表, 序列名称)
+        Tuple[List[Tuple[float, float, float, float]], str]: (归一化信息列表[cx, cy, width, height], 序列名称)
     """
     if not os.path.isdir(sequence_dir_path):
         return [], ""
@@ -59,7 +61,7 @@ def get_sequence_bbox_info(
 
     annotation_directory.load_json_files()
 
-    normalized_sizes = []
+    normalized_info = []
 
     for annotation_file in annotation_directory.annotation_file_list:
         img_width, img_height = (
@@ -68,13 +70,15 @@ def get_sequence_bbox_info(
         )
 
         for rect_annotation in annotation_file.rect_annotation_list:
-            # 计算归一化尺寸
+            # 计算归一化尺寸和中心坐标
             norm_width = rect_annotation.width / img_width
             norm_height = rect_annotation.height / img_height
+            norm_cx = rect_annotation.center_x / img_width
+            norm_cy = rect_annotation.center_y / img_height
 
-            normalized_sizes.append((norm_width, norm_height))
+            normalized_info.append((norm_cx, norm_cy, norm_width, norm_height))
 
-    return normalized_sizes, sequence_name
+    return normalized_info, sequence_name
 
 
 def find_max_dimensions(all_sequences: List[str]) -> Tuple[float, float]:
@@ -92,9 +96,9 @@ def find_max_dimensions(all_sequences: List[str]) -> Tuple[float, float]:
 
     print("正在计算最大bbox尺寸...")
     for sequence_path in tqdm.tqdm(all_sequences):
-        normalized_sizes, _ = get_sequence_bbox_info(sequence_path)
+        normalized_info, _ = get_sequence_bbox_info(sequence_path)
 
-        for width, height in normalized_sizes:
+        for cx, cy, width, height in normalized_info:
             max_width = max(max_width, width)
             max_height = max(max_height, height)
 
@@ -116,9 +120,9 @@ def draw_sequence_bboxes_tensor(
     Returns:
         Tuple[torch.Tensor, str, int]: (画布张量, 序列名称, bbox数量)
     """
-    normalized_sizes, sequence_name = get_sequence_bbox_info(sequence_path)
+    normalized_info, sequence_name = get_sequence_bbox_info(sequence_path)
 
-    if not normalized_sizes:
+    if not normalized_info:
         # 返回空张量
         empty_canvas = torch.zeros(
             (canvas_size, canvas_size), dtype=torch.float32, device=device
@@ -128,24 +132,26 @@ def draw_sequence_bboxes_tensor(
     # 创建画布张量
     canvas = torch.zeros((canvas_size, canvas_size), dtype=torch.float32, device=device)
 
-    center = canvas_size // 2
+    for norm_cx, norm_cy, norm_width, norm_height in normalized_info:
+        # 将归一化坐标转换为画布坐标
+        center_x = int(norm_cx * canvas_size)
+        center_y = int(norm_cy * canvas_size)
 
-    for norm_width, norm_height in normalized_sizes:
         # 计算实际像素尺寸
         pixel_width = int(norm_width * canvas_size)
         pixel_height = int(norm_height * canvas_size)
 
         # 计算矩形的边界
-        left = max(0, center - pixel_width // 2)
-        right = min(canvas_size, center + pixel_width // 2)
-        top = max(0, center - pixel_height // 2)
-        bottom = min(canvas_size, center + pixel_height // 2)
+        left = max(0, center_x - pixel_width // 2)
+        right = min(canvas_size, center_x + pixel_width // 2)
+        top = max(0, center_y - pixel_height // 2)
+        bottom = min(canvas_size, center_y + pixel_height // 2)
 
         # 在张量上绘制矩形（加法操作，支持叠加）
         if right > left and bottom > top:
             canvas[top:bottom, left:right] += alpha
 
-    return canvas, sequence_name, len(normalized_sizes)
+    return canvas, sequence_name, len(normalized_info)
 
 
 def process_sequences_parallel(
@@ -269,84 +275,115 @@ def tensor_to_opencv_image(
     return colored_image
 
 
-def save_visualization(
+def save_visualization_matplotlib(
     final_canvas: torch.Tensor, output_path: str, title_info: Dict = None
 ) -> None:
     """
-    保存可视化结果
+    使用matplotlib保存可视化结果
 
     Args:
         final_canvas: 最终画布张量
         output_path: 输出路径
         title_info: 标题信息字典
     """
-    # 转换为OpenCV图像
-    colored_image = tensor_to_opencv_image(final_canvas, cv2.COLORMAP_JET)
+    # 将张量转换为numpy数组
+    heatmap_data = final_canvas.cpu().numpy()
 
-    # 添加标题信息
-    if title_info:
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
-        color = (255, 255, 255)
-        thickness = 2
+    # 创建图形和轴
+    fig, ax = plt.subplots(figsize=(12, 10))
 
-        # 在图像上方添加文字信息
-        canvas_size = colored_image.shape[0]
-        text_height = 30
-        text_area_height = len(title_info) * text_height + 20
+    # 绘制热力图
+    im = ax.imshow(
+        heatmap_data, cmap="jet", origin="lower"
+    )  # 改为origin="lower"使坐标系正确
 
-        # 创建带文字区域的新图像
-        final_image = np.zeros(
-            (canvas_size + text_area_height, canvas_size, 3), dtype=np.uint8
-        )
-        final_image[text_area_height:, :, :] = colored_image
+    # 添加颜色条（图例）
+    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label("BBox Density", rotation=270, labelpad=20, fontsize=12)
 
-        # 添加文字
-        y_offset = 25
-        for key, value in title_info.items():
-            text = f"{key}: {value}"
-            cv2.putText(
-                final_image, text, (10, y_offset), font, font_scale, color, thickness
-            )
-            y_offset += text_height
-    else:
-        final_image = colored_image
+    # 设置轴标签
+    ax.set_xlabel("Normalized X Position", fontsize=12)
+    ax.set_ylabel("Normalized Y Position", fontsize=12)
+
+    # 设置轴刻度
+    canvas_size = heatmap_data.shape[0]
+    tick_positions = np.linspace(0, canvas_size - 1, 5)
+    tick_labels = np.linspace(0, 1, 5)
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels([f"{x:.1f}" for x in tick_labels])
+    ax.set_yticks(tick_positions)
+    ax.set_yticklabels([f"{y:.1f}" for y in tick_labels])
+
+    # 调整布局
+    plt.tight_layout()
 
     # 保存图像
-    cv2.imwrite(output_path, final_image)
-    print(f"可视化结果已保存到: {output_path}")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    
+    # Save svg
+    svg_output_path = os.path.splitext(output_path)[0] + ".svg"
+    plt.savefig(svg_output_path, format='svg', bbox_inches='tight')
+    
+    # Save eps
+    eps_output_path = os.path.splitext(output_path)[0] + ".eps"
+    plt.savefig(eps_output_path, format='eps', bbox_inches='tight')
+    
+    plt.close()
+
+    print(f"Visualization saved to: {output_path}")
+
+
+def save_visualization(
+    final_canvas: torch.Tensor, output_path: str, title_info: Dict = None
+) -> None:
+    """
+    保存可视化结果（使用matplotlib）
+
+    Args:
+        final_canvas: 最终画布张量
+        output_path: 输出路径
+        title_info: 标题信息字典
+    """
+    save_visualization_matplotlib(final_canvas, output_path, title_info)
 
 
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="绘制bbox尺寸分布统计图")
+    parser = argparse.ArgumentParser(description="Draw bbox size distribution heatmap")
 
     parser.add_argument(
         "--base-path",
         type=str,
         default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
-        help="数据集基础路径",
+        help="Dataset base path",
     )
     parser.add_argument(
-        "--canvas-size", type=int, default=1024, help="画布尺寸（正方形边长）"
+        "--canvas-size", type=int, default=1024, help="Canvas size (square side length)"
     )
-    parser.add_argument("--alpha", type=float, default=0.05, help="每个bbox的透明度")
-    parser.add_argument("--max-workers", type=int, default=8, help="最大工作线程数")
     parser.add_argument(
-        "--output", type=str, default="bbox_distribution.png", help="输出图像文件名"
+        "--alpha", type=float, default=0.05, help="Alpha value for each bbox"
+    )
+    parser.add_argument(
+        "--max-workers", type=int, default=8, help="Maximum number of worker threads"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="bbox_distribution_heatmap.png",
+        help="Output image filename",
     )
     parser.add_argument(
         "--device",
         type=str,
         default="cuda",
         choices=["cpu", "cuda"],
-        help="PyTorch计算设备",
+        help="PyTorch computation device",
     )
     parser.add_argument(
         "--black-list",
         nargs="+",
         default=["BV14S4y147jX-t5PTpDLBGiSESMzw"],
-        help="要排除的视频关键词列表",
+        help="List of video keywords to exclude",
     )
 
     return parser.parse_args()
@@ -360,12 +397,12 @@ def main():
 
     # 检查设备可用性
     if args.device == "cuda" and not torch.cuda.is_available():
-        print("CUDA不可用，将使用CPU")
+        print("CUDA not available, using CPU")
         device = "cpu"
     else:
         device = args.device
 
-    print(f"使用设备: {device}")
+    print(f"Using device: {device}")
 
     base_path = os.path.abspath(args.base_path)
 
@@ -381,7 +418,7 @@ def main():
         if not is_blacklisted:
             filtered_video_dirs.append(video_dir_path)
 
-    print(f"找到 {len(filtered_video_dirs)} 个视频目录（已过滤黑名单）")
+    print(f"Found {len(filtered_video_dirs)} video directories (blacklist filtered)")
 
     # 获取所有序列
     all_sequences = []
@@ -389,19 +426,19 @@ def main():
         sequence_dirs = walk_dir_get_dir_list(video_dir_path)
         all_sequences.extend(sequence_dirs)
 
-    print(f"总共找到 {len(all_sequences)} 个序列")
+    print(f"Total {len(all_sequences)} sequences found")
 
     if not all_sequences:
-        print("没有找到任何序列，程序退出")
+        print("No sequences found, exiting")
         return
 
     # 计算最大尺寸
     max_width, max_height = find_max_dimensions(all_sequences)
     max_dimension = max(max_width, max_height)
 
-    print(f"最大归一化尺寸: 宽度={max_width:.4f}, 高度={max_height:.4f}")
-    print(f"使用最大尺寸: {max_dimension:.4f}")
-    print(f"画布尺寸: {args.canvas_size}x{args.canvas_size}")
+    print(f"Max normalized size: width={max_width:.4f}, height={max_height:.4f}")
+    print(f"Using max dimension: {max_dimension:.4f}")
+    print(f"Canvas size: {args.canvas_size}x{args.canvas_size}")
 
     # 并行处理所有序列
     canvas_results = process_sequences_parallel(
@@ -429,11 +466,11 @@ def main():
     save_visualization(final_canvas, output_path, title_info)
 
     end_time = time.time()
-    print(f"处理完成，耗时: {end_time - start_time:.2f} 秒")
+    print(f"Processing completed, time elapsed: {end_time - start_time:.2f} seconds")
 
     # 显示最终统计
     print("\n" + "=" * 50)
-    print("最终统计:")
+    print("Final Statistics:")
     for key, value in title_info.items():
         print(f"  {key}: {value}")
     print("=" * 50)

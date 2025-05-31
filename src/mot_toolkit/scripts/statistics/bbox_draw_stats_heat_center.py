@@ -8,13 +8,13 @@ import torch
 import cv2
 import numpy as np
 import tqdm
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 
-from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
-
-os.environ["CUDA_VISIBLE_DEVICES"] = "4"  # 设置可见的GPU设备
+os.environ["CUDA_VISIBLE_DEVICES"] = "5"  # 设置可见的GPU设备
 
 
 def walk_dir_get_dir_list(dir_path: str) -> List[str]:
@@ -121,36 +121,16 @@ def draw_sequence_bboxes_tensor(
     normalized_sizes, sequence_name = get_sequence_bbox_info(sequence_path)
 
     if not normalized_sizes:
-        # 返回空张量 - 白色背景
-        empty_canvas = torch.ones(
-            (canvas_size, canvas_size, 3), dtype=torch.float32, device=device
+        # 返回空张量
+        empty_canvas = torch.zeros(
+            (canvas_size, canvas_size), dtype=torch.float32, device=device
         )
         return empty_canvas, sequence_name, 0
 
-    # 创建RGB画布张量 (3通道) - 白色背景
-    canvas = torch.ones(
-        (canvas_size, canvas_size, 3), dtype=torch.float32, device=device
-    )
+    # 创建画布张量
+    canvas = torch.zeros((canvas_size, canvas_size), dtype=torch.float32, device=device)
 
     center = canvas_size // 2
-    
-    # 获取希格雯配色方案中的颜色
-    color_scheme = SIGEWINNEColorScheme()
-    hex_colors = color_scheme.hex_colors().copy()
-    # Remove 3rd color
-    hex_colors = hex_colors[:2] + hex_colors[3:]
-    
-    # 将十六进制颜色转换为RGB浮点数格式 (0-1范围)
-    colors = []
-    for hex_color in hex_colors:
-        r = int(hex_color[1:3], 16) / 255.0
-        g = int(hex_color[3:5], 16) / 255.0
-        b = int(hex_color[5:7], 16) / 255.0
-        colors.append(torch.tensor([r, g, b], device=device))
-    
-    # 根据序列名称选择颜色索引 (确保相同序列使用相同颜色)
-    color_idx = hash(sequence_name) % len(colors)
-    color = colors[color_idx]
 
     for norm_width, norm_height in normalized_sizes:
         # 计算实际像素尺寸
@@ -163,29 +143,9 @@ def draw_sequence_bboxes_tensor(
         top = max(0, center - pixel_height // 2)
         bottom = min(canvas_size, center + pixel_height // 2)
 
-        # 绘制YOLO风格的矩形边框 (而不是填充整个区域)
+        # 在张量上绘制矩形（加法操作，支持叠加）
         if right > left and bottom > top:
-            # 确定线宽 (比例线宽)
-            line_width = max(1, int(min(pixel_width, pixel_height) * 0.01))
-
-            # 绘制上边框
-            if top + line_width <= bottom:
-                canvas[top : top + line_width, left:right, :] = (1.0 - alpha) * canvas[top : top + line_width, left:right, :] + alpha * color
-
-            # 绘制下边框
-            if bottom - line_width >= top:
-                canvas[bottom - line_width : bottom, left:right, :] = (1.0 - alpha) * canvas[bottom - line_width : bottom, left:right, :] + alpha * color
-
-            # 绘制左边框
-            if left + line_width <= right:
-                canvas[top:bottom, left : left + line_width, :] = (1.0 - alpha) * canvas[top:bottom, left : left + line_width, :] + alpha * color
-
-            # 绘制右边框
-            if right - line_width >= left:
-                canvas[top:bottom, right - line_width : right, :] = (1.0 - alpha) * canvas[top:bottom, right - line_width : right, :] + alpha * color
-
-    # 裁剪值，确保在0到1的范围内
-    canvas = torch.clamp(canvas, 0.0, 1.0)
+            canvas[top:bottom, left:right] += alpha
 
     return canvas, sequence_name, len(normalized_sizes)
 
@@ -250,7 +210,7 @@ def combine_canvases(
         torch.Tensor: 叠加后的最终画布
     """
     if not canvas_results:
-        return torch.ones((512, 512, 3), dtype=torch.float32)  # 返回白色背景
+        return torch.zeros((512, 512), dtype=torch.float32)
 
     print("正在叠加所有画布...")
 
@@ -258,187 +218,165 @@ def combine_canvases(
     canvas_size = canvas_results[0][0].shape[0]
     device = canvas_results[0][0].device
 
-    # 创建最终画布 (3通道) - 白色背景
-    final_canvas = torch.ones(
-        (canvas_size, canvas_size, 3), dtype=torch.float32, device=device
+    # 创建最终画布
+    final_canvas = torch.zeros(
+        (canvas_size, canvas_size), dtype=torch.float32, device=device
     )
-
-    # 获取希格雯配色方案
-    color_scheme = SIGEWINNEColorScheme()
-    hex_colors = color_scheme.hex_colors()
-    
-    # 将十六进制颜色转换为RGB浮点数格式 (0-1范围)
-    colors = []
-    for hex_color in hex_colors:
-        r = int(hex_color[1:3], 16) / 255.0
-        g = int(hex_color[3:5], 16) / 255.0
-        b = int(hex_color[5:7], 16) / 255.0
-        colors.append(torch.tensor([r, g, b], device=device))
 
     total_bbox_count = 0
     valid_sequences = 0
 
-    # 循环所有序列结果，每个序列使用不同颜色
-    for idx, (canvas, sequence_name, bbox_count) in enumerate(canvas_results):
+    for canvas, sequence_name, bbox_count in canvas_results:
         if bbox_count > 0:
-            # 从原始画布中减去白色背景，得到只有bbox线条的部分
-            bbox_only = canvas - 1.0
-            
-            # 为这个序列选择颜色
-            color_idx = idx % len(colors)
-            color = colors[color_idx]
-            
-            # 将bbox线条部分应用当前颜色
-            color_canvas = torch.zeros_like(canvas)
-            for c in range(3):
-                color_canvas[..., c] = bbox_only.sum(dim=2) * color[c]
-                
-            # 将有颜色的bbox添加到最终画布
-            final_canvas = final_canvas + color_canvas
-            
+            final_canvas += canvas
             total_bbox_count += bbox_count
             valid_sequences += 1
-            print(f"  {sequence_name}: {bbox_count} bboxes (颜色: {hex_colors[color_idx]})")
+            print(f"  {sequence_name}: {bbox_count} bboxes")
 
-    # 裁剪值到0-1范围
-    final_canvas = torch.clamp(final_canvas, 0.0, 1.0)
-
-    # 在画布中心绘制参考点
-    center = canvas_size // 2
-    marker_size = max(5, canvas_size // 100)
-    final_canvas[
-        center - marker_size : center + marker_size,
-        center - marker_size : center + marker_size,
-        :,
-    ] = torch.tensor(
-        [1.0, 0.0, 0.0], device=device
-    )  # 红色中心点
+    print(f"总计: {valid_sequences} 个有效序列, {total_bbox_count} 个bbox")
 
     return final_canvas
 
 
-def tensor_to_opencv_image(tensor: torch.Tensor) -> np.ndarray:
+def tensor_to_opencv_image(
+    tensor: torch.Tensor, colormap: int = cv2.COLORMAP_JET
+) -> np.ndarray:
     """
-    将PyTorch RGB张量转换为OpenCV BGR图像
+    将PyTorch张量转换为OpenCV图像
 
     Args:
-        tensor: 输入RGB张量 (H, W, 3)
+        tensor: 输入张量
+        colormap: OpenCV颜色映射
 
     Returns:
-        np.ndarray: OpenCV BGR图像
+        np.ndarray: OpenCV图像
     """
     # 将张量移到CPU并转换为numpy
     numpy_array = tensor.cpu().numpy()
 
-    # 转换为uint8 (0-255)
-    image_uint8 = (numpy_array * 255).astype(np.uint8)
+    # 归一化到0-255范围
+    if numpy_array.max() > numpy_array.min():
+        normalized = (numpy_array - numpy_array.min()) / (
+            numpy_array.max() - numpy_array.min()
+        )
+    else:
+        normalized = numpy_array
 
-    # RGB到BGR转换 (OpenCV使用BGR格式)
-    image_bgr = cv2.cvtColor(image_uint8, cv2.COLOR_RGB2BGR)
+    # 转换为uint8
+    image_uint8 = (normalized * 255).astype(np.uint8)
 
-    return image_bgr
+    # 应用颜色映射
+    colored_image = cv2.applyColorMap(image_uint8, colormap)
+
+    return colored_image
 
 
-def save_visualization(
+def save_visualization_matplotlib(
     final_canvas: torch.Tensor, output_path: str, title_info: Dict = None
 ) -> None:
     """
-    保存可视化结果
+    使用matplotlib保存可视化结果
 
     Args:
         final_canvas: 最终画布张量
         output_path: 输出路径
         title_info: 标题信息字典
     """
-    # 转换为OpenCV图像
-    image = tensor_to_opencv_image(final_canvas)
+    # 将张量转换为numpy数组
+    heatmap_data = final_canvas.cpu().numpy()
 
-    # 添加网格线以增强可视化效果
-    canvas_size = image.shape[0]
-    grid_step = canvas_size // 10
-    grid_color = (120, 120, 120)  # 浅灰色
-    grid_thickness = 1
+    # 创建图形和轴
+    fig, ax = plt.subplots(figsize=(12, 10))
 
-    # 绘制网格线
-    for i in range(0, canvas_size + 1, grid_step):
-        cv2.line(image, (0, i), (canvas_size, i), grid_color, grid_thickness)
-        cv2.line(image, (i, 0), (i, canvas_size), grid_color, grid_thickness)
+    # 绘制热力图
+    im = ax.imshow(heatmap_data, cmap="jet", origin="upper")
 
-    # 绘制中心参考线
-    center = canvas_size // 2
-    center_color = (0, 0, 255)  # 红色
-    center_thickness = 2
-    cv2.line(image, (center, 0), (center, canvas_size), center_color, center_thickness)
-    cv2.line(image, (0, center), (canvas_size, center), center_color, center_thickness)
+    # 添加颜色条（图例）
+    cbar = plt.colorbar(im, ax=ax, shrink=0.8)
+    cbar.set_label("BBox Density", rotation=270, labelpad=20, fontsize=12)
 
-    # 添加标题信息
-    if title_info:
-        font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
-        color = (255, 255, 255)
-        thickness = 2
+    # # 设置标题
+    # if title_info:
+    #     title_lines = []
+    #     for key, value in title_info.items():
+    #         title_lines.append(f"{key}: {value}")
+    #     title_text = "\n".join(title_lines)
+    #     ax.set_title(title_text, fontsize=10, pad=20)
 
-        # 在图像上方添加文字信息
-        text_height = 30
-        text_area_height = len(title_info) * text_height + 20
+    # 设置轴标签
+    ax.set_xlabel("Normalized Width", fontsize=12)
+    ax.set_ylabel("Normalized Height", fontsize=12)
 
-        # 创建带文字区域的新图像
-        final_image = np.zeros(
-            (canvas_size + text_area_height, canvas_size, 3), dtype=np.uint8
-        )
-        final_image[text_area_height:, :, :] = image
+    # 设置轴刻度
+    canvas_size = heatmap_data.shape[0]
+    tick_positions = np.linspace(0, canvas_size - 1, 5)
+    tick_labels = np.linspace(0, 1, 5)
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels([f"{x:.1f}" for x in tick_labels])
+    ax.set_yticks(tick_positions)
+    ax.set_yticklabels([f"{y:.1f}" for y in tick_labels])
 
-        # 添加文字
-        y_offset = 25
-        for key, value in title_info.items():
-            text = f"{key}: {value}"
-            cv2.putText(
-                final_image, text, (10, y_offset), font, font_scale, color, thickness
-            )
-            y_offset += text_height
-    else:
-        final_image = image
+    # 调整布局
+    plt.tight_layout()
 
     # 保存图像
-    cv2.imwrite(output_path, final_image)
-    print(f"可视化结果已保存到: {output_path}")
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    plt.close()
+
+    print(f"Visualization saved to: {output_path}")
+
+
+def save_visualization(
+    final_canvas: torch.Tensor, output_path: str, title_info: Dict = None
+) -> None:
+    """
+    保存可视化结果（使用matplotlib）
+
+    Args:
+        final_canvas: 最终画布张量
+        output_path: 输出路径
+        title_info: 标题信息字典
+    """
+    save_visualization_matplotlib(final_canvas, output_path, title_info)
 
 
 def parse_args():
     """解析命令行参数"""
-    parser = argparse.ArgumentParser(description="绘制BBox尺寸分布统计图")
+    parser = argparse.ArgumentParser(description="Draw bbox size distribution heatmap")
 
     parser.add_argument(
         "--base-path",
         type=str,
         default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
-        help="数据集基础路径",
+        help="Dataset base path",
     )
     parser.add_argument(
-        "--canvas-size", type=int, default=2048, help="画布尺寸（正方形边长）"
+        "--canvas-size", type=int, default=1024, help="Canvas size (square side length)"
     )
-    parser.add_argument("--alpha", type=float, default=0.05, help="每个bbox的透明度")
-    parser.add_argument("--max-workers", type=int, default=8, help="最大工作线程数")
     parser.add_argument(
-        "--output", type=str, default="bbox_distribution.png", help="输出图像文件名"
+        "--alpha", type=float, default=0.05, help="Alpha value for each bbox"
+    )
+    parser.add_argument(
+        "--max-workers", type=int, default=8, help="Maximum number of worker threads"
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="bbox_distribution_heatmap.png",
+        help="Output image filename",
     )
     parser.add_argument(
         "--device",
         type=str,
         default="cuda",
         choices=["cpu", "cuda"],
-        help="PyTorch计算设备",
+        help="PyTorch computation device",
     )
     parser.add_argument(
         "--black-list",
         nargs="+",
         default=["BV14S4y147jX-t5PTpDLBGiSESMzw"],
-        help="要排除的视频关键词列表",
-    )
-    parser.add_argument(
-        "--title-info",
-        action="store_true",
-        help="是否在输出图像中添加标题信息",
+        help="List of video keywords to exclude",
     )
 
     return parser.parse_args()
@@ -452,12 +390,12 @@ def main():
 
     # 检查设备可用性
     if args.device == "cuda" and not torch.cuda.is_available():
-        print("CUDA不可用，将使用CPU")
+        print("CUDA not available, using CPU")
         device = "cpu"
     else:
         device = args.device
 
-    print(f"使用设备: {device}")
+    print(f"Using device: {device}")
 
     base_path = os.path.abspath(args.base_path)
 
@@ -473,7 +411,7 @@ def main():
         if not is_blacklisted:
             filtered_video_dirs.append(video_dir_path)
 
-    print(f"找到 {len(filtered_video_dirs)} 个视频目录（已过滤黑名单）")
+    print(f"Found {len(filtered_video_dirs)} video directories (blacklist filtered)")
 
     # 获取所有序列
     all_sequences = []
@@ -481,23 +419,19 @@ def main():
         sequence_dirs = walk_dir_get_dir_list(video_dir_path)
         all_sequences.extend(sequence_dirs)
 
-    print(f"总共找到 {len(all_sequences)} 个序列")
+    print(f"Total {len(all_sequences)} sequences found")
 
     if not all_sequences:
-        print("没有找到任何序列，程序退出")
+        print("No sequences found, exiting")
         return
 
     # 计算最大尺寸
     max_width, max_height = find_max_dimensions(all_sequences)
     max_dimension = max(max_width, max_height)
 
-    print(f"最大归一化尺寸: 宽度={max_width:.4f}, 高度={max_height:.4f}")
-    print(f"使用最大尺寸: {max_dimension:.4f}")
-    print(f"画布尺寸: {args.canvas_size}x{args.canvas_size}")
-
-    # 保存YOLO风格的可视化和热力图两种可视化结果
-    output_prefix = os.path.splitext(args.output)[0]
-    yolo_style_output = os.path.join(f"{output_prefix}_yolo_style.jpg")
+    print(f"Max normalized size: width={max_width:.4f}, height={max_height:.4f}")
+    print(f"Using max dimension: {max_dimension:.4f}")
+    print(f"Canvas size: {args.canvas_size}x{args.canvas_size}")
 
     # 并行处理所有序列
     canvas_results = process_sequences_parallel(
@@ -521,17 +455,15 @@ def main():
         "Alpha": args.alpha,
     }
 
-    # 保存YOLO风格可视化结果
-    save_visualization(
-        final_canvas, yolo_style_output, title_info if args.title_info else None
-    )
+    # 保存可视化结果
+    save_visualization(final_canvas, output_path, title_info)
 
     end_time = time.time()
-    print(f"处理完成，耗时: {end_time - start_time:.2f} 秒")
+    print(f"Processing completed, time elapsed: {end_time - start_time:.2f} seconds")
 
     # 显示最终统计
     print("\n" + "=" * 50)
-    print("最终统计:")
+    print("Final Statistics:")
     for key, value in title_info.items():
         print(f"  {key}: {value}")
     print("=" * 50)
