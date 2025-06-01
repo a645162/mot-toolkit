@@ -725,7 +725,7 @@ def parse_args():
     parser.add_argument(
         "--base-path",
         type=str,
-        default=r"H:\Datasets\MaritimeTrackAllData\LabelMe",
+        default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
         help="数据集基础路径",
     )
     parser.add_argument(
@@ -765,7 +765,7 @@ def parse_args():
     opt = parser.parse_args()
 
     # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
-    opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
+    # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
 
     return opt
 
