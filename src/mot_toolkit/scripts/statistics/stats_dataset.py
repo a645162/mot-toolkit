@@ -108,6 +108,7 @@ def save_to_csv(
         "Moving Object Count (>=T)",  # 移动目标数量
         "Static BBox Count",  # 静止目标BBox数量
         "Static BBox Ratio (%)",  # 静止目标BBox占比
+        "Moving Target Avg Movement",  # 移动目标平均移动距离
     ]
 
     # Append Class Title
@@ -312,15 +313,25 @@ def handle_sequence_dir(
 
     # 根据累计移动距离判断静止和运动目标
     static_object_ids = []  # 记录所有静止目标的ID
+    moving_object_ids = []  # 记录所有移动目标的ID
     for obj_id in object_id_dict:
         if "total_movement" in object_id_dict[obj_id]:
             total_movement = object_id_dict[obj_id]["total_movement"]
             # 使用阈值判断静止和运动目标
             if total_movement >= ocpmd_threshold:
                 moving_object_count += 1
+                moving_object_ids.append(obj_id)
             else:
                 static_object_count += 1
                 static_object_ids.append(obj_id)  # 添加到静止目标列表
+
+    # 计算移动目标的平均移动距离
+    moving_target_avg_movement = 0.0
+    if moving_object_ids:
+        total_moving_distance = sum(
+            object_id_dict[obj_id]["total_movement"] for obj_id in moving_object_ids
+        )
+        moving_target_avg_movement = total_moving_distance / len(moving_object_ids)
 
     # 计算静止目标的总BBox数
     static_bbox_count = 0
@@ -422,6 +433,7 @@ def handle_sequence_dir(
     return_list.append(round(static_frame_ratio * 100, 2))  # 静止目标帧数占比(%)
     return_list.append(static_bbox_count)  # 静止目标BBox数
     return_list.append(round(static_bbox_ratio * 100, 2))  # 静止目标BBox占比(%)
+    return_list.append(round(moving_target_avg_movement, 6))  # 移动目标平均移动距离
 
     return_list.extend(class_count_list)
 
@@ -442,21 +454,28 @@ def handle_sequence_dir(
     print(
         f"\t\tStatic BBox Count: {static_bbox_count} / {object_instance_count} ({static_bbox_ratio*100:.2f}%)"
     )
+    print(
+        f"\t\tMoving Target Average Movement Distance: {moving_target_avg_movement:.6f}"
+    )
 
     if class_config.object_classes:
         print("\t\tClass Instance Count List:")
         for idx, count in enumerate(
-            return_list[16:]
-        ):  # 索引调整为16，因为增加了2个字段
-            print(
-                f"\t\t\t[{idx}] {class_config.object_classes[idx].class_name}: {count}"
-            )
+            return_list[17:]  # 索引调整为17，因为增加了移动目标平均移动距离字段
+        ):
+            if idx < len(class_config.object_classes):  # 添加边界检查
+                print(
+                    f"\t\t\t[{idx}] {class_config.object_classes[idx].class_name}: {count}"
+                )
 
     return return_list
 
 
 def plot_movement_histogram(
-    movement_data: Dict, output_path: str, ocpmd_threshold: float
+    movement_data: Dict,
+    output_path: str,
+    ocpmd_threshold: float,
+    additional_title: bool = False,
 ):
     """
     绘制目标移动特性的分布直方图
@@ -514,11 +533,18 @@ def plot_movement_histogram(
     avg_value = sum(movement_values) / len(movement_values)
 
     # 添加标题和标签 - 使用英文替代中文
+    additional_title_text = (
+        (
+            "\n"
+            f"Static Objects (<{ocpmd_threshold}): {static_count} ({static_percent:.1f}%)\n"
+            f"Moving Objects (≥{ocpmd_threshold}): {moving_count} ({moving_percent:.1f}%)\n"
+            f"Range: [{min_value:.4f}, {max_value:.4f}], Avg: {avg_value:.4f}"
+        )
+        if additional_title
+        else ""
+    )
     plt.title(
-        f"Object Movement Distribution Histogram\n"
-        f"Static Objects (<{ocpmd_threshold}): {static_count} ({static_percent:.1f}%)\n"
-        f"Moving Objects (≥{ocpmd_threshold}): {moving_count} ({moving_percent:.1f}%)\n"
-        f"Range: [{min_value:.4f}, {max_value:.4f}], Avg: {avg_value:.4f}",
+        "Object Movement Distribution Histogram" + additional_title_text,
         fontsize=14,
     )
     plt.xlabel("Normalized Cumulative Movement Distance", fontsize=12)
@@ -528,6 +554,15 @@ def plot_movement_histogram(
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    # Save svg
+    svg_output_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+
+    # Save eps
+    eps_output_path = output_path.replace(".png", ".eps")
+    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+
     plt.close()
 
     print(f"已保存移动特性分布直方图到: {output_path}")
@@ -712,6 +747,114 @@ def output_summary(
     return summary_text
 
 
+def plot_sequence_moving_avg_distance(
+    result_list: List, output_path: str, top_n: int = 50
+):
+    """
+    绘制序列移动目标平均移动距离的柱状图
+
+    Args:
+        result_list: 序列结果列表
+        output_path: 输出路径
+        top_n: 显示前N个序列
+    """
+    # 提取有效序列数据 (video_name, sequence_name, moving_avg_distance)
+    sequence_data = []
+    for row in result_list:
+        if not row or len(row) < 17:  # 跳过空行或数据不完整的行
+            continue
+
+        video_name = row[0]
+        sequence_name = row[2]
+        moving_avg_distance = row[16] if isinstance(row[16], (int, float)) else 0.0
+
+        # 只包含有移动距离的序列
+        if moving_avg_distance > 0:
+            sequence_data.append((video_name, sequence_name, moving_avg_distance))
+
+    if not sequence_data:
+        print("Warning: No valid sequences with moving target average distance > 0")
+        return
+
+    # 按移动距离排序并取前top_n个
+    sequence_data.sort(key=lambda x: x[2], reverse=True)
+    if len(sequence_data) > top_n:
+        sequence_data = sequence_data[:top_n]
+
+    # 提取数据用于绘图
+    # data[0]: 视频名称
+    # data[1]: 序列名称
+    # 暂时不使用data[0]
+    sequence_labels = [f"{data[1]}" for data in sequence_data]
+    # sequence_labels = [f"{data[0]}_{data[1]}" for data in sequence_data]
+
+    moving_distances = [data[2] for data in sequence_data]
+
+    plt.figure(figsize=(20, 10))
+
+    # 创建柱状图
+    bars = plt.bar(
+        range(len(sequence_labels)),
+        moving_distances,
+        alpha=0.7,
+        color="orange",
+        edgecolor="black",
+    )
+
+    # 设置x轴标签 (旋转45度以避免重叠)
+    plt.xticks(range(len(sequence_labels)), sequence_labels, rotation=45, ha="right")
+
+    # 添加数值标签到柱子顶部
+    for i, bar in enumerate(bars):
+        height = bar.get_height()
+        plt.text(
+            bar.get_x() + bar.get_width() / 2.0,
+            height + height * 0.01,
+            f"{height:.4f}",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
+
+    # 计算统计信息
+    mean_distance = np.mean(moving_distances)
+    plt.axhline(
+        y=mean_distance,
+        color="r",
+        linestyle="--",
+        linewidth=2,
+        label=f"Mean Distance: {mean_distance:.4f}",
+    )
+
+    plt.title(
+        f"Top {len(sequence_data)} Sequences by Moving Target Average Movement Distance",
+        fontsize=16,
+    )
+    plt.xlabel("Sequence (Video_Sequence)", fontsize=12)
+    plt.ylabel("Average Movement Distance", fontsize=12)
+    plt.grid(True, linestyle="--", alpha=0.7, axis="y")
+    plt.legend()
+    plt.tight_layout()
+
+    # 保存图像
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    # Save svg
+    svg_output_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+
+    # Save eps
+    eps_output_path = output_path.replace(".png", ".eps")
+    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+
+    plt.close()
+
+    print(f"Moving target average distance bar chart saved to: {output_path}")
+    print(
+        f"Statistics - Mean: {mean_distance:.6f}, Max: {max(moving_distances):.6f}, Min: {min(moving_distances):.6f}"
+    )
+
+
 def parse_args():
     """
     解析命令行参数
@@ -761,9 +904,23 @@ def parse_args():
         default="movement_histogram.png",
         help="移动特性分布直方图输出路径",
     )
+    parser.add_argument(
+        "--moving-avg-bar",
+        type=str,
+        default="moving_avg_distance_bar.png",
+        help="移动目标平均移动距离柱状图输出路径",
+    )
+
+    # 开关
+    parser.add_argument(
+        "--additional-title",
+        action="store_true",
+        help="在输出的图表标题中添加额外信息",
+    )
 
     opt = parser.parse_args()
 
+    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
     # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
     # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
 
@@ -784,11 +941,13 @@ def main():
     black_list = args.black_list
     skip_class_stats = args.skip_class_stats
     movement_hist_path = args.movement_hist
+    moving_avg_bar_path = args.moving_avg_bar
 
     # 输出目录为当前py目录
     output_dir_path = os.path.dirname(os.path.abspath(__file__))
 
     output_dir_path = os.path.join(output_dir_path, "output")
+    output_dir_path = os.path.join(output_dir_path, "stats_dataset")
 
     # 获取base_path的两级目录名level1
     level1 = os.path.basename(base_path)
@@ -802,6 +961,7 @@ def main():
     # 确保所有输出文件保存到output_dir_path目录
     output_csv_path = os.path.join(output_dir_path, output_csv)
     movement_hist_output_path = os.path.join(output_dir_path, movement_hist_path)
+    moving_avg_bar_output_path = os.path.join(output_dir_path, moving_avg_bar_path)
     output_txt_path = os.path.join(output_dir_path, "results_summary.txt")
 
     # 用于收集所有序列中目标的移动数据
@@ -891,8 +1051,14 @@ def main():
     # 绘制移动特性分布直方图
     if all_movement_data:
         plot_movement_histogram(
-            all_movement_data, movement_hist_output_path, ocpmd_threshold
+            all_movement_data,
+            movement_hist_output_path,
+            ocpmd_threshold,
+            args.additional_title,
         )
+
+    # 绘制移动目标平均移动距离柱状图
+    plot_sequence_moving_avg_distance(result_list, moving_avg_bar_output_path)
 
     # 输出总结统计信息并保存到文本文件
     output_summary(
@@ -909,6 +1075,7 @@ def main():
 
     print(f"已将CSV文件保存到: {output_csv_path}")
     print(f"已将移动特性分布直方图保存到: {movement_hist_output_path}")
+    print(f"已将移动目标平均距离柱状图保存到: {moving_avg_bar_output_path}")
     print("完成")
 
     print("耗时:", round(end_time - start_time, 2), "秒")
