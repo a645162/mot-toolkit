@@ -311,7 +311,7 @@ def get_visual_description_batch(
             return "无法组合图像"
 
         # 使用 OpenAIImageAnalyzer 分析图像
-        prompt = f"这些是同一个目标的 {len(images)} 个不同时刻的图像。请详细描述这个目标的外观特征，例如颜色、形状、穿着、携带物品等。"
+        prompt = f"这些是同一个目标的 {len(images)} 个不同时刻的图像。请详细描述这个目标的外观特征，例如颜色、形状、外观特征等。"
         response = analyzer.ask_question_about_image(grid_image, prompt)
 
         logger.info("已生成批量视觉描述")

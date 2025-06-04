@@ -12,7 +12,7 @@ from matplotlib.colors import LinearSegmentedColormap
 import matplotlib.gridspec as gridspec
 import seaborn as sns
 
-from mot_toolkit.vis.sigewinne_colors import SIGEWINNEColorScheme as ColorScheme
+from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme as ColorScheme
 
 
 def setup_figure_style():
