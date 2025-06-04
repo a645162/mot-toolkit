@@ -10,7 +10,7 @@ def setup_mirrors():
 
 
 def install_conda_packages(
-        packages: Union[str, List[str]] = "numpy",
+    packages: Union[str, List[str]] = "numpy",
 ):
     if isinstance(packages, str):
         packages = [packages]
@@ -20,26 +20,27 @@ def install_conda_packages(
     return ret == 0
 
 
-def install_pip_packages(
-        packages: Union[str, List[str]],
-):
-    if isinstance(packages, str):
-        packages = [packages]
+def get_python_exe_path() -> str:
+    """
+    Get the path of the Python executable (Current process).
+    """
+    import sys
 
-    package_str = " ".join(packages)
-    ret = os.system(f"pip install {package_str}")
-    return ret == 0
+    return sys.executable
+
+
+python_exe_path = get_python_exe_path()
 
 
 def install_pip_requirements_txt(
-        file_paths: Union[str, List[str]] = "requirements.txt",
+    file_paths: Union[str, List[str]] = "requirements.txt",
 ) -> bool:
     if isinstance(file_paths, str):
         file_paths = [file_paths]
 
     is_success = True
     for file_path in file_paths:
-        ret = os.system(f"pip install -r {file_path}")
+        ret = os.system(f"{python_exe_path} -m pip install -r {file_path}")
         if ret != 0:
             print(f"Install {file_path} Failed!")
             is_success = False
@@ -48,8 +49,8 @@ def install_pip_requirements_txt(
     return is_success
 
 
-def install_package(
-        package_name: Union[str, List[str]] = "pip", update: bool = False
+def install_pip_package(
+    package_name: Union[str, List[str]] = "pip", update: bool = False
 ) -> bool:
     if isinstance(package_name, str):
         package_name = [package_name]
@@ -58,9 +59,23 @@ def install_package(
     if update:
         update_flag = " -U "
 
+    for i in range(len(package_name)):
+        current_package = package_name[i]
+
+        current_package = current_package.strip()
+
+        # Ensure the package name is quoted
+        if not current_package.startswith('"') and not current_package.endswith('"'):
+            if not current_package.startswith("'") and not current_package.endswith(
+                "'"
+            ):
+                current_package = f'"{current_package}"'
+
+        package_name[i] = current_package
+
     package_str = " ".join(package_name)
 
-    ret = os.system(f"pip install {update_flag} {package_str}")
+    ret = os.system(f"{python_exe_path} -m pip install {update_flag} {package_str}")
 
     return ret == 0
 
@@ -157,12 +172,12 @@ def update():
 
 
 def upgrade():
-    install_package("pip", update=True)
-    install_package("setuptools", update=True)
+    install_pip_package("pip", update=True)
+    install_pip_package("setuptools", update=True)
 
-    install_package("pyside6", update=True)
+    install_pip_package("pyside6", update=True)
 
-    install_package(
+    install_pip_package(
         [
             "ultralytics",
             "opencv-python",
@@ -197,7 +212,9 @@ def get_options():
         "--all", "-a", action="store_true", help="Install All Dependencies"
     )
 
-    parser.add_argument("--upgrade", "-U", action="store_true", help="Upgrade All Dependencies")
+    parser.add_argument(
+        "--upgrade", "-U", action="store_true", help="Upgrade All Dependencies"
+    )
 
     return parser.parse_args()
 
@@ -219,6 +236,8 @@ if __name__ == "__main__":
 
     print("=" * 20)
     print("mot-toolkit Installer")
+    print("=" * 20)
+    print("Python Executable Path:", python_exe_path)
     print("=" * 20)
     print("Install Options:")
     print("-" * 20)
