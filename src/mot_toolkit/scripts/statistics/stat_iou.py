@@ -11,6 +11,7 @@ import numpy as np
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
+from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
 
 
 def calculate_iou(
@@ -173,12 +174,16 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
 
     plt.figure(figsize=(12, 8))
 
+    # 获取希格雯配色
+    color_scheme = SIGEWINNEColorScheme()
+    colors = color_scheme.hex_colors()
+
     # 设置直方图区间 (0-1, 分成50个区间)
     bins = np.linspace(0, 1, 51)
 
     # 绘制直方图
     n, bins, patches = plt.hist(
-        iou_data, bins=bins, alpha=0.7, color="blue", edgecolor="black"
+        iou_data, bins=bins, alpha=0.7, color=colors[1], edgecolor="black"
     )
 
     # 计算统计信息
@@ -191,14 +196,14 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
     # 添加统计线
     plt.axvline(
         x=mean_iou,
-        color="r",
+        color=colors[0],
         linestyle="--",
         linewidth=2,
         label=f"Mean: {mean_iou:.3f}",
     )
     plt.axvline(
         x=median_iou,
-        color="g",
+        color=colors[3],
         linestyle="--",
         linewidth=2,
         label=f"Median: {median_iou:.3f}",
@@ -218,6 +223,15 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    
+    # Save svg
+    svg_output_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+    
+    # Save eps
+    eps_output_path = output_path.replace(".png", ".eps")
+    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+    
     plt.close()
 
     print(f"IoU distribution histogram saved to: {output_path}")
@@ -261,9 +275,18 @@ def plot_sequence_iou_bar_chart(
 
     plt.figure(figsize=(20, 10))
 
-    # 创建柱状图
+    # 获取希格雯配色
+    color_scheme = SIGEWINNEColorScheme()
+    colors = color_scheme.hex_colors()
+
+    # 创建柱状图，每个柱子交替使用希格雯配色
+    bar_colors = [colors[i % len(colors)] for i in range(len(seq_names))]
     bars = plt.bar(
-        range(len(seq_names)), iou_values, alpha=0.7, color="skyblue", edgecolor="black"
+        range(len(seq_names)),
+        iou_values,
+        alpha=0.7,
+        color=bar_colors,
+        edgecolor="black",
     )
 
     # 设置x轴标签 (旋转45度以避免重叠)
@@ -285,7 +308,7 @@ def plot_sequence_iou_bar_chart(
     mean_iou = np.mean(iou_values)
     plt.axhline(
         y=mean_iou,
-        color="r",
+        color=colors[0],
         linestyle="--",
         linewidth=2,
         label=f"Mean IoU: {mean_iou:.3f}",
@@ -302,6 +325,15 @@ def plot_sequence_iou_bar_chart(
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    
+    # Save svg
+    svg_output_path = output_path.replace(".png", ".svg")
+    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+    
+    # Save eps
+    eps_output_path = output_path.replace(".png", ".eps")
+    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+    
     plt.close()
 
     print(f"Sequence IoU bar chart saved to: {output_path}")
@@ -336,7 +368,7 @@ def parse_args():
 
     opt = parser.parse_args()
 
-    # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
+    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
 
     return opt
 

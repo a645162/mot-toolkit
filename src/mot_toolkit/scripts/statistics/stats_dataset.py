@@ -20,6 +20,7 @@ from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.datatype.dataset.object_property import ObjectSizeType
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
+from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
 
 
 def walk_dir_get_dir_list(dir_path: str) -> List[str]:
@@ -496,6 +497,10 @@ def plot_movement_histogram(
     # 创建图形
     plt.figure(figsize=(12, 8))
 
+    # 获取希格雯配色
+    color_scheme = SIGEWINNEColorScheme()
+    colors = color_scheme.hex_colors()
+
     # 计算数据的最大值，以确定直方图范围
     max_value = max(movement_values)
 
@@ -510,13 +515,13 @@ def plot_movement_histogram(
 
     # 绘制直方图
     n, bins, patches = plt.hist(
-        movement_values, bins=bins, alpha=0.7, color="blue", edgecolor="black"
+        movement_values, bins=bins, alpha=0.7, color=colors[1], edgecolor="black"
     )
 
     # 标记静止/移动阈值
     plt.axvline(
         x=ocpmd_threshold,
-        color="r",
+        color=colors[0],
         linestyle="--",
         linewidth=2,
         label=f"Static/Moving Threshold ({ocpmd_threshold})",
@@ -748,7 +753,7 @@ def output_summary(
 
 
 def plot_sequence_moving_avg_distance(
-    result_list: List, output_path: str, top_n: int = 50
+    result_list: List, output_path: str, top_n: int = 20
 ):
     """
     绘制序列移动目标平均移动距离的柱状图
@@ -792,12 +797,17 @@ def plot_sequence_moving_avg_distance(
 
     plt.figure(figsize=(20, 10))
 
-    # 创建柱状图
+    # 获取希格雯配色
+    color_scheme = SIGEWINNEColorScheme()
+    colors = color_scheme.hex_colors()
+
+    # 创建柱状图，每个柱子交替使用希格雯配色
+    bar_colors = [colors[i % len(colors)] for i in range(len(sequence_labels))]
     bars = plt.bar(
         range(len(sequence_labels)),
         moving_distances,
         alpha=0.7,
-        color="orange",
+        color=bar_colors,
         edgecolor="black",
     )
 
@@ -820,7 +830,7 @@ def plot_sequence_moving_avg_distance(
     mean_distance = np.mean(moving_distances)
     plt.axhline(
         y=mean_distance,
-        color="r",
+        color=colors[0],
         linestyle="--",
         linewidth=2,
         label=f"Mean Distance: {mean_distance:.4f}",
