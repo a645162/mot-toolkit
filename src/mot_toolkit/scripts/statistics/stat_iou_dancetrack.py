@@ -57,18 +57,20 @@ def calculate_iou(
     return intersection_area / union_area
 
 
-def calculate_sequence_adjacent_iou(sequence_dir_path: str) -> Tuple[float, int, int]:
+def calculate_sequence_adjacent_iou(
+    sequence_dir_path: str,
+) -> Tuple[float, int, int, float, int]:
     """
-    计算单个序列的相邻帧IoU
+    计算单个序列的相邻帧IoU (按照DanceTrack论文公式)
 
     Args:
         sequence_dir_path: 序列目录路径
 
     Returns:
-        tuple: (平均IoU, 有效IoU对数, 总帧数)
+        tuple: (DanceTrack式IoU, 有效IoU对数, 总帧数, 原始平均IoU, 对象数量)
     """
     if not os.path.isdir(sequence_dir_path):
-        return 0.0, 0, 0
+        return 0.0, 0, 0, 0.0, 0
 
     annotation_directory = XAnyLabelingAnnotationDirectory()
     annotation_directory.dir_path = sequence_dir_path
@@ -77,7 +79,7 @@ def calculate_sequence_adjacent_iou(sequence_dir_path: str) -> Tuple[float, int,
 
     frame_count = len(annotation_directory.file_list)
     if frame_count < 2:
-        return 0.0, 0, frame_count
+        return 0.0, 0, frame_count, 0.0, 0
 
     annotation_directory.load_json_files()
 
@@ -100,8 +102,17 @@ def calculate_sequence_adjacent_iou(sequence_dir_path: str) -> Tuple[float, int,
             )
             frame_objects[frame_idx][object_id] = bbox
 
+    # 统计所有出现过的对象ID
+    all_object_ids = set()
+    for frame_objects_dict in frame_objects.values():
+        all_object_ids.update(frame_objects_dict.keys())
+
+    total_objects = len(all_object_ids)  # N: 对象数量
+    total_frame_intervals = frame_count - 1  # T-1: 帧间隔数量
+
     # 计算相邻帧IoU
     iou_values = []
+    total_iou_sum = 0.0  # 用于DanceTrack公式计算
 
     for frame_idx in range(frame_count - 1):
         current_frame = frame_objects.get(frame_idx, {})
@@ -115,13 +126,21 @@ def calculate_sequence_adjacent_iou(sequence_dir_path: str) -> Tuple[float, int,
             bbox2 = next_frame[obj_id]
             iou = calculate_iou(bbox1, bbox2)
             iou_values.append(iou)
+            total_iou_sum += iou
 
-    # 计算平均IoU
-    if iou_values:
-        avg_iou = sum(iou_values) / len(iou_values)
-        return avg_iou, len(iou_values), frame_count
-    else:
-        return 0.0, 0, frame_count
+    # 计算原始平均IoU (用于兼容性)
+    original_avg_iou = sum(iou_values) / len(iou_values) if iou_values else 0.0
+
+    # 计算DanceTrack式IoU: U = 1/(N(T-1)) * ∑∑IoU
+    # 注意：DanceTrack的公式假设所有对象在所有帧间隔都存在
+    # 实际计算时，我们只对存在的IoU对进行求和，然后除以理论上的总对数 N*(T-1)
+    dancetrack_iou = 0.0
+    if total_objects > 0 and total_frame_intervals > 0:
+        # DanceTrack公式：分母是所有对象在所有帧间隔的理论总数
+        theoretical_total_pairs = total_objects * total_frame_intervals
+        dancetrack_iou = total_iou_sum / theoretical_total_pairs
+
+    return dancetrack_iou, len(iou_values), frame_count, original_avg_iou, total_objects
 
 
 def walk_dir_get_dir_list(dir_path: str) -> List[str]:
@@ -147,8 +166,10 @@ def save_iou_results_to_csv(results: List, csv_file_path: str):
         "Video Name",
         "Sequence Name",
         "Frame Count",
+        "Object Count",
         "Valid IoU Pairs",
-        "Average IoU",
+        "DanceTrack IoU",
+        "Original Average IoU",
         "IoU Standard Deviation",
     ]
 
@@ -223,15 +244,15 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    
+
     # Save svg
     svg_output_path = output_path.replace(".png", ".svg")
     plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
-    
+
     # Save eps
     eps_output_path = output_path.replace(".png", ".eps")
     plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
-    
+
     plt.close()
 
     print(f"IoU distribution histogram saved to: {output_path}")
@@ -244,10 +265,10 @@ def plot_sequence_iou_bar_chart(
     sequence_results: List, output_path: str, top_n: int = 50
 ):
     """
-    绘制序列IoU均值的柱状图
+    绘制序列IoU均值的柱状图 (使用DanceTrack IoU)
 
     Args:
-        sequence_results: 序列结果列表 [(video_name, seq_name, frame_count, valid_pairs, avg_iou, std_iou)]
+        sequence_results: 序列结果列表
         output_path: 输出路径
         top_n: 显示前N个序列
     """
@@ -255,9 +276,9 @@ def plot_sequence_iou_bar_chart(
         print("Warning: No sequence results available for plotting")
         return
 
-    # 过滤掉IoU为0的序列并按IoU排序
+    # 过滤掉IoU为0的序列并按DanceTrack IoU排序 (索引5是DanceTrack IoU)
     valid_results = [
-        (result[1], result[4]) for result in sequence_results if result[4] > 0
+        (result[1], result[5]) for result in sequence_results if result[5] > 0
     ]
     valid_results.sort(key=lambda x: x[1], reverse=True)
 
@@ -266,7 +287,7 @@ def plot_sequence_iou_bar_chart(
         valid_results = valid_results[:top_n]
 
     if not valid_results:
-        print("Warning: No valid sequences with IoU > 0")
+        print("Warning: No valid sequences with DanceTrack IoU > 0")
         return
 
     # 提取序列名和IoU值
@@ -311,32 +332,33 @@ def plot_sequence_iou_bar_chart(
         color=colors[0],
         linestyle="--",
         linewidth=2,
-        label=f"Mean IoU: {mean_iou:.3f}",
+        label=f"Mean DanceTrack IoU: {mean_iou:.3f}",
     )
 
     plt.title(
-        f"Top {len(valid_results)} Sequences by Average Adjacent Frame IoU", fontsize=16
+        f"Top {len(valid_results)} Sequences by DanceTrack Adjacent Frame IoU",
+        fontsize=16,
     )
     plt.xlabel("Sequence Name", fontsize=12)
-    plt.ylabel("Average IoU", fontsize=12)
+    plt.ylabel("DanceTrack IoU", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7, axis="y")
     plt.legend()
     plt.tight_layout()
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
-    
+
     # Save svg
     svg_output_path = output_path.replace(".png", ".svg")
     plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
-    
+
     # Save eps
     eps_output_path = output_path.replace(".png", ".eps")
     plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
-    
+
     plt.close()
 
-    print(f"Sequence IoU bar chart saved to: {output_path}")
+    print(f"Sequence DanceTrack IoU bar chart saved to: {output_path}")
 
 
 def parse_args():
@@ -368,7 +390,7 @@ def parse_args():
 
     opt = parser.parse_args()
 
-    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
+    # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
 
     return opt
 
@@ -384,7 +406,7 @@ def main():
     # 输出目录设置
     output_dir_path = os.path.dirname(os.path.abspath(__file__))
     output_dir_path = os.path.join(output_dir_path, "output")
-    output_dir_path = os.path.join(output_dir_path, "iou")
+    output_dir_path = os.path.join(output_dir_path, "iou_dancetrack")
 
     # 获取数据集层级信息用于输出目录命名
     level1 = os.path.basename(base_path)
@@ -424,6 +446,11 @@ def main():
 
     total_frames = 0
     total_valid_pairs = 0
+    total_objects = 0
+
+    # DanceTrack式统计
+    total_dancetrack_iou_sum = 0.0
+    total_theoretical_pairs = 0
 
     # 新增：用于加权平均计算的数据
     weighted_iou_sum = 0.0  # 加权IoU总和
@@ -441,8 +468,8 @@ def main():
             sequence_name = os.path.basename(sequence_dir_path)
 
             # 计算该序列的相邻帧IoU
-            avg_iou, valid_pairs, frame_count = calculate_sequence_adjacent_iou(
-                sequence_dir_path
+            dancetrack_iou, valid_pairs, frame_count, original_avg_iou, object_count = (
+                calculate_sequence_adjacent_iou(sequence_dir_path)
             )
 
             # 计算标准差 (需要重新计算获取所有IoU值)
@@ -488,29 +515,55 @@ def main():
                 if iou_values:
                     std_iou = np.std(iou_values)
 
-            # 添加结果
+            # 添加结果 [video_name, sequence_name, frame_count, object_count, valid_pairs, dancetrack_iou, original_avg_iou, std_iou]
             results.append(
-                [video_name, sequence_name, frame_count, valid_pairs, avg_iou, std_iou]
+                [
+                    video_name,
+                    sequence_name,
+                    frame_count,
+                    object_count,
+                    valid_pairs,
+                    dancetrack_iou,
+                    original_avg_iou,
+                    std_iou,
+                ]
             )
 
-            if avg_iou > 0:  # 只有有效的序列才添加到柱状图数据
+            if dancetrack_iou > 0:  # 只有有效的序列才添加到柱状图数据
                 sequence_avg_ious.append(
                     (
                         video_name,
                         sequence_name,
                         frame_count,
+                        object_count,
                         valid_pairs,
-                        avg_iou,
+                        dancetrack_iou,
+                        original_avg_iou,
                         std_iou,
                     )
                 )
 
-                # 新增：累加加权IoU计算所需数据
-                weighted_iou_sum += avg_iou * frame_count
+                # 新增：累加加权IoU计算所需数据 (使用DanceTrack IoU)
+                weighted_iou_sum += dancetrack_iou * frame_count
                 total_weighted_frames += frame_count
+
+            # DanceTrack式全局统计
+            if object_count > 0 and frame_count > 1:
+                frame_intervals = frame_count - 1
+                theoretical_pairs = object_count * frame_intervals
+                total_dancetrack_iou_sum += dancetrack_iou * theoretical_pairs
+                total_theoretical_pairs += theoretical_pairs
 
             total_frames += frame_count
             total_valid_pairs += valid_pairs
+            total_objects += object_count
+
+    # 计算全局DanceTrack IoU
+    global_dancetrack_iou = (
+        total_dancetrack_iou_sum / total_theoretical_pairs
+        if total_theoretical_pairs > 0
+        else 0.0
+    )
 
     # 计算按帧数加权的数据集IoU
     dataset_weighted_iou = (
@@ -529,22 +582,38 @@ def main():
         plot_sequence_iou_bar_chart(sequence_avg_ious, seq_bar_path)
 
     # 生成总结报告
-    valid_sequences = [r for r in results if r[4] > 0]
-    overall_avg_iou = np.mean([r[4] for r in valid_sequences]) if valid_sequences else 0
-    overall_std_iou = np.std([r[4] for r in valid_sequences]) if valid_sequences else 0
+    valid_sequences = [r for r in results if r[5] > 0]  # 使用DanceTrack IoU判断
+    dancetrack_avg_iou = (
+        np.mean([r[5] for r in valid_sequences]) if valid_sequences else 0
+    )  # DanceTrack IoU
+    original_avg_iou = (
+        np.mean([r[6] for r in valid_sequences]) if valid_sequences else 0
+    )  # 原始平均IoU
+    dancetrack_std_iou = (
+        np.std([r[5] for r in valid_sequences]) if valid_sequences else 0
+    )
 
     summary_lines = [
         "=" * 60,
-        "Adjacent Frame IoU Statistics Summary",
+        "Adjacent Frame IoU Statistics Summary (DanceTrack Style)",
         "=" * 60,
         f"Total Videos: {len(filtered_video_dirs)}",
         f"Total Sequences: {len(results)}",
-        f"Valid Sequences (IoU > 0): {len(valid_sequences)}",
+        f"Valid Sequences (DanceTrack IoU > 0): {len(valid_sequences)}",
         f"Total Frames: {total_frames}",
+        f"Total Objects: {total_objects}",
         f"Total Valid IoU Pairs: {total_valid_pairs}",
-        f"Overall Average IoU (Unweighted): {overall_avg_iou:.4f}",
-        f"Dataset IoU (Frame-Weighted): {dataset_weighted_iou:.4f}",
-        f"Overall Standard Deviation: {overall_std_iou:.4f}",
+        f"Total Theoretical Pairs: {total_theoretical_pairs}",
+        "=" * 60,
+        "DanceTrack IoU Formula: U = 1/(N*(T-1)) * ∑∑IoU",
+        f"Global DanceTrack IoU: {global_dancetrack_iou:.4f}",
+        f"Sequence Average DanceTrack IoU: {dancetrack_avg_iou:.4f}",
+        f"DanceTrack IoU Standard Deviation: {dancetrack_std_iou:.4f}",
+        "=" * 60,
+        "Comparison with Original Method:",
+        f"Original Average IoU (Simple Mean): {original_avg_iou:.4f}",
+        f"Frame-Weighted DanceTrack IoU: {dataset_weighted_iou:.4f}",
+        f"Difference (DanceTrack - Original): {dancetrack_avg_iou - original_avg_iou:.4f}",
         "=" * 60,
     ]
 
@@ -558,11 +627,6 @@ def main():
                 f"  Median: {np.median(all_sequence_iou_values):.4f}",
                 f"  Min: {np.min(all_sequence_iou_values):.4f}",
                 f"  Max: {np.max(all_sequence_iou_values):.4f}",
-                "=" * 60,
-                f"Weighted vs Unweighted IoU Comparison:",
-                f"  Unweighted Average IoU: {overall_avg_iou:.4f}",
-                f"  Frame-Weighted Dataset IoU: {dataset_weighted_iou:.4f}",
-                f"  Difference: {abs(dataset_weighted_iou - overall_avg_iou):.4f}",
                 "=" * 60,
             ]
         )
@@ -580,7 +644,7 @@ def main():
     print(f"IoU histogram saved to: {iou_hist_path}")
     print(f"Sequence bar chart saved to: {seq_bar_path}")
     print(f"Summary saved to: {summary_txt_path}")
-    print(f"Dataset Frame-Weighted IoU: {dataset_weighted_iou:.4f}")
+    print(f"Global DanceTrack IoU: {global_dancetrack_iou:.4f}")
     print(f"Processing completed in {end_time - start_time:.2f} seconds")
 
 
