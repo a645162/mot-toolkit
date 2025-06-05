@@ -1,6 +1,7 @@
 # Image Processing
 torchvision
 pillow
+cairosvg
 opencv-python
 
 # Dataset Spilt
