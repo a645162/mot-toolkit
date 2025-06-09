@@ -4,6 +4,7 @@ from typing import List, Union
 
 import cv2
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QScreen
 
 from PySide6.QtWidgets import (
     QApplication,
@@ -92,10 +93,30 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         # Create widget
         self.__init_ui(current_frame, thickness, selection_label)
 
+        # 确保窗口正确显示
+        self.adjustSize()
         self.move_to_center()
 
     def __setup_properties(self):
         self.setWindowTitle("OpenCV Preview")
+
+    def move_to_center(self):
+        """将窗口移动到屏幕中央"""
+        # 获取主屏幕
+        screen = QApplication.primaryScreen()
+        if screen is None:
+            return
+            
+        # 获取屏幕几何信息
+        screen_geometry = screen.availableGeometry()
+        
+        # 计算窗口应该放置的位置（屏幕中央）
+        window_geometry = self.frameGeometry()
+        center_point = screen_geometry.center()
+        window_geometry.moveCenter(center_point)
+        
+        # 移动窗口到计算出的位置
+        self.move(window_geometry.topLeft())
 
     def __init_ui(self, current_frame: int, thickness: int, selection_label: str):
         main_layout = QVBoxLayout()
