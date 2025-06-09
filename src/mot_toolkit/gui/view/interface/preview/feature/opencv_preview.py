@@ -8,17 +8,26 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
-    QVBoxLayout, QHBoxLayout, QGroupBox,
+    QVBoxLayout,
+    QHBoxLayout,
+    QGroupBox,
     QColorDialog,
-    QLabel, QLineEdit, QPushButton, QCheckBox,
-    QMessageBox
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QCheckBox,
+    QMessageBox,
 )
 from PySide6.QtGui import QColor
 
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotation
 
-from mot_toolkit.gui.view.components.widget.combination.directory_select_widget import DirectorySelectWidget
-from mot_toolkit.gui.view.components.widget.combination.file_save_widget import FileSaveWidget
+from mot_toolkit.gui.view.components.widget.combination.directory_select_widget import (
+    DirectorySelectWidget,
+)
+from mot_toolkit.gui.view.components.widget.combination.file_save_widget import (
+    FileSaveWidget,
+)
 from mot_toolkit.gui.view.components.window.base_q_main_window import BaseQMainWindow
 
 
@@ -40,18 +49,18 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
     color_dict: dict
 
     def __init__(
-            self,
-            annotation_file: List[XAnyLabelingAnnotation] = None,
-            current_frame: int = -1,
-            start_frame: int = 0,
-            end_frame: int = 1,
-            unselected_color: Union[tuple, QColor] = (0, 255, 0),
-            selected_color: Union[tuple, QColor] = (0, 255, 255),
-            text_color: Union[tuple, QColor] = (0, 0, 255),
-            thickness: int = 2,
-            selection_label: str = "",
-            color_dict: dict = None,
-            parent=None
+        self,
+        annotation_file: List[XAnyLabelingAnnotation] = None,
+        current_frame: int = -1,
+        start_frame: int = 0,
+        end_frame: int = 1,
+        unselected_color: Union[tuple, QColor] = (0, 255, 0),
+        selected_color: Union[tuple, QColor] = (0, 255, 255),
+        text_color: Union[tuple, QColor] = (0, 0, 255),
+        thickness: int = 2,
+        selection_label: str = "",
+        color_dict: dict = None,
+        parent=None,
     ):
         super().__init__(parent=parent)
 
@@ -86,14 +95,9 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         self.move_to_center()
 
     def __setup_properties(self):
-        self.setWindowTitle('OpenCV Preview')
+        self.setWindowTitle("OpenCV Preview")
 
-    def __init_ui(
-            self,
-            current_frame: int,
-            thickness: int,
-            selection_label: str
-    ):
+    def __init_ui(self, current_frame: int, thickness: int, selection_label: str):
         main_layout = QVBoxLayout()
 
         content_widget = QWidget()
@@ -113,12 +117,12 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_picture.setLayout(group_picture_layout)
         left_layout.addWidget(group_picture)
 
-        self.max_width_label = QLabel('Max Width')
+        self.max_width_label = QLabel("Max Width")
         group_picture_layout.addWidget(self.max_width_label)
         self.max_width_edit = QLineEdit(str(1920))
         group_picture_layout.addWidget(self.max_width_edit)
 
-        self.max_height_label = QLabel('Max Height')
+        self.max_height_label = QLabel("Max Height")
         group_picture_layout.addWidget(self.max_height_label)
         self.max_height_edit = QLineEdit(str(1080))
         group_picture_layout.addWidget(self.max_height_edit)
@@ -129,31 +133,31 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_range.setLayout(group_range_layout)
         left_layout.addWidget(group_range)
 
-        self.start_label = QLabel('Start Frame:')
+        self.start_label = QLabel("Start Frame:")
         group_range_layout.addWidget(self.start_label)
         self.start_edit = QLineEdit(str(self.frame_index_min))
         group_range_layout.addWidget(self.start_edit)
 
-        self.end_label = QLabel('End Frame:')
+        self.end_label = QLabel("End Frame:")
         group_range_layout.addWidget(self.end_label)
         self.end_edit = QLineEdit(str(self.frame_index_max))
         group_range_layout.addWidget(self.end_edit)
 
         self.label_frame_range = QLabel(
-            f'Frame Range: {self.frame_index_min} - {self.frame_index_max}'
+            f"Frame Range: {self.frame_index_min} - {self.frame_index_max}"
         )
         group_range_layout.addWidget(self.label_frame_range)
-        self.label_current_frame = QLabel(f'Current Frame: {current_frame}')
+        self.label_current_frame = QLabel(f"Current Frame: {current_frame}")
         group_range_layout.addWidget(self.label_current_frame)
 
         range_widget = QWidget()
         range_layout = QHBoxLayout()
         range_widget.setLayout(range_layout)
 
-        self.button_current_frame = QPushButton('Current Frame')
+        self.button_current_frame = QPushButton("Current Frame")
         self.button_current_frame.clicked.connect(self.set_current_frame)
         range_layout.addWidget(self.button_current_frame)
-        self.button_restore_range = QPushButton('Restore Range')
+        self.button_restore_range = QPushButton("Restore Range")
         self.button_restore_range.clicked.connect(self.restore_range)
         range_layout.addWidget(self.button_restore_range)
 
@@ -169,18 +173,18 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_play_control.setLayout(group_play_control_layout)
         left_layout.addWidget(group_play_control)
 
-        self.play_loop_checkbox = QCheckBox('Play in a loop')
+        self.play_loop_checkbox = QCheckBox("Play in a loop")
         group_play_control_layout.addWidget(self.play_loop_checkbox)
         self.play_loop_checkbox.setChecked(False)
         group_play_control_layout.addWidget(self.play_loop_checkbox)
-        self.pause_on_last_frame_checkbox = QCheckBox('Pause on Last Frame')
+        self.pause_on_last_frame_checkbox = QCheckBox("Pause on Last Frame")
         group_play_control_layout.addWidget(self.pause_on_last_frame_checkbox)
         self.pause_on_last_frame_checkbox.setChecked(False)
         group_play_control_layout.addWidget(self.pause_on_last_frame_checkbox)
 
-        self.frame_interval_label = QLabel('Frame Interval:')
+        self.frame_interval_label = QLabel("Frame Interval:")
         group_play_control_layout.addWidget(self.frame_interval_label)
-        self.frame_interval_edit = QLineEdit('1')
+        self.frame_interval_edit = QLineEdit("1")
         group_play_control_layout.addWidget(self.frame_interval_edit)
 
         #########################
@@ -193,15 +197,15 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_screen_control.setLayout(group_screen_control_layout)
         right_layout.addWidget(group_screen_control)
 
-        self.show_frame_text_checkbox = QCheckBox('Show Frame Text')
+        self.show_frame_text_checkbox = QCheckBox("Show Frame Text")
         group_screen_control_layout.addWidget(self.show_frame_text_checkbox)
         self.show_frame_text_checkbox.setChecked(True)
 
-        self.frame_progress_checkbox = QCheckBox('Show Frame Progress')
+        self.frame_progress_checkbox = QCheckBox("Show Frame Progress")
         group_screen_control_layout.addWidget(self.frame_progress_checkbox)
         self.frame_progress_checkbox.setChecked(True)
 
-        self.frame_object_count_checkbox = QCheckBox('Show Frame Object Count')
+        self.frame_object_count_checkbox = QCheckBox("Show Frame Object Count")
         group_screen_control_layout.addWidget(self.frame_object_count_checkbox)
         self.frame_object_count_checkbox.setChecked(True)
 
@@ -211,32 +215,32 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_box_control.setLayout(group_box_control_layout)
         right_layout.addWidget(group_box_control)
 
-        self.show_box_checkbox = QCheckBox('Show Box')
+        self.show_box_checkbox = QCheckBox("Show Box")
         group_box_control_layout.addWidget(self.show_box_checkbox)
         self.show_box_checkbox.setChecked(True)
-        self.different_color_checkbox = QCheckBox('Different Color')
+        self.different_color_checkbox = QCheckBox("Different Color")
         group_box_control_layout.addWidget(self.different_color_checkbox)
         self.different_color_checkbox.setChecked(True)
-        self.with_text_checkbox = QCheckBox('With Text')
+        self.with_text_checkbox = QCheckBox("With Text")
         group_box_control_layout.addWidget(self.with_text_checkbox)
         self.with_text_checkbox.setChecked(False)
-        self.center_point_trajectory_checkbox = QCheckBox('Center Point Trajectory')
+        self.center_point_trajectory_checkbox = QCheckBox("Center Point Trajectory")
         group_box_control_layout.addWidget(self.center_point_trajectory_checkbox)
         self.center_point_trajectory_checkbox.setChecked(True)
 
-        self.select_color_button = QPushButton('Select Selected Color')
+        self.select_color_button = QPushButton("Select Selected Color")
         self.select_color_button.clicked.connect(self.select_selected_color)
         group_box_control_layout.addWidget(self.select_color_button)
-        self.text_color_button = QPushButton('Select Text Color')
+        self.text_color_button = QPushButton("Select Text Color")
         self.text_color_button.clicked.connect(self.select_text_color)
         group_box_control_layout.addWidget(self.text_color_button)
-        self.unselect_color_button = QPushButton('Select Unselected Color')
+        self.unselect_color_button = QPushButton("Select Unselected Color")
         self.unselect_color_button.clicked.connect(self.select_unselected_color)
         group_box_control_layout.addWidget(self.unselect_color_button)
         # Set Button Text Color
         self.update_color_buttons_style()
 
-        self.thickness_label = QLabel('Thickness:')
+        self.thickness_label = QLabel("Thickness:")
         group_box_control_layout.addWidget(self.thickness_label)
         self.thickness_edit = QLineEdit(str(thickness))
         group_box_control_layout.addWidget(self.thickness_edit)
@@ -246,19 +250,19 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_filter_layout = QVBoxLayout()
         group_filter.setLayout(group_filter_layout)
         right_layout.addWidget(group_filter)
-        self.only_near_selection_checkbox = QCheckBox('Only Near Selection')
+        self.only_near_selection_checkbox = QCheckBox("Only Near Selection")
         group_filter_layout.addWidget(self.only_near_selection_checkbox)
         self.only_near_selection_checkbox.setChecked(False)
-        self.only_selection_box = QCheckBox('Only Selection Box')
+        self.only_selection_box = QCheckBox("Only Selection Box")
         group_filter_layout.addWidget(self.only_selection_box)
         self.only_selection_box.setChecked(False)
 
-        self.selection_label_label = QLabel('Selection Label:')
+        self.selection_label_label = QLabel("Selection Label:")
         group_filter_layout.addWidget(self.selection_label_label)
         self.selection_label_edit = QLineEdit(selection_label)
         group_filter_layout.addWidget(self.selection_label_edit)
 
-        self.crop_padding_label = QLabel('Crop Padding:')
+        self.crop_padding_label = QLabel("Crop Padding:")
         group_filter_layout.addWidget(self.crop_padding_label)
         self.crop_padding_edit = QLineEdit("50")
         group_filter_layout.addWidget(self.crop_padding_edit)
@@ -269,7 +273,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         group_output.setLayout(group_output_layout)
         left_layout.addWidget(group_output)
 
-        self.output_video_checkbox = QCheckBox('Output Video')
+        self.output_video_checkbox = QCheckBox("Output Video")
         group_output_layout.addWidget(self.output_video_checkbox)
         self.output_video_checkbox.setChecked(False)
 
@@ -279,9 +283,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         now = datetime.datetime.now()
         formatted_time = now.strftime("%Y-%m-%d-%H-%M-%S")
         self.video_path_widget.file_path = f"Output/{formatted_time}.mp4"
-        self.video_path_widget.filter = "MP4 Video (*.mp4);;AVI Video (*.avi);;All Files (*)"
+        self.video_path_widget.filter = (
+            "MP4 Video (*.mp4);;AVI Video (*.avi);;All Files (*)"
+        )
 
-        self.output_frame_checkbox = QCheckBox('Output Frame')
+        self.output_frame_checkbox = QCheckBox("Output Frame")
         group_output_layout.addWidget(self.output_frame_checkbox)
         self.output_frame_checkbox.setChecked(False)
 
@@ -294,11 +300,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         control_button_layout = QHBoxLayout()
         control_button_widget.setLayout(control_button_layout)
 
-        self.ok_button = QPushButton('Start')
+        self.ok_button = QPushButton("Start")
         self.ok_button.clicked.connect(self.accept)
         control_button_layout.addWidget(self.ok_button)
 
-        self.cancel_button = QPushButton('Close')
+        self.cancel_button = QPushButton("Close")
         self.cancel_button.clicked.connect(self.reject)
         control_button_layout.addWidget(self.cancel_button)
 
@@ -359,9 +365,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         # self.unselect_color_button.setStyleSheet(f'background-color: {self.unselected_color.name()};')
 
         # Set button Text Color
-        self.select_color_button.setStyleSheet(f'color: {self.selected_color.name()};')
-        self.text_color_button.setStyleSheet(f'color: {self.text_color.name()};')
-        self.unselect_color_button.setStyleSheet(f'color: {self.unselected_color.name()};')
+        self.select_color_button.setStyleSheet(f"color: {self.selected_color.name()};")
+        self.text_color_button.setStyleSheet(f"color: {self.text_color.name()};")
+        self.unselect_color_button.setStyleSheet(
+            f"color: {self.unselected_color.name()};"
+        )
 
         # # Set button Background Color(Reverse Color)
         # self.select_color_button.setStyleSheet(f'background-color: {reverse_color(self.selected_color).name()};')
@@ -370,7 +378,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
 
     def accept(self):
         if len(self.annotation_file_list) == 0:
-            QMessageBox.critical(self, 'Error', 'No any annotation file!')
+            QMessageBox.critical(self, "Error", "No any annotation file!")
             return
 
         try:
@@ -395,7 +403,9 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
             show_box = self.show_box_checkbox.isChecked()
             different_color = self.different_color_checkbox.isChecked()
             with_text = self.with_text_checkbox.isChecked()
-            show_center_point_trajectory = self.center_point_trajectory_checkbox.isChecked()
+            show_center_point_trajectory = (
+                self.center_point_trajectory_checkbox.isChecked()
+            )
             only_near_selection = self.only_near_selection_checkbox.isChecked()
             only_selection_box = self.only_selection_box.isChecked()
 
@@ -416,12 +426,12 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                 if not os.path.isdir(frame_save_dir_path):
                     output_frame_checkbox = False
         except ValueError:
-            QMessageBox.critical(self, 'Error', 'Invalid input')
+            QMessageBox.critical(self, "Error", "Invalid input")
             return
 
         image_width, image_height = (
             self.annotation_file_list[0].image_width,
-            self.annotation_file_list[0].image_height
+            self.annotation_file_list[0].image_height,
         )
 
         scale_ratio = 1
@@ -444,7 +454,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         if output_video:
             try:
                 # Write Test
-                with open(video_path, 'w') as f:
+                with open(video_path, "w") as f:
                     f.write("Test")
 
                 # Remove
@@ -453,11 +463,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                 output_video = False
 
         if start_frame < self.frame_index_min or start_frame > self.frame_index_max:
-            QMessageBox.critical(self, 'Error', 'Start frame out of range')
+            QMessageBox.critical(self, "Error", "Start frame out of range")
             return
 
         if frame_interval < 0:
-            QMessageBox.critical(self, 'Error', 'Frame interval should be positive')
+            QMessageBox.critical(self, "Error", "Frame interval should be positive")
             return
 
         selected_color = self.selected_color
@@ -476,11 +486,13 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
 
             video_out = None
             if output_video:
-                if video_path.endswith('.mp4'):
-                    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+                if video_path.endswith(".mp4"):
+                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
                 else:
-                    fourcc = cv2.VideoWriter_fourcc(*'XVID')
-                video_out = cv2.VideoWriter(video_path, fourcc, 30.0, (image_width, image_height))
+                    fourcc = cv2.VideoWriter_fourcc(*"XVID")
+                video_out = cv2.VideoWriter(
+                    video_path, fourcc, 30.0, (image_width, image_height)
+                )
 
             for i, annotation in enumerate(self.annotation_file_list):
                 frame_index = i + 1
@@ -501,8 +513,9 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                         only_selection_box=only_selection_box,
                         crop_selection=only_near_selection,
                         not_found_return_none=only_near_selection,
+                        crop_xyxy=(0, 0, 0, 0),
                         crop_padding=crop_padding,
-                        color_dict=self.color_dict if different_color else None
+                        color_dict=self.color_dict if different_color else None,
                     )
                 else:
                     image = annotation.get_cv_mat()
@@ -527,7 +540,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                         cv2.FONT_HERSHEY_SIMPLEX,
                         1,
                         (0, 255, 0),
-                        2
+                        2,
                     )
 
                 # Resize
@@ -536,8 +549,8 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                         image,
                         (
                             int(image_width * scale_ratio),
-                            int(image_height * scale_ratio)
-                        )
+                            int(image_height * scale_ratio),
+                        ),
                     )
 
                 if output_frame_checkbox:
@@ -549,11 +562,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     video_out.write(image)
                 cv2.imshow("OpenCV Preview", image)
                 if is_last_frame and pause_on_last_frame:
-                    if cv2.waitKey(0) & 0xFF == ord('q'):
+                    if cv2.waitKey(0) & 0xFF == ord("q"):
                         loop_play = False
                         break
                 else:
-                    if cv2.waitKey(frame_interval) & 0xFF == ord('q'):
+                    if cv2.waitKey(frame_interval) & 0xFF == ord("q"):
                         loop_play = False
                         break
             if video_out:
@@ -566,7 +579,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         self.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app = QApplication([])
 
     window = OpenCVPreviewOptionWindow(start_frame=1, end_frame=100)

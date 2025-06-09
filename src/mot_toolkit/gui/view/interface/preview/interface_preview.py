@@ -2574,7 +2574,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         crop_image = self.current_annotation_object.get_cv_mat_with_box(
             with_text=False,
-            crop_x1=x1, crop_y1=y1, crop_x2=x2, crop_y2=y2
+            crop_xyxy=(x1, y1, x2, y2)
         )
         if crop_image is None:
             QMessageBox.warning(self, "Warning", "Image is None.")

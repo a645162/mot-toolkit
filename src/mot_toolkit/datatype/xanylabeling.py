@@ -15,13 +15,12 @@ from mot_toolkit.config.hardware import cpu_count
 from mot_toolkit.datatype.common.object_annotation import ObjectAnnotation
 from mot_toolkit.datatype.common.annotation_file import AnnotationFile
 from mot_toolkit.datatype.common.dataset_directory import AnnotationDirectory
-from mot_toolkit.datatype.common.rect_data_annotation import (
-    RectDataAnnotation
-)
+from mot_toolkit.datatype.common.rect_data_annotation import RectDataAnnotation
 from mot_toolkit.datatype.math.interpolate import liner_interpolate_position
 from mot_toolkit.parser.json_parser import parse_json_to_dict
 
 from mot_toolkit.utils.logs import get_logger
+from mot_toolkit.utils.image_renderer import render_image_with_annotations
 
 logger = get_logger()
 
@@ -138,7 +137,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 rect_item.center_x_ratio,
                 rect_item.center_y_ratio,
                 rect_item.width_ratio,
-                rect_item.height_ratio
+                rect_item.height_ratio,
             )
 
             end_count = 6
@@ -146,7 +145,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 round(x, end_count),
                 round(y, end_count),
                 round(w, end_count),
-                round(h, end_count)
+                round(h, end_count),
             )
 
             label = rect_item.label
@@ -179,24 +178,16 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         # Convert Dict to Json String
         try:
-            json_string = \
-                json.dumps(
-                    result_dict,
-                    sort_keys=False,
-                    indent=2,
-                    separators=(',', ': ')
-                )
+            json_string = json.dumps(
+                result_dict, sort_keys=False, indent=2, separators=(",", ": ")
+            )
         except Exception as e:
             logger.error(f"Error in to_json_string: {e}")
             return ""
 
         return json_string.strip() + "\n"
 
-    def save_json(
-            self,
-            save_path: str = "",
-            with_log: bool = True
-    ) -> bool:
+    def save_json(self, save_path: str = "", with_log: bool = True) -> bool:
         save_path = save_path.strip()
         if len(save_path) == 0:
             save_path = self.file_path
@@ -232,10 +223,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
         if not super().save():
             return False
 
-        save_result = self.save_json(
-            save_path=self.file_path,
-            with_log=with_log
-        )
+        save_result = self.save_json(save_path=self.file_path, with_log=with_log)
 
         # Update Original Dict
         new_dict = self.to_dict()
@@ -283,8 +271,10 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 current_rect_annotation.text = item_text
 
                 current_rect_annotation.set_by_rect_two_point(
-                    item_points[0][0], item_points[0][1],
-                    item_points[1][0], item_points[1][1]
+                    item_points[0][0],
+                    item_points[0][1],
+                    item_points[1][0],
+                    item_points[1][1],
                 )
 
                 current_rect_annotation.group_id = item_group_id
@@ -295,12 +285,12 @@ class XAnyLabelingAnnotation(AnnotationFile):
                 current_rect_annotation.picture_width = self.image_width
                 current_rect_annotation.picture_height = self.image_height
 
-                self.rect_annotation_list.append(
-                    current_rect_annotation
-                )
+                self.rect_annotation_list.append(current_rect_annotation)
             else:
                 self.other_shape_dict_list.append(shape_item)
-                logger.info(f"Unknown shape type: {item_label}({item_shape_type}) in {self.file_path}")
+                logger.info(
+                    f"Unknown shape type: {item_label}({item_shape_type}) in {self.file_path}"
+                )
 
         self.is_modified = False
         if not self.pause_emit:
@@ -312,11 +302,8 @@ class XAnyLabelingAnnotation(AnnotationFile):
         modified = False
 
         for rect_item in self.rect_annotation_list:
-            if (
-                    rect_item.fix_bugs(
-                        image_width=self.image_width,
-                        image_height=self.image_height
-                    )
+            if rect_item.fix_bugs(
+                image_width=self.image_width, image_height=self.image_height
             ):
                 modified = True
 
@@ -405,7 +392,9 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return tag_list
 
-    def get_target_name_rect_annotation_list(self, target_name: str) -> List[RectDataAnnotation]:
+    def get_target_name_rect_annotation_list(
+        self, target_name: str
+    ) -> List[RectDataAnnotation]:
         target_name_annotation_list = []
 
         for rect_item in self.rect_annotation_list:
@@ -414,10 +403,14 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return target_name_annotation_list
 
-    def get_target_name_annotation_list(self, target_name: str) -> List[ObjectAnnotation]:
+    def get_target_name_annotation_list(
+        self, target_name: str
+    ) -> List[ObjectAnnotation]:
         target_name_annotation_list: List[ObjectAnnotation] = []
 
-        target_name_annotation_list.extend(self.get_target_name_rect_annotation_list(target_name))
+        target_name_annotation_list.extend(
+            self.get_target_name_rect_annotation_list(target_name)
+        )
 
         return target_name_annotation_list
 
@@ -439,10 +432,12 @@ class XAnyLabelingAnnotation(AnnotationFile):
         self.rect_annotation_list.append(rect_item.copy())
 
     def add_rect(
-            self,
-            label_name: str,
-            x: int = 0, y: int = 0,
-            width: int = 50, height: int = 50,
+        self,
+        label_name: str,
+        x: int = 0,
+        y: int = 0,
+        width: int = 50,
+        height: int = 50,
     ) -> bool:
         label_name = label_name.strip()
 
@@ -478,193 +473,46 @@ class XAnyLabelingAnnotation(AnnotationFile):
         return img_np
 
     def get_cv_mat_with_box(
-            self,
-            with_text=True,
-            color: Union[tuple, QColor] = (0, 255, 0),
-            text_color: Union[tuple, QColor] = (0, 0, 255),
-            thickness: int = 2,
-            center_point_trajectory: dict = None,
-            draw_trajectory: bool = False,
-            trajectory_line_mode: bool = True,
-            selection_label: str = "",
-            selection_color: Union[tuple, QColor] = (0, 255, 255),
-            not_found_return_none: bool = False,
-            only_selection_box: bool = False,
-            crop_selection: bool = False,
-            crop_x1: int = 0, crop_y1: int = 0,
-            crop_x2: int = 0, crop_y2: int = 0,
-            crop_padding: int = 50,
-            crop_min_size: int = 1000,
-            color_dict: dict = None
+        self,
+        with_text=True,
+        color: Union[tuple, QColor] = (0, 255, 0),
+        text_color: Union[tuple, QColor] = (0, 0, 255),
+        thickness: int = 2,
+        center_point_trajectory: dict = None,
+        draw_trajectory: bool = False,
+        trajectory_line_mode: bool = True,
+        selection_label: str = "",
+        selection_color: Union[tuple, QColor] = (0, 255, 255),
+        not_found_return_none: bool = False,
+        only_selection_box: bool = False,
+        crop_selection: bool = False,
+        crop_xyxy: tuple = (0, 0, 0, 0),
+        crop_padding: int = 50,
+        crop_min_size: int = 1000,
+        color_dict: dict = None,
     ) -> Optional[np.ndarray]:
-        if center_point_trajectory is None:
-            center_point_trajectory = {}
-        if color_dict is None:
-            color_dict = {}
         img_np = self.get_cv_mat()
-        if img_np is None:
-            return None
 
-        new_image = img_np.copy()
-
-        def rgb2bgr(rgb: object) -> tuple:
-            return rgb[2], rgb[1], rgb[0]
-
-        if isinstance(color, QColor):
-            color = rgb2bgr(color.getRgb())
-        if isinstance(text_color, QColor):
-            text_color = rgb2bgr(text_color.getRgb())
-        if isinstance(selection_color, QColor):
-            selection_color = rgb2bgr(selection_color.getRgb())
-
-        selection_x1, selection_y1, selection_x2, selection_y2 = 0, 0, 0, 0
-        found_selection = False
-
-        for rect_item in self.rect_annotation_list:
-            x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
-            center_x, center_y = rect_item.center_x, rect_item.center_y
-            label = rect_item.label.strip()
-
-            if label != "":
-                if label not in center_point_trajectory.keys():
-                    center_point_trajectory[label] = []
-
-                center_point_trajectory[label].append((center_x, center_y))
-
-            current_color = color
-
-            found_color = False
-            if label in color_dict.keys():
-                found_color_obj: QColor = color_dict[label]
-                current_color = rgb2bgr(found_color_obj.getRgb())
-                found_color = True
-
-            if len(selection_label) > 0:
-                # Find Selection
-                if rect_item.label == selection_label:
-                    if not found_color:
-                        current_color = selection_color
-
-                    (
-                        selection_x1,
-                        selection_y1,
-                        selection_x2,
-                        selection_y2
-                    ) = x1, y1, x2, y2
-                    found_selection = True
-                else:
-                    if only_selection_box:
-                        continue
-
-            new_image = \
-                cv2.rectangle(
-                    new_image,
-                    (x1, y1),
-                    (x2, y2),
-                    current_color,
-                    thickness
-                )
-
-            # Draw Trajectory
-            if (
-                    draw_trajectory and
-                    len(center_point_trajectory.keys()) > 0 and
-                    label and
-                    label in center_point_trajectory.keys()
-            ):
-                if trajectory_line_mode:
-                    # Draw line between points
-                    last_point = None
-                    for point in center_point_trajectory[label]:
-                        center_x, center_y = point
-                        if last_point is not None:
-                            new_image = cv2.line(
-                                new_image,
-                                last_point,
-                                (int(center_x), int(center_y)),
-                                current_color,
-                                thickness
-                            )
-                        last_point = (int(center_x), int(center_y))
-                else:
-                    for point in center_point_trajectory[label]:
-                        center_x, center_y = point
-                        new_image = cv2.circle(
-                            new_image,
-                            (int(center_x), int(center_y)),
-                            3,
-                            current_color,
-                            -1
-                        )
-
-            if with_text:
-                text = f"{label}"
-
-                cv2.putText(
-                    new_image,
-                    text,
-                    (x1, y1 + 30),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    text_color,
-                    2
-                )
-
-        if (
-                not_found_return_none and
-                len(selection_label) > 0 and
-                not found_selection
-        ):
-            return None
-
-        crop_selection = crop_selection and found_selection
-
-        if (
-                (not crop_selection) and
-                (
-                        crop_x1 == 0 and
-                        crop_y1 == 0 and
-                        crop_x2 == 0 and
-                        crop_y2 == 0
-                )
-        ):
-            return new_image
-
-        image_width, image_height = new_image.shape[1], new_image.shape[0]
-
-        crop_x1 = crop_x1
-        crop_y1 = crop_y1
-        crop_x2 = crop_x2
-        crop_y2 = crop_y2
-
-        if crop_selection:
-            crop_x1 = selection_x1
-            crop_y1 = selection_y1
-            crop_x2 = selection_x2
-            crop_y2 = selection_y2
-
-        # Add Padding
-        crop_x1 -= crop_padding
-        crop_y1 -= crop_padding
-        crop_x2 += crop_padding
-        crop_y2 += crop_padding
-
-        # Fix Crop Size
-        crop_x1 = max(0, crop_x1)
-        crop_y1 = max(0, crop_y1)
-        crop_x2 = min(image_width, crop_x2)
-        crop_y2 = min(image_height, crop_y2)
-
-        crop_image = new_image[crop_y1:crop_y2, crop_x1:crop_x2]
-
-        crop_image_width, crop_image_height = crop_image.shape[1], crop_image.shape[0]
-
-        if crop_min_size > 0:
-            if crop_image_width < crop_min_size or crop_image_height < crop_min_size:
-                scale_factor = crop_min_size / max(crop_image_width, crop_image_height)
-                crop_image = cv2.resize(crop_image, (0, 0), fx=scale_factor, fy=scale_factor)
-
-        return crop_image
+        return render_image_with_annotations(
+            img_np=img_np,
+            rect_annotation_list=self.rect_annotation_list,
+            with_text=with_text,
+            color=color,
+            text_color=text_color,
+            thickness=thickness,
+            center_point_trajectory=center_point_trajectory,
+            draw_trajectory=draw_trajectory,
+            trajectory_line_mode=trajectory_line_mode,
+            selection_label=selection_label,
+            selection_color=selection_color,
+            not_found_return_none=not_found_return_none,
+            only_selection_box=only_selection_box,
+            crop_selection=crop_selection,
+            crop_xyxy=crop_xyxy,
+            crop_padding=crop_padding,
+            crop_min_size=crop_min_size,
+            color_dict=color_dict,
+        )
 
     def change_annotation_label(self, old_label: str, new_label: str) -> bool:
         have_modify = False
@@ -678,14 +526,10 @@ class XAnyLabelingAnnotation(AnnotationFile):
         return have_modify
 
 
-def parse_xanylabeling_json(
-        json_path: str,
-        index: int = -1
-) -> XAnyLabelingAnnotation:
+def parse_xanylabeling_json(json_path: str, index: int = -1) -> XAnyLabelingAnnotation:
     data: dict = parse_json_to_dict(json_path)
 
-    current_annotation_obj: XAnyLabelingAnnotation = \
-        XAnyLabelingAnnotation()
+    current_annotation_obj: XAnyLabelingAnnotation = XAnyLabelingAnnotation()
     current_annotation_obj.index = index
 
     file_name = os.path.basename(json_path)
@@ -747,12 +591,12 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         self.file_name_black_list.append(modify_store_file_name)
 
     def do_for_each_file(
-            self,
-            func: Callable[[XAnyLabelingAnnotation, int], Any],
-            multi_thread: bool = True,
-            start_index: int = -1,
-            end_index: int = -1,
-            emit_only_once: bool = True
+        self,
+        func: Callable[[XAnyLabelingAnnotation, int], Any],
+        multi_thread: bool = True,
+        start_index: int = -1,
+        end_index: int = -1,
+        emit_only_once: bool = True,
     ):
         """
         Apply a function to each file in the annotation list, optionally using multiple threads.
@@ -771,7 +615,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         if end_index == -1 or end_index > len(self.annotation_file_list):
             end_index = len(self.annotation_file_list) - 1
 
-        file_obj_list = self.annotation_file_list[start_index:end_index + 1]
+        file_obj_list = self.annotation_file_list[start_index : end_index + 1]
         file_index_list = range(start_index, end_index + 1)
 
         def work_function(file_obj: XAnyLabelingAnnotation, index: int):
@@ -822,11 +666,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         self.file_name_list.clear()
 
         for i, json_file in enumerate(self.file_list):
-            annotation = \
-                parse_xanylabeling_json(
-                    json_path=json_file,
-                    index=i
-                )
+            annotation = parse_xanylabeling_json(json_path=json_file, index=i)
 
             annotation.annotation_directory = self
 
@@ -881,18 +721,12 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             directory_path = os.path.dirname(file_path)
             file_name = os.path.basename(file_path)
             file_ext = os.path.splitext(file_name)[1]
-            if (
-                    directory_path not in directory_list and
-                    os.path.isdir(directory_path)
-            ):
+            if directory_path not in directory_list and os.path.isdir(directory_path):
                 directory_list.append(directory_path)
             if file_ext not in ext_list:
                 ext_list.append(file_ext)
 
-        only_file_name = (
-                len(directory_list) == 1 and
-                len(ext_list) == 1
-        )
+        only_file_name = len(directory_list) == 1 and len(ext_list) == 1
 
         self.__can_only_file_name = only_file_name
 
@@ -913,13 +747,21 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
     @property
     def first_file(self) -> XAnyLabelingAnnotation:
-        return self.annotation_file_list[0] if len(self.annotation_file_list) > 0 else None
+        return (
+            self.annotation_file_list[0] if len(self.annotation_file_list) > 0 else None
+        )
 
     @property
     def last_file(self) -> XAnyLabelingAnnotation:
-        return self.annotation_file_list[-1] if len(self.annotation_file_list) > 0 else None
+        return (
+            self.annotation_file_list[-1]
+            if len(self.annotation_file_list) > 0
+            else None
+        )
 
-    def get_file_object_by_file_name(self, file_name: str) -> Optional[XAnyLabelingAnnotation]:
+    def get_file_object_by_file_name(
+        self, file_name: str
+    ) -> Optional[XAnyLabelingAnnotation]:
         for annotation_obj in self.annotation_file_list:
             if annotation_obj.file_name == file_name:
                 return annotation_obj
@@ -980,9 +822,7 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         # Remove Empty Line
         file_name_list = [
-            file_name.strip()
-            for file_name in file_name_list
-            if len(file_name.strip())
+            file_name.strip() for file_name in file_name_list if len(file_name.strip())
         ]
 
         # Remove File Not Exist
@@ -993,15 +833,12 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         ]
 
         all_file_name_list = [
-            file_obj.file_name
-            for file_obj in self.annotation_file_list
+            file_obj.file_name for file_obj in self.annotation_file_list
         ]
 
         # Remove File Name Not Exist
         file_name_list = [
-            file_name
-            for file_name in all_file_name_list
-            if file_name in file_name_list
+            file_name for file_name in all_file_name_list if file_name in file_name_list
         ]
 
         first_file_name = all_file_name_list[0]
@@ -1032,7 +869,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         return interval_list
 
-    def get_file_by_frame_number(self, frame_number: int) -> Optional[XAnyLabelingAnnotation]:
+    def get_file_by_frame_number(
+        self, frame_number: int
+    ) -> Optional[XAnyLabelingAnnotation]:
         for annotation_obj in self.annotation_file_list:
             try:
                 current_frame_number = int(annotation_obj.file_name_no_extension)
@@ -1044,10 +883,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         return None
 
     def linear_interpolation(
-            self,
-            start: Union[int, str, XAnyLabelingAnnotation] = -1,
-            end: Union[int, str, XAnyLabelingAnnotation] = -1,
-            label: Union[str, List[str], None] = None,
+        self,
+        start: Union[int, str, XAnyLabelingAnnotation] = -1,
+        end: Union[int, str, XAnyLabelingAnnotation] = -1,
+        label: Union[str, List[str], None] = None,
     ) -> int:
         # Check Start Object Type
         if isinstance(start, str):
@@ -1087,57 +926,50 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                 label_list.extend(label)
 
         for label in label_list:
-            start_rect: Optional[RectDataAnnotation] = \
-                start.get_rect_by_label(label)
-            end_rect: Optional[RectDataAnnotation] = \
-                end.get_rect_by_label(label)
+            start_rect: Optional[RectDataAnnotation] = start.get_rect_by_label(label)
+            end_rect: Optional[RectDataAnnotation] = end.get_rect_by_label(label)
 
             if start_rect is None or end_rect is None:
                 continue
 
             def linear_operation(annotation_obj: XAnyLabelingAnnotation, index: int):
-                current_rect: Optional[RectDataAnnotation] = \
+                current_rect: Optional[RectDataAnnotation] = (
                     annotation_obj.get_rect_by_label(label)
+                )
                 if current_rect is None:
                     return
 
                 current_index = index - start_index
 
-                current_rect.x1 = \
-                    liner_interpolate_position(
-                        start_pos=start_rect.x1,
-                        end_pos=end_rect.x1,
-                        total_count=count,
-                        index=current_index
-                    )
-                current_rect.y1 = \
-                    liner_interpolate_position(
-                        start_pos=start_rect.y1,
-                        end_pos=end_rect.y1,
-                        total_count=count,
-                        index=current_index
-                    )
-                current_rect.x2 = \
-                    liner_interpolate_position(
-                        start_pos=start_rect.x2,
-                        end_pos=end_rect.x2,
-                        total_count=count,
-                        index=current_index
-                    )
-                current_rect.y2 = \
-                    liner_interpolate_position(
-                        start_pos=start_rect.y2,
-                        end_pos=end_rect.y2,
-                        total_count=count,
-                        index=current_index
-                    )
+                current_rect.x1 = liner_interpolate_position(
+                    start_pos=start_rect.x1,
+                    end_pos=end_rect.x1,
+                    total_count=count,
+                    index=current_index,
+                )
+                current_rect.y1 = liner_interpolate_position(
+                    start_pos=start_rect.y1,
+                    end_pos=end_rect.y1,
+                    total_count=count,
+                    index=current_index,
+                )
+                current_rect.x2 = liner_interpolate_position(
+                    start_pos=start_rect.x2,
+                    end_pos=end_rect.x2,
+                    total_count=count,
+                    index=current_index,
+                )
+                current_rect.y2 = liner_interpolate_position(
+                    start_pos=start_rect.y2,
+                    end_pos=end_rect.y2,
+                    total_count=count,
+                    index=current_index,
+                )
 
                 annotation_obj.modifying()
 
             self.do_for_each_file(
-                func=linear_operation,
-                start_index=start_index,
-                end_index=end_index
+                func=linear_operation, start_index=start_index, end_index=end_index
             )
 
         return 0
@@ -1187,10 +1019,10 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         return modified
 
     def export_yolo_annotation(
-            self,
-            output_dir: str = "",
-            name_front: str = "",
-            replace_label_dict: dict = None
+        self,
+        output_dir: str = "",
+        name_front: str = "",
+        replace_label_dict: dict = None,
     ) -> bool:
         if len(output_dir) == 0:
             output_dir = os.path.join(self.dir_path, "labels")
@@ -1199,14 +1031,15 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
             os.makedirs(output_dir, exist_ok=True)
 
         for annotation_obj in self.annotation_file_list:
-            yolo_text = annotation_obj.to_yolo_format(
-                replace_label_dict=replace_label_dict
-            ).strip() + "\n"
-            yolo_file_path = \
-                os.path.join(
-                    output_dir,
-                    name_front + annotation_obj.file_name_no_extension + ".txt"
-                )
+            yolo_text = (
+                annotation_obj.to_yolo_format(
+                    replace_label_dict=replace_label_dict
+                ).strip()
+                + "\n"
+            )
+            yolo_file_path = os.path.join(
+                output_dir, name_front + annotation_obj.file_name_no_extension + ".txt"
+            )
 
             with open(yolo_file_path, "w") as f:
                 f.write(yolo_text)
@@ -1231,8 +1064,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
 
         for class_name in class_list:
 
-            class_annotation_obj_list: List[XAnyLabelingAnnotation] = \
+            class_annotation_obj_list: List[XAnyLabelingAnnotation] = (
                 self.label_obj_list_dict[class_name].copy()
+            )
             class_annotation_obj_list.sort(key=lambda x: x.mot_index)
 
             for annotation_obj in class_annotation_obj_list:
@@ -1249,36 +1083,11 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
                         w = rect_annotation.width
                         h = rect_annotation.height
 
-                        x, y, w, h = (
-                            int(x),
-                            int(y),
-                            int(w),
-                            int(h)
-                        )
+                        x, y, w, h = (int(x), int(y), int(w), int(h))
 
                         final_text += f"{frame},{label},{x},{y},{w},{h},1,1,1\n"
 
                         break
-
-            # for annotation_file in self.annotation_file:
-            #     for rect_annotation in annotation_file.rect_annotation_list:
-            #         if rect_annotation.label == class_name:
-            #             frame = int(annotation_file.file_name_no_extension)
-            #             label = class_name
-            #
-            #             x = rect_annotation.x1
-            #             y = rect_annotation.y1
-            #             w = rect_annotation.width
-            #             h = rect_annotation.height
-            #
-            #             x, y, w, h = (
-            #                 int(x),
-            #                 int(y),
-            #                 int(w),
-            #                 int(h)
-            #             )
-            #
-            #             final_text += f"{frame},{label},{x},{y},{w},{h},1,1,1\n"
 
         return final_text
 
@@ -1310,11 +1119,9 @@ class XAnyLabelingAnnotationDirectory(AnnotationDirectory):
         return ini_text.strip() + "\n"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Single File Test
-    result = parse_xanylabeling_json(
-        r"../../../Test/00000000.json"
-    )
+    result = parse_xanylabeling_json(r"../../../Test/00000000.json")
     print(result.version)
     print()
     for rect_item in result.rect_annotation_list:
