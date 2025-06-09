@@ -4,22 +4,22 @@ import re
 from multiprocessing import Pool
 from functools import partial
 
+from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
+
 use_gpu = "0,1,2,3,4,5,6,7"
 task_count_per_gpu = 2
 
-seq_list_dir = (
-    r"outputs/MeMOTR_MaritimeTrack_Full_Same_73/val/checkpoint_19_tracker/plot_img"
-)
+seq_list_dir = r"/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe"
 
-video_output_dir = (
-    "outputs/MeMOTR_MaritimeTrack_Full_Same_73/val/checkpoint_19_tracker/plot_img_video"
-)
+video_output_dir = "/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe_video"
 if not os.path.exists(video_output_dir):
     os.makedirs(video_output_dir)
 
-seq_dir_list = os.listdir(seq_list_dir)
-seq_dir_list = [os.path.join(seq_list_dir, i) for i in seq_dir_list]
-seq_dir_list = [i for i in seq_dir_list if os.path.isdir(i)]
+# seq_dir_list = os.listdir(seq_list_dir)
+# seq_dir_list = [os.path.join(seq_list_dir, i) for i in seq_dir_list]
+# seq_dir_list = [i for i in seq_dir_list if os.path.isdir(i)]
+
+seq_dir_list = get_dataset_dir_list(seq_list_dir, depth=1)
 
 
 def detect_gpu_type():
@@ -95,8 +95,12 @@ def get_encoder_config(gpu_type, gpu_id=None):
 def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
     """处理单个序列，生成视频"""
     seq_name = os.path.basename(seq_dir_path)
-    video_name = seq_name + ".mp4"
+    video_name = os.path.basename(os.path.dirname(seq_dir_path))
+    video_name = f"{video_name}_{seq_name}.mp4"
     video_path = os.path.join(video_output_dir, video_name)
+
+    if not os.path.exists(seq_dir_path):
+        os.makedirs(seq_dir_path, exist_ok=True)
 
     # 设置GPU环境变量
     env = os.environ.copy()
@@ -167,6 +171,12 @@ def distribute_tasks(seq_list, gpu_type, available_gpus):
     return task_assignments
 
 
+def process_task(task):
+    """处理单个任务的包装函数（模块级别函数，可以被多进程序列化）"""
+    seq_path, gpu_type, gpu_id = task
+    return handle_seq(seq_path, gpu_type, gpu_id)
+
+
 def main():
     """主函数"""
     print("Detecting available GPUs...")
@@ -181,11 +191,6 @@ def main():
     task_assignments = distribute_tasks(seq_dir_list, gpu_type, available_gpus.copy())
 
     print(f"Processing {len(task_assignments)} sequences...")
-
-    # 使用偏函数创建带参数的处理函数
-    def process_task(task):
-        seq_path, gpu_type, gpu_id = task
-        return handle_seq(seq_path, gpu_type, gpu_id)
 
     # 并行处理
     max_workers = (

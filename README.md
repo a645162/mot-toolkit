@@ -31,6 +31,10 @@ Aim to compatible with `X-AnyLabeling` and `LabelMe` and these following:
 - [ ] Export to `ultralytics (YOLO Series)` (GUI)
 - [ ] Export to `COCO Format` (GUI)
 
+## Notices
+
+This program only optimized for Intel E5-2690v4 and dual AMD EPYC 7763
+
 ## Installation
 
 ### 1. Use `pip` to install `mot-toolkit`

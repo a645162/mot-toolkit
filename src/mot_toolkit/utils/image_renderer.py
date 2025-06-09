@@ -25,6 +25,9 @@ class RenderConfig:
         crop_padding: int = 50,
         crop_min_size: int = 1000,
         color_dict: dict = None,
+        # 新增矩形填充参数
+        fill_rectangle: bool = False,
+        fill_alpha: float = 0.1,  # 填充透明度，0.0-1.0
     ):
         self.with_text = with_text
         self.color = color
@@ -42,6 +45,9 @@ class RenderConfig:
         self.crop_padding = crop_padding
         self.crop_min_size = crop_min_size
         self.color_dict = color_dict or {}
+        # 新增属性
+        self.fill_rectangle = fill_rectangle
+        self.fill_alpha = max(0.0, min(1.0, fill_alpha))  # 确保在有效范围内
 
 
 def _convert_color_to_bgr(color: Union[tuple, QColor]) -> tuple:
@@ -94,6 +100,21 @@ def _draw_rectangle(
     return cv2.rectangle(image, (x1, y1), (x2, y2), color, thickness)
 
 
+def _draw_filled_rectangle(
+    image: np.ndarray, x1: int, y1: int, x2: int, y2: int, color: tuple, alpha: float
+) -> np.ndarray:
+    """绘制填充的半透明矩形"""
+    if alpha <= 0:
+        return image
+
+    # 创建填充层
+    overlay = image.copy()
+    cv2.rectangle(overlay, (x1, y1), (x2, y2), color, -1)
+
+    # 混合原图和填充层
+    return cv2.addWeighted(overlay, alpha, image, 1 - alpha, 0)
+
+
 def _draw_trajectory_line(
     image: np.ndarray,
     trajectory_points: List[Tuple[int, int]],
@@ -141,13 +162,31 @@ def _draw_trajectory(
 
 
 def _draw_text_label(
-    image: np.ndarray, label: str, x1: int, y1: int, text_color: tuple
+    image: np.ndarray, label: str, x1: int, y1: int, x2: int, y2: int, text_color: tuple
 ) -> np.ndarray:
-    """绘制文字标签"""
+    """绘制文字标签（居中显示，无背景）"""
     if label:
-        cv2.putText(
-            image, label, (x1, y1 + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, text_color, 2
+        # 计算文本尺寸
+        font = cv2.FONT_HERSHEY_SIMPLEX
+        font_scale = 0.8
+        thickness = 2
+        (text_width, text_height), baseline = cv2.getTextSize(
+            label, font, font_scale, thickness
         )
+
+        # 计算矩形框中心位置
+        center_x = (x1 + x2) // 2
+        center_y = (y1 + y2) // 2
+
+        # 计算文本绘制位置（使文本居中）
+        text_x = center_x - text_width // 2
+        text_y = center_y + text_height // 2
+
+        # 直接绘制文本，不添加背景
+        cv2.putText(
+            image, label, (text_x, text_y), font, font_scale, text_color, thickness
+        )
+
     return image
 
 
@@ -165,8 +204,10 @@ def _process_single_annotation(
     trajectory_line_mode: bool,
     with_text: bool,
     only_selection_box: bool,
-) -> Tuple[np.ndarray, Optional[Tuple[int, int, int, int]]]:
-    """处理单个标注"""
+    fill_rectangle: bool,
+    fill_alpha: float,
+) -> Tuple[np.ndarray, Optional[Tuple[int, int, int, int]], tuple, str]:
+    """处理单个标注，返回绘制信息用于后续文本绘制"""
     x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
     center_x, center_y = rect_item.center_x, rect_item.center_y
     label = rect_item.label.strip()
@@ -185,7 +226,11 @@ def _process_single_annotation(
         if rect_item.label == selection_label:
             selection_rect = (x1, y1, x2, y2)
         elif only_selection_box:
-            return image, selection_rect
+            return image, selection_rect, current_color, label
+
+    # 绘制填充矩形（如果启用）
+    if fill_rectangle:
+        image = _draw_filled_rectangle(image, x1, y1, x2, y2, current_color, fill_alpha)
 
     # 绘制矩形框
     image = _draw_rectangle(image, x1, y1, x2, y2, current_color, thickness)
@@ -201,11 +246,7 @@ def _process_single_annotation(
             trajectory_line_mode,
         )
 
-    # 绘制文字
-    if with_text:
-        image = _draw_text_label(image, label, x1, y1, text_color)
-
-    return image, selection_rect
+    return image, selection_rect, current_color, label
 
 
 def _crop_image(
@@ -260,12 +301,13 @@ def render_image_with_config(
     text_color = _convert_color_to_bgr(config.text_color)
     selection_color = _convert_color_to_bgr(config.selection_color)
 
-    # 处理所有标注
+    # 处理所有标注，收集文本绘制信息
     found_selection = False
     selection_rect = None
+    text_draw_info = []  # 存储文本绘制信息
 
     for rect_item in rect_annotation_list:
-        new_image, current_selection = _process_single_annotation(
+        new_image, current_selection, current_color, label = _process_single_annotation(
             new_image,
             rect_item,
             config.center_point_trajectory,
@@ -279,14 +321,29 @@ def render_image_with_config(
             config.trajectory_line_mode,
             config.with_text,
             config.only_selection_box,
+            config.fill_rectangle,
+            config.fill_alpha,
         )
 
         if current_selection is not None:
             selection_rect = current_selection
             found_selection = True
 
+        # 收集文本绘制信息，留到最后绘制
+        if config.with_text and label:
+            x1, y1, x2, y2 = rect_item.get_rect_two_point_tuple_int()
+            text_draw_info.append((label, x1, y1, x2, y2, text_color))
+
+    # 最后绘制所有文本（确保在最顶层）
+    for label, x1, y1, x2, y2, t_color in text_draw_info:
+        new_image = _draw_text_label(new_image, label, x1, y1, x2, y2, t_color)
+
     # 检查选择结果
-    if config.not_found_return_none and len(config.selection_label) > 0 and not found_selection:
+    if (
+        config.not_found_return_none
+        and len(config.selection_label) > 0
+        and not found_selection
+    ):
         return None
 
     # 处理裁剪
@@ -304,6 +361,8 @@ def render_image_with_config(
     return _crop_image(new_image, crop_xyxy, config.crop_padding, config.crop_min_size)
 
 
+# # 旧接口，已重命名为 render_image_with_config
+# 未来不再添加任何新的参数
 def render_image_with_annotations_legacy(
     img_np: np.ndarray,
     rect_annotation_list: List,
@@ -325,6 +384,7 @@ def render_image_with_annotations_legacy(
     color_dict: dict = None,
 ) -> Optional[np.ndarray]:
     """渲染带有标注框的图像（旧接口，已重命名，调用新接口）"""
+    # 旧接口直接使用默认值！这个函数不再进行修改！
     config = RenderConfig(
         with_text=with_text,
         color=color,

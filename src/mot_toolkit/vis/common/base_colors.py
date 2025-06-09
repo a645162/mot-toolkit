@@ -30,6 +30,14 @@ class BaseColorScheme(ABC):
         """生成颜色映射"""
         pass
 
+    def bgr_colors(self) -> List[Tuple[int, int, int]]:
+        """返回BGR格式的颜色列表"""
+        bgr_list = []
+        for r, g, b in self.colors:
+            # 将RGB转换为BGR
+            bgr_list.append((b, g, r))
+        return bgr_list
+
 
 def rgb_to_hex(r: int, g: int, b: int) -> str:
     """RGB颜色转HEX颜色码
