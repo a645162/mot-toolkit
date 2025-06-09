@@ -1,14 +1,19 @@
 #!/bin/bash
 
-source_dir=""
+# Install vscode "Bash Run Button" extension to run this script easily.
+
+source_dir="/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe_video"
 
 # 所在目录 parent_dir
-parent_dir=$(dirname "$(realpath "$0")")
+parent_dir=$(dirname "$(realpath "${source_dir}")")
 
 # 获取目录名称
-source_dir_name=$(basename "$parent_dir")
+source_dir_name=$(basename "$source_dir")
 
-zip_name="${source_dir_name}.7z"
+# Time str
+time_str=$(date +%Y%m%d_%H%M%S)
+
+zip_name="${source_dir_name}_${time_str}.7z"
 
 zip_path="${parent_dir}/${zip_name}"
 
@@ -17,5 +22,8 @@ if ! command -v 7z &> /dev/null; then
 	echo "7z command not found. Please install p7zip."
 	exit 1
 fi
+
+echo "Compressing directory: $parent_dir"
+echo "Output zip file: $zip_path"
 
 7z a -t7z "$zip_path" "$parent_dir"/*
