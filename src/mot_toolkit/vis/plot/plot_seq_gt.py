@@ -10,6 +10,34 @@ from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
 from mot_toolkit.utils.image_renderer import RenderConfig
 
 
+# 全局视频设置参数
+VIDEO_SETTINGS = {
+    # 视频设置
+    "fps": 30.0,
+    "max_width": 1920,
+    "max_height": 1080,
+    # 显示设置
+    "show_frame_text": True,
+    "show_frame_progress": True,
+    "show_frame_object_count": True,
+    # 框设置
+    "show_box": True,
+    "different_color": True,
+    "with_text": False,
+    "center_point_trajectory": True,
+    "thickness": 2,
+    # 颜色设置 (BGR格式)
+    "selected_color": (0, 255, 255),  # 黄色
+    "unselected_color": (0, 255, 0),  # 绿色
+    "text_color": (0, 0, 255),  # 红色
+    # 过滤设置
+    "selection_label": "",
+    "only_selection_box": False,
+    "only_near_selection": False,
+    "crop_padding": 50,
+}
+
+
 def bgr2rgb(color: tuple) -> tuple:
     return color[2], color[1], color[0]
 
@@ -33,33 +61,7 @@ def generate_color_dict(annotation_directory: XAnyLabelingAnnotationDirectory) -
     return color_dict
 
 
-def process_sequence(
-    sequence_dir_path: str,
-    output_video_path: str,
-    # 视频设置
-    fps: float = 30.0,
-    max_width: int = 1920,
-    max_height: int = 1080,
-    # 显示设置
-    show_frame_text: bool = True,
-    show_frame_progress: bool = True,
-    show_frame_object_count: bool = True,
-    # 框设置
-    show_box: bool = True,
-    different_color: bool = True,
-    with_text: bool = False,
-    center_point_trajectory: bool = True,
-    thickness: int = 2,
-    # 颜色设置
-    selected_color: tuple = (0, 255, 255),  # BGR格式
-    unselected_color: tuple = (0, 255, 0),  # BGR格式
-    text_color: tuple = (0, 0, 255),  # BGR格式
-    # 过滤设置
-    selection_label: str = "",
-    only_selection_box: bool = False,
-    only_near_selection: bool = False,
-    crop_padding: int = 50,
-):
+def process_sequence(sequence_dir_path: str, output_video_path: str):
     """处理单个序列，生成带GT框的视频"""
 
     if not os.path.isdir(sequence_dir_path):
@@ -84,13 +86,25 @@ def process_sequence(
 
     # 计算缩放比例
     scale_ratio = 1
-    if max_width > 0 or max_height > 0:
-        width_ratio = max_width / image_width if max_width > 0 else 1
-        height_ratio = max_height / image_height if max_height > 0 else 1
+    if VIDEO_SETTINGS["max_width"] > 0 or VIDEO_SETTINGS["max_height"] > 0:
+        width_ratio = (
+            VIDEO_SETTINGS["max_width"] / image_width
+            if VIDEO_SETTINGS["max_width"] > 0
+            else 1
+        )
+        height_ratio = (
+            VIDEO_SETTINGS["max_height"] / image_height
+            if VIDEO_SETTINGS["max_height"] > 0
+            else 1
+        )
         scale_ratio = min(width_ratio, height_ratio)
 
     # 生成颜色字典
-    color_dict = generate_color_dict(annotation_directory) if different_color else None
+    color_dict = (
+        generate_color_dict(annotation_directory)
+        if VIDEO_SETTINGS["different_color"]
+        else None
+    )
 
     # 创建视频写入器
     output_dir = os.path.dirname(output_video_path)
@@ -104,7 +118,7 @@ def process_sequence(
     final_width = int(image_width * scale_ratio)
     final_height = int(image_height * scale_ratio)
     video_out = cv2.VideoWriter(
-        output_video_path, fourcc, fps, (final_width, final_height)
+        output_video_path, fourcc, VIDEO_SETTINGS["fps"], (final_width, final_height)
     )
 
     if not video_out.isOpened():
@@ -123,21 +137,21 @@ def process_sequence(
     ):
         frame_index = i + 1
 
-        if show_box:
+        if VIDEO_SETTINGS["show_box"]:
             # 创建渲染配置对象
             render_config = RenderConfig(
-                with_text=with_text,
-                color=unselected_color,
-                text_color=text_color,
-                thickness=thickness,
+                with_text=VIDEO_SETTINGS["with_text"],
+                color=VIDEO_SETTINGS["unselected_color"],
+                text_color=VIDEO_SETTINGS["text_color"],
+                thickness=VIDEO_SETTINGS["thickness"],
                 center_point_trajectory=center_point_trajectory_dict,
-                draw_trajectory=center_point_trajectory,
-                selection_label=selection_label,
-                selection_color=selected_color,
-                only_selection_box=only_selection_box,
-                crop_selection=only_near_selection,
-                not_found_return_none=only_near_selection,
-                crop_padding=crop_padding,
+                draw_trajectory=VIDEO_SETTINGS["center_point_trajectory"],
+                selection_label=VIDEO_SETTINGS["selection_label"],
+                selection_color=VIDEO_SETTINGS["selected_color"],
+                only_selection_box=VIDEO_SETTINGS["only_selection_box"],
+                crop_selection=VIDEO_SETTINGS["only_near_selection"],
+                not_found_return_none=VIDEO_SETTINGS["only_near_selection"],
+                crop_padding=VIDEO_SETTINGS["crop_padding"],
                 color_dict=color_dict,
             )
 
@@ -150,11 +164,11 @@ def process_sequence(
             continue
 
         # 添加帧信息文本
-        if show_frame_text:
+        if VIDEO_SETTINGS["show_frame_text"]:
             text_list: List[str] = []
-            if show_frame_progress:
+            if VIDEO_SETTINGS["show_frame_progress"]:
                 text_list.append(f"Frame: {frame_index}/{file_count}")
-            if show_frame_object_count:
+            if VIDEO_SETTINGS["show_frame_object_count"]:
                 text_list.append(f"Objects: {annotation.annotation_count}")
 
             text = " | ".join(text_list)
@@ -185,32 +199,6 @@ def main():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     output_base_dir = os.path.join(current_dir, "output", "seq_gt")
 
-    # 视频生成设置
-    video_settings = {
-        "fps": 30.0,
-        "max_width": 1920,
-        "max_height": 1080,
-        # 显示设置
-        "show_frame_text": True,
-        "show_frame_progress": True,
-        "show_frame_object_count": True,
-        # 框设置
-        "show_box": True,
-        "different_color": True,
-        "with_text": False,
-        "center_point_trajectory": True,
-        "thickness": 2,
-        # 颜色设置 (BGR格式)
-        "selected_color": (0, 255, 255),  # 黄色
-        "unselected_color": (0, 255, 0),  # 绿色
-        "text_color": (0, 0, 255),  # 红色
-        # 过滤设置
-        "selection_label": "",
-        "only_selection_box": False,
-        "only_near_selection": False,
-        "crop_padding": 50,
-    }
-
     # 获取所有序列目录
     sequence_dir_list = get_dataset_dir_list(base_path)
 
@@ -234,7 +222,7 @@ def main():
         print(f"\n处理序列: {video_name}/{sequence_name}")
 
         # 处理序列
-        if process_sequence(sequence_dir_path, output_video_path, **video_settings):
+        if process_sequence(sequence_dir_path, output_video_path):
             success_count += 1
         else:
             print(f"处理失败: {video_name}/{sequence_name}")
