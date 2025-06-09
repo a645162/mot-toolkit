@@ -19,7 +19,7 @@ class FilmStripConfig:
     hole_ratio: int = 30  # 胶片孔洞大小比例
     spacing_ratio: int = 25  # 孔洞间距比例
     gradient_steps: int = 5  # 边缘渐变步数
-    hole_color: Tuple[int, int, int] = (40, 40, 40)  # 孔洞颜色
+    hole_color: Tuple[int, int, int] = (255, 255, 255)  # 孔洞颜色
     min_strip_width: int = 40  # 最小胶片边框宽度
     min_hole_size: int = 15  # 最小孔洞大小
     min_hole_spacing: int = 20  # 最小孔洞间距

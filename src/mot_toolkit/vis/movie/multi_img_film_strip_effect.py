@@ -348,9 +348,8 @@ def main() -> None:
 
     # 图片路径列表（可以是相对路径或绝对路径）
     image_paths = [
-        "image_001.jpg",
-        "image_002.jpg",
-        "image_003.jpg",
+        "BV1B84y1D7Hg-kdDKogHERE0VwOKy_00000000-00000816.jpg",
+        "BV1B3411Q7wV-F5KqBqN5h8jjoV3e_00000000-00000318.jpg",
         # 在这里添加更多图片路径...
     ]
 
