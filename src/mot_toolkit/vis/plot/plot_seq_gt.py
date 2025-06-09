@@ -392,6 +392,7 @@ def main():
     total_main_time = processing_end_time - main_start_time
 
     print(f"\n{'='*50}")
+    print(f"多线程处理，总共使用线程数: {MULTIPROCESS_SETTINGS['process_count']}")
     print(f"处理完成时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"完成! 成功处理了 {success_count}/{len(sequence_dir_list)} 个序列")
     print(f"序列处理总用时: {timedelta(seconds=int(total_processing_time))}")

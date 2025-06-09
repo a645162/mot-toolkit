@@ -4,16 +4,23 @@ import re
 from multiprocessing import Pool
 from functools import partial
 
+import shutil
+from multiprocessing import Manager
+
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 
 use_gpu = "0,1,2,3,4,5,6,7"
+# use_gpu = "0"
 task_count_per_gpu = 2
 
 seq_list_dir = r"/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe"
 
 video_output_dir = "/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe_video"
-if not os.path.exists(video_output_dir):
-    os.makedirs(video_output_dir)
+
+if os.path.exists(video_output_dir):
+    shutil.rmtree(video_output_dir)
+
+os.makedirs(video_output_dir)
 
 # seq_dir_list = os.listdir(seq_list_dir)
 # seq_dir_list = [os.path.join(seq_list_dir, i) for i in seq_dir_list]
@@ -22,7 +29,10 @@ if not os.path.exists(video_output_dir):
 seq_dir_list = get_dataset_dir_list(seq_list_dir, depth=1)
 
 # Debug only
-seq_dir_list = seq_dir_list[:1]
+# seq_dir_list = seq_dir_list[:1]
+
+# 添加全局变量来跟踪失败的序列
+failed_sequences = []
 
 
 def detect_gpu_type():
@@ -82,8 +92,7 @@ def get_encoder_config(gpu_type, gpu_id=None):
     """根据GPU类型返回相应的编码器配置"""
     if gpu_type == "nvidia":
         encoder = "h264_nvenc"
-        gpu_option = f"-gpu {gpu_id}" if gpu_id is not None else ""
-        return f"{gpu_option} -c:v {encoder} -preset fast -crf 23"
+        return f"-c:v {encoder} -preset fast -crf 23"
     elif gpu_type == "amd":
         encoder = "h264_amf"
         return f"-c:v {encoder} -quality speed -rc cqp -qp 23"
@@ -95,11 +104,50 @@ def get_encoder_config(gpu_type, gpu_id=None):
         return "-c:v libx264 -preset fast -crf 23"
 
 
-def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
+def get_start_frame_and_pattern(seq_dir_path):
+    """检测目录中图片文件的起始帧号和文件名模式"""
+    if not os.path.exists(seq_dir_path):
+        return 1, "%08d.jpg"
+
+    # 获取所有jpg文件
+    jpg_files = [f for f in os.listdir(seq_dir_path) if f.lower().endswith(".jpg")]
+
+    if not jpg_files:
+        return 1, "%08d.jpg"
+
+    # 提取文件名中的数字部分
+    frame_numbers = []
+    for filename in jpg_files:
+        # 提取文件名中的数字部分（不包括扩展名）
+        basename = os.path.splitext(filename)[0]
+        if basename.isdigit():
+            frame_numbers.append(int(basename))
+
+    if not frame_numbers:
+        return 1, "%08d.jpg"
+
+    # 找到最小的帧号作为起始帧
+    start_frame = min(frame_numbers)
+
+    # 根据文件名长度确定格式模式
+    first_file = jpg_files[0]
+    basename = os.path.splitext(first_file)[0]
+    if basename.isdigit():
+        digit_count = len(basename)
+        pattern = f"%0{digit_count}d.jpg"
+    else:
+        pattern = "%08d.jpg"
+
+    return start_frame, pattern
+
+
+def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None, failed_list=None):
     """处理单个序列，生成视频"""
-    
-    print(f"Processing sequence: {seq_dir_path} on {gpu_type.upper()} GPU {gpu_id if gpu_id is not None else 'CPU'}")
-    
+
+    print(
+        f"Processing sequence: {seq_dir_path} on {gpu_type.upper()} GPU {gpu_id if gpu_id is not None else 'CPU'}"
+    )
+
     seq_name = os.path.basename(seq_dir_path)
     video_name = os.path.basename(os.path.dirname(seq_dir_path))
     video_name = f"{video_name}_{seq_name}.mp4"
@@ -107,6 +155,10 @@ def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
 
     if not os.path.exists(seq_dir_path):
         os.makedirs(seq_dir_path, exist_ok=True)
+
+    # 检测起始帧和文件名模式
+    start_frame, pattern = get_start_frame_and_pattern(seq_dir_path)
+    print(f"  Start frame: {start_frame}, Pattern: {pattern}")
 
     # 设置GPU环境变量
     env = os.environ.copy()
@@ -118,9 +170,10 @@ def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
     # 获取编码器配置
     encoder_config = get_encoder_config(gpu_type, gpu_id)
 
-    # 构建FFmpeg命令
+    # 构建FFmpeg命令，使用检测到的起始帧号
+    input_pattern = os.path.join(seq_dir_path, pattern)
     ffmpeg_cmd = (
-        f"ffmpeg -y -r 25 -f image2 -i '{os.path.join(seq_dir_path, '%08d.jpg')}' "
+        f"ffmpeg -y -start_number {start_frame} -r 25 -f image2 -i '{input_pattern}' "
         f"{encoder_config} -pix_fmt yuv420p '{video_path}'"
     )
 
@@ -130,19 +183,28 @@ def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
         )
         if result.returncode == 0:
             print(
-                f"Generated: {video_path} (using {gpu_type.upper()} GPU {gpu_id if gpu_id is not None else 'CPU'})"
+                f"✅ Generated: {video_path} (using {gpu_type.upper()} GPU {gpu_id if gpu_id is not None else 'CPU'})"
             )
+            return True
         else:
-            print(f"Error generating {video_path}: {result.stderr}")
+            error_msg = f"FFmpeg error: {result.stderr}"
+            print(f"❌ Error generating {video_path}: {error_msg}")
+            if failed_list is not None:
+                failed_list.append((seq_dir_path, error_msg))
+            return False
     except Exception as e:
-        print(f"Exception while processing {seq_dir_path}: {e}")
+        error_msg = f"Exception: {str(e)}"
+        print(f"❌ Exception while processing {seq_dir_path}: {error_msg}")
+        if failed_list is not None:
+            failed_list.append((seq_dir_path, error_msg))
+        return False
 
 
-def distribute_tasks(seq_list, gpu_type, available_gpus):
-    """将任务分配给可用的GPU"""
+def distribute_tasks_by_queue(seq_list, gpu_type, available_gpus):
+    """将任务按队列分配给GPU，每个GPU一个队列"""
     if not available_gpus:
         # 如果没有GPU，使用CPU处理
-        return [(seq, "cpu", None) for seq in seq_list]
+        return [[(seq, "cpu", None) for seq in seq_list]]
 
     # 解析use_gpu参数
     if use_gpu:
@@ -154,33 +216,35 @@ def distribute_tasks(seq_list, gpu_type, available_gpus):
 
     if not available_gpus:
         print("Warning: No requested GPUs available, falling back to CPU")
-        return [(seq, "cpu", None) for seq in seq_list]
+        return [[(seq, "cpu", None) for seq in seq_list]]
 
-    # 为每个GPU创建任务队列
-    task_assignments = []
-    gpu_task_counts = {gpu: 0 for gpu in available_gpus}
+    # 为每个GPU创建一个任务队列
+    gpu_queues = [[] for _ in available_gpus]
 
-    for seq in seq_list:
-        # 选择任务数最少的GPU
-        selected_gpu = min(available_gpus, key=lambda g: gpu_task_counts[g])
-        task_assignments.append((seq, gpu_type, selected_gpu))
-        gpu_task_counts[selected_gpu] += 1
+    # 轮流分配任务到各个GPU队列
+    for i, seq in enumerate(seq_list):
+        gpu_index = i % len(available_gpus)
+        gpu_id = available_gpus[gpu_index]
+        gpu_queues[gpu_index].append((seq, gpu_type, gpu_id))
 
-        # 如果GPU任务数达到限制，暂时移除该GPU
-        if gpu_task_counts[selected_gpu] >= task_count_per_gpu:
-            available_gpus.remove(selected_gpu)
-            if not available_gpus:
-                # 重置GPU列表以继续分配
-                available_gpus = [gpu for gpu in gpu_task_counts.keys()]
-                gpu_task_counts = {gpu: 0 for gpu in available_gpus}
+    # 打印每个GPU的任务数量
+    for i, (gpu_id, queue) in enumerate(zip(available_gpus, gpu_queues)):
+        print(f"GPU {gpu_id}: {len(queue)} tasks")
 
-    return task_assignments
+    return gpu_queues
 
 
-def process_task(task):
-    """处理单个任务的包装函数（模块级别函数，可以被多进程序列化）"""
-    seq_path, gpu_type, gpu_id = task
-    return handle_seq(seq_path, gpu_type, gpu_id)
+def process_gpu_queue(gpu_queue_with_failed):
+    """处理单个GPU的任务队列（串行执行）"""
+    gpu_queue, failed_list = gpu_queue_with_failed
+    results = []
+
+    for task in gpu_queue:
+        seq_path, gpu_type, gpu_id = task
+        result = handle_seq(seq_path, gpu_type, gpu_id, failed_list)
+        results.append(result)
+
+    return results
 
 
 def main():
@@ -193,19 +257,65 @@ def main():
     else:
         print(f"Detected {gpu_type.upper()} GPUs: {available_gpus}")
 
-    # 分配任务
-    task_assignments = distribute_tasks(seq_dir_list, gpu_type, available_gpus.copy())
+    # 创建共享的失败列表
+    manager = Manager()
+    failed_list = manager.list()
 
-    print(f"Processing {len(task_assignments)} sequences...")
-
-    # 并行处理
-    max_workers = (
-        len(available_gpus) * task_count_per_gpu
-        if available_gpus
-        else task_count_per_gpu
+    # 按队列分配任务
+    gpu_queues = distribute_tasks_by_queue(
+        seq_dir_list, gpu_type, available_gpus.copy()
     )
+
+    # 为每个队列添加失败列表
+    gpu_queues_with_failed = [(queue, failed_list) for queue in gpu_queues]
+
+    print(
+        f"Processing {len(seq_dir_list)} sequences across {len(gpu_queues)} GPU queues..."
+    )
+
+    # 并行处理各个GPU队列（每个GPU队列内部串行执行）
+    max_workers = len(gpu_queues)
+
+    all_results = []
     with Pool(processes=max_workers) as pool:
-        pool.map(process_task, task_assignments)
+        queue_results = pool.map(process_gpu_queue, gpu_queues_with_failed)
+        # 展平结果列表
+        for queue_result in queue_results:
+            all_results.extend(queue_result)
+
+    # 统计结果
+    total_sequences = len(seq_dir_list)
+    successful_count = sum(1 for result in all_results if result)
+    failed_count = len(failed_list)
+
+    print(f"\n{'='*60}")
+    print(f"处理完成！")
+    print(f"总序列数: {total_sequences}")
+    print(f"成功: {successful_count}")
+    print(f"失败: {failed_count}")
+    print(f"{'='*60}")
+
+    # 输出失败的序列列表
+    if failed_list:
+        print(f"\n❌ 失败的序列列表 ({failed_count} 个):")
+        print("-" * 60)
+        for i, (seq_path, error_msg) in enumerate(failed_list, 1):
+            print(f"{i:3d}. {seq_path}")
+            print(f"     错误: {error_msg}")
+            print()
+
+        # 将失败列表保存到文件
+        failed_log_path = os.path.join(video_output_dir, "failed_sequences.txt")
+        with open(failed_log_path, "w", encoding="utf-8") as f:
+            f.write(f"失败的序列列表 (共 {failed_count} 个)\n")
+            f.write("=" * 60 + "\n\n")
+            for i, (seq_path, error_msg) in enumerate(failed_list, 1):
+                f.write(f"{i:3d}. {seq_path}\n")
+                f.write(f"     错误: {error_msg}\n\n")
+
+        print(f"失败列表已保存到: {failed_log_path}")
+    else:
+        print("\n✅ 所有序列都处理成功！")
 
 
 if __name__ == "__main__":
