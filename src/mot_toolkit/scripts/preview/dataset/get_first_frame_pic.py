@@ -21,14 +21,15 @@ ratio = (16, 9)
 
 scale = True
 scale_target = (1280, 720)
+scale_target = (1920, 1080)
 if scale:
     print(f"scale_target: {scale_target}")
 
 
 # TL Tag
 show_tl_tag = True
-tl_tag_width_mode = False
 
+tl_tag_width_mode = False
 # 控制TL标签框与文字长度占图片长度的比例
 tl_label_ratio_width = 0.4  # 标签框宽度占图片宽度的比例
 tl_label_ratio_height = 0.5  # 标签框高度占图片高度的比例
