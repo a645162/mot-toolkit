@@ -152,7 +152,12 @@ def _draw_trajectory(
     trajectory_line_mode: bool,
 ) -> np.ndarray:
     """绘制轨迹"""
-    if label and label in center_point_trajectory and len(center_point_trajectory) > 0:
+    # 修复：与原版本保持一致的条件判断
+    if (
+        len(center_point_trajectory.keys()) > 0
+        and label
+        and label in center_point_trajectory.keys()
+    ):
         trajectory_points = center_point_trajectory[label]
         if trajectory_line_mode:
             image = _draw_trajectory_line(image, trajectory_points, color, thickness)

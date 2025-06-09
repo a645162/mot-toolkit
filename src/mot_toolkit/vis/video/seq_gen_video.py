@@ -21,6 +21,9 @@ if not os.path.exists(video_output_dir):
 
 seq_dir_list = get_dataset_dir_list(seq_list_dir, depth=1)
 
+# Debug only
+seq_dir_list = seq_dir_list[:1]
+
 
 def detect_gpu_type():
     """检测可用的GPU类型，优先级：NVIDIA > AMD > Intel"""
@@ -94,6 +97,9 @@ def get_encoder_config(gpu_type, gpu_id=None):
 
 def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None):
     """处理单个序列，生成视频"""
+    
+    print(f"Processing sequence: {seq_dir_path} on {gpu_type.upper()} GPU {gpu_id if gpu_id is not None else 'CPU'}")
+    
     seq_name = os.path.basename(seq_dir_path)
     video_name = os.path.basename(os.path.dirname(seq_dir_path))
     video_name = f"{video_name}_{seq_name}.mp4"
