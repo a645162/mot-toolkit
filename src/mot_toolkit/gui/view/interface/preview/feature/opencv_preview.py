@@ -30,6 +30,7 @@ from mot_toolkit.gui.view.components.widget.combination.file_save_widget import 
     FileSaveWidget,
 )
 from mot_toolkit.gui.view.components.window.base_q_main_window import BaseQMainWindow
+from mot_toolkit.utils.image_renderer import RenderConfig
 
 
 def bgr2rgb(color: tuple) -> tuple:
@@ -106,15 +107,15 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         screen = QApplication.primaryScreen()
         if screen is None:
             return
-            
+
         # 获取屏幕几何信息
         screen_geometry = screen.availableGeometry()
-        
+
         # 计算窗口应该放置的位置（屏幕中央）
         window_geometry = self.frameGeometry()
         center_point = screen_geometry.center()
         window_geometry.moveCenter(center_point)
-        
+
         # 移动窗口到计算出的位置
         self.move(window_geometry.topLeft())
 
@@ -248,6 +249,16 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
         self.center_point_trajectory_checkbox = QCheckBox("Center Point Trajectory")
         group_box_control_layout.addWidget(self.center_point_trajectory_checkbox)
         self.center_point_trajectory_checkbox.setChecked(True)
+
+        # 新增填充功能控件
+        self.fill_rectangle_checkbox = QCheckBox("Fill Rectangle")
+        group_box_control_layout.addWidget(self.fill_rectangle_checkbox)
+        self.fill_rectangle_checkbox.setChecked(False)
+
+        self.fill_alpha_label = QLabel("Fill Alpha (0.0-1.0):")
+        group_box_control_layout.addWidget(self.fill_alpha_label)
+        self.fill_alpha_edit = QLineEdit("0.3")
+        group_box_control_layout.addWidget(self.fill_alpha_edit)
 
         self.select_color_button = QPushButton("Select Selected Color")
         self.select_color_button.clicked.connect(self.select_selected_color)
@@ -446,6 +457,10 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     os.makedirs(frame_save_dir_path)
                 if not os.path.isdir(frame_save_dir_path):
                     output_frame_checkbox = False
+
+            # 新增填充功能参数
+            fill_rectangle = self.fill_rectangle_checkbox.isChecked()
+            fill_alpha = float(self.fill_alpha_edit.text())
         except ValueError:
             QMessageBox.critical(self, "Error", "Invalid input")
             return
@@ -522,13 +537,15 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     continue
 
                 if show_box:
-                    image = annotation.get_cv_mat_with_box_old(
+                    # 使用新版接口
+                    config = RenderConfig(
                         with_text=with_text,
                         color=unselected_color,
                         text_color=text_color,
                         thickness=thickness,
                         center_point_trajectory=center_point_trajectory,
                         draw_trajectory=show_center_point_trajectory,
+                        trajectory_line_mode=True,
                         selection_label=selection_label,
                         selection_color=selected_color,
                         only_selection_box=only_selection_box,
@@ -537,7 +554,11 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                         crop_xyxy=(0, 0, 0, 0),
                         crop_padding=crop_padding,
                         color_dict=self.color_dict if different_color else None,
+                        fill_rectangle=fill_rectangle,
+                        fill_alpha=fill_alpha,
                     )
+
+                    image = annotation.get_cv_mat_with_box(config)
                 else:
                     image = annotation.get_cv_mat()
 

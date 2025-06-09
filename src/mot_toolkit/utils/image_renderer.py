@@ -33,7 +33,10 @@ class RenderConfig:
         self.color = color
         self.text_color = text_color
         self.thickness = thickness
-        self.center_point_trajectory = center_point_trajectory or {}
+        # 修复：确保传递正确的字典引用，而不是创建新的空字典
+        self.center_point_trajectory = (
+            center_point_trajectory if center_point_trajectory is not None else {}
+        )
         self.draw_trajectory = draw_trajectory
         self.trajectory_line_mode = trajectory_line_mode
         self.selection_label = selection_label
@@ -44,7 +47,7 @@ class RenderConfig:
         self.crop_xyxy = crop_xyxy
         self.crop_padding = crop_padding
         self.crop_min_size = crop_min_size
-        self.color_dict = color_dict or {}
+        self.color_dict = color_dict if color_dict is not None else {}
         # 新增属性
         self.fill_rectangle = fill_rectangle
         self.fill_alpha = max(0.0, min(1.0, fill_alpha))  # 确保在有效范围内
@@ -242,6 +245,9 @@ def _process_single_annotation(
 
     # 绘制轨迹
     if draw_trajectory:
+        # Debug Info
+        # print("center_point_trajectory", center_point_trajectory)
+
         image = _draw_trajectory(
             image,
             center_point_trajectory,
