@@ -8,62 +8,79 @@ from typing import List, Optional, Tuple
 import cv2
 
 from PySide6.QtCore import QSize, QUrl
-from PySide6.QtGui import (
-    QColor, QAction, QIcon, QDesktopServices, QActionGroup, Qt
-)
+from PySide6.QtGui import QColor, QAction, QIcon, QDesktopServices, QActionGroup, Qt
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
-    QHBoxLayout, QVBoxLayout,
+    QHBoxLayout,
+    QVBoxLayout,
     QMenuBar,
-    QDialog, QInputDialog, QMessageBox,
+    QDialog,
+    QInputDialog,
+    QMessageBox,
 )
 
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.dl.utils.value_calc import calculate_iou
+
 # Load Settings
 from mot_toolkit.gui.common.global_settings import program_settings
 from mot_toolkit.gui.utils.q_color import generate_unique_q_colors
 from mot_toolkit.gui.view.components.controller.gamepad_monitor import (
-    get_pygame_version, get_pygame_version_info,
-    GamepadMonitor, GamepadButtonKey
+    get_pygame_version,
+    get_pygame_version_info,
+    GamepadMonitor,
+    GamepadButtonKey,
 )
-from mot_toolkit.gui.view.components. \
-    dialog.dialog_input_1_int import DialogInput1Int
-from mot_toolkit.gui.view.components. \
-    dialog.dialog_input_2_int import DialogInput2Int
-from mot_toolkit.gui.view.components. \
-    menu.menu_item_radio import MenuItemRadio
-from mot_toolkit.gui.view.components.widget. \
-    basic.base_image_view_graphics import ImageDisplayType
-from mot_toolkit.gui.view.components.widget.rect.annotation_widget_rect import AnnotationWidgetRect
-from mot_toolkit.gui.view.components. \
-    widget.rect.image_rect import ImageRect
-from mot_toolkit.gui.view.interface.classify.dialog.object_class_select_dialog import ClassSelectionDialog
-from mot_toolkit.gui.view.interface. \
-    preview.components.detail.detail_widget import DetailWidget
-from mot_toolkit.gui.view.interface.preview.components. \
-    option.dialog_brightness_contrast import DialogBrightnessContrast
-from mot_toolkit.gui.view.interface.preview.feature.opencv_preview import OpenCVPreviewOptionWindow
-from mot_toolkit.gui.view.interface.preview.feature.task.export_sam_task import ExportSamTaskWindow
-from mot_toolkit.gui.view.interface. \
-    software.interface_about import InterFaceAbout
+from mot_toolkit.gui.view.components.dialog.dialog_input_1_int import DialogInput1Int
+from mot_toolkit.gui.view.components.dialog.dialog_input_2_int import DialogInput2Int
+from mot_toolkit.gui.view.components.menu.menu_item_radio import MenuItemRadio
+from mot_toolkit.gui.view.components.widget.basic.base_image_view_graphics import (
+    ImageDisplayType,
+)
+from mot_toolkit.gui.view.components.widget.rect.annotation_widget_rect import (
+    AnnotationWidgetRect,
+)
+from mot_toolkit.gui.view.components.widget.rect.image_rect import ImageRect
+from mot_toolkit.gui.view.interface.classify.dialog.object_class_select_dialog import (
+    ClassSelectionDialog,
+)
+from mot_toolkit.gui.view.interface.preview.components.detail.detail_widget import (
+    DetailWidget,
+)
+from mot_toolkit.gui.view.interface.preview.components.option.dialog_brightness_contrast import (
+    DialogBrightnessContrast,
+)
+from mot_toolkit.gui.view.interface.preview.feature.opencv_preview import (
+    OpenCVPreviewOptionWindow,
+)
+from mot_toolkit.gui.view.interface.preview.feature.task.export_sam_task import (
+    ExportSamTaskWindow,
+)
+from mot_toolkit.gui.view.interface.software.interface_about import InterFaceAbout
 from mot_toolkit.datatype.xanylabeling import (
     XAnyLabelingAnnotationDirectory,
-    XAnyLabelingAnnotation, XAnyLabelingRect
+    XAnyLabelingAnnotation,
+    XAnyLabelingRect,
 )
-from mot_toolkit.gui.view.components. \
-    window.base_interface_window import BaseWorkInterfaceWindow
-from mot_toolkit.gui.view.interface.preview. \
-    components.dataset_image_view_widget import DatasetImageView
-from mot_toolkit.gui.view.interface.preview. \
-    components.right_widget.file_list_widget import FileListWidget
-from mot_toolkit.gui.view.interface.preview. \
-    components.right_widget.label_list_widget import LabelClassListWidget
-from mot_toolkit.gui.view.interface.preview. \
-    components.right_widget.object_list_widget import ObjectListWidget
-from mot_toolkit.gui.view.interface.preview. \
-    components.toolbox_widget import ToolboxWidget
+from mot_toolkit.gui.view.components.window.base_interface_window import (
+    BaseWorkInterfaceWindow,
+)
+from mot_toolkit.gui.view.interface.preview.components.dataset_image_view_widget import (
+    DatasetImageView,
+)
+from mot_toolkit.gui.view.interface.preview.components.right_widget.file_list_widget import (
+    FileListWidget,
+)
+from mot_toolkit.gui.view.interface.preview.components.right_widget.label_list_widget import (
+    LabelClassListWidget,
+)
+from mot_toolkit.gui.view.interface.preview.components.right_widget.object_list_widget import (
+    ObjectListWidget,
+)
+from mot_toolkit.gui.view.interface.preview.components.toolbox_widget import (
+    ToolboxWidget,
+)
 from mot_toolkit.utils.logs import get_logger
 from mot_toolkit.utils.system.file_explorer import show_in_explorer
 
@@ -87,16 +104,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     menu: QMenuBar = None
 
-    def __init__(
-            self,
-            work_directory_path: str,
-            base_dir: str = "",
-            parent=None
-    ):
-        super().__init__(
-            work_directory_path=work_directory_path,
-            parent=parent
-        )
+    def __init__(self, work_directory_path: str, base_dir: str = "", parent=None):
+        super().__init__(work_directory_path=work_directory_path, parent=parent)
         self.base_dir = base_dir
         if self.base_dir:
             logger.info(f"Base Directory: {self.base_dir}")
@@ -105,8 +114,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.current_file_list = []
         self.current_file_str_list = []
 
-        self.annotation_directory = \
-            XAnyLabelingAnnotationDirectory()
+        self.annotation_directory = XAnyLabelingAnnotationDirectory()
         self.annotation_directory.slot_modified.connect(
             self.__slot_annotation_directory_modified
         )
@@ -150,9 +158,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.toolkit_widget.btn_previous_frame.clicked.connect(
             self.__slot_previous_image
         )
-        self.toolkit_widget.btn_next_frame.clicked.connect(
-            self.__slot_next_image
-        )
+        self.toolkit_widget.btn_next_frame.clicked.connect(self.__slot_next_image)
 
         self.toolkit_widget.btn_zoom_in_10.clicked.connect(
             lambda: self.main_image_view.zoom_in(1.0)
@@ -183,13 +189,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         def __toolkit_input_zoom_factor():
-            current_scale_factor = \
-                self.main_image_view.image_view.scale_factor
+            current_scale_factor = self.main_image_view.image_view.scale_factor
             input_text, ok = QInputDialog.getText(
                 self,
                 "Input Zoom Factor",
                 "Zoom Factor:",
-                text=str(current_scale_factor)
+                text=str(current_scale_factor),
             )
             if ok:
                 try:
@@ -198,9 +203,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 except ValueError:
                     pass
 
-        self.toolkit_widget.btn_zoom_input.clicked.connect(
-            __toolkit_input_zoom_factor
-        )
+        self.toolkit_widget.btn_zoom_input.clicked.connect(__toolkit_input_zoom_factor)
 
         self.toolkit_widget.btn_center.clicked.connect(
             lambda: self.main_image_view.move_area_to_center()
@@ -215,14 +218,18 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Main Image View
         self.main_image_view = DatasetImageView(parent=self)
 
-        self.main_image_view.only_show_selected = program_settings.menu_rect_only_show_selected
+        self.main_image_view.only_show_selected = (
+            program_settings.menu_rect_only_show_selected
+        )
         self.main_image_view.show_box = program_settings.menu_rect_show_box
         self.main_image_view.show_box_label = program_settings.menu_rect_show_box_label
 
         self.main_image_view.slot_previous_image.connect(self.__slot_previous_image)
         self.main_image_view.slot_next_image.connect(self.__slot_next_image)
         self.main_image_view.slot_save.connect(self.save_current_opened)
-        self.main_image_view.slot_selection_changed.connect(self.__slot_selection_changed)
+        self.main_image_view.slot_selection_changed.connect(
+            self.__slot_selection_changed
+        )
         self.main_image_view.slot_scroll.connect(self.__update_display_area)
         self.main_image_view.slot_property_changed.connect(self.__slot_property_changed)
 
@@ -233,19 +240,22 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.right_widget.setLayout(self.right_v_layout)
 
         self.r_label_class_list_widget = LabelClassListWidget(parent=self)
-        self.r_label_class_list_widget. \
-            list_widget.itemSelectionChanged.connect(self.__label_class_list_item_selection_changed)
+        self.r_label_class_list_widget.list_widget.itemSelectionChanged.connect(
+            self.__label_class_list_item_selection_changed
+        )
         self.right_v_layout.addWidget(self.r_label_class_list_widget)
 
         self.r_object_list_widget = ObjectListWidget(parent=self)
-        self.r_object_list_widget. \
-            list_widget.itemSelectionChanged.connect(self.__object_list_item_selection_changed)
+        self.r_object_list_widget.list_widget.itemSelectionChanged.connect(
+            self.__object_list_item_selection_changed
+        )
         self.right_v_layout.addWidget(self.r_object_list_widget)
 
         self.r_file_list_widget = FileListWidget(parent=self)
         self.r_file_list_widget.show_current_index = True
-        self.r_file_list_widget. \
-            list_widget.itemSelectionChanged.connect(self.__file_list_item_selection_changed)
+        self.r_file_list_widget.list_widget.itemSelectionChanged.connect(
+            self.__file_list_item_selection_changed
+        )
         self.right_v_layout.addWidget(self.r_file_list_widget)
 
         self.r_file_detail_widget_container = QWidget(parent=self)
@@ -256,9 +266,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.right_v_layout.addWidget(self.r_file_detail_widget_container)
 
         self.r_file_detail_widget = DetailWidget(parent=self)
-        self.r_file_detail_widget_container_layout.addWidget(
-            self.r_file_detail_widget
-        )
+        self.r_file_detail_widget_container_layout.addWidget(self.r_file_detail_widget)
 
         self.right_v_layout.setStretch(0, 1)
         self.right_v_layout.setStretch(1, 1)
@@ -268,8 +276,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # self.right_widget.setFixedWidth(200)
         self.main_h_layout.addWidget(self.right_widget)
 
-        self.main_image_view.object_menu = \
-            self.r_object_list_widget.list_widget.menu
+        self.main_image_view.object_menu = self.r_object_list_widget.list_widget.menu
 
         self.main_h_layout.setStretch(0, 0)
         self.main_h_layout.setStretch(1, 8)
@@ -298,117 +305,68 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # File Menu
         self.menu_file = self.menu.addMenu("File")
 
-        self.menu_file_open_dir = \
-            QAction(
-                "Open Directory", self.menu_file
-            )
-        self.menu_file_open_dir.setIcon(
-            QIcon(":/toolbox/folder_open")
-        )
+        self.menu_file_open_dir = QAction("Open Directory", self.menu_file)
+        self.menu_file_open_dir.setIcon(QIcon(":/toolbox/folder_open"))
         self.menu_file.addAction(self.menu_file_open_dir)
 
-        self.menu_file_refresh = \
-            QAction(
-                "Refresh", self.menu_file
-            )
-        self.menu_file_refresh.setIcon(
-            QIcon(":/toolbox/folder_refresh")
-        )
+        self.menu_file_refresh = QAction("Refresh", self.menu_file)
+        self.menu_file_refresh.setIcon(QIcon(":/toolbox/folder_refresh"))
         self.menu_file.addAction(self.menu_file_refresh)
 
         self.menu_file.addSeparator()
 
-        self.menu_file_restore_current = \
-            QAction(
-                "Restore", self.menu_file
-            )
-        self.menu_file_restore_current.setIcon(
-            QIcon(":/menu/preview/file_restore")
+        self.menu_file_restore_current = QAction("Restore", self.menu_file)
+        self.menu_file_restore_current.setIcon(QIcon(":/menu/preview/file_restore"))
+        self.menu_file_restore_current.triggered.connect(
+            self.__action_window_restore_current
         )
-        self.menu_file_restore_current.triggered.connect(self.__action_window_restore_current)
         self.menu_file.addAction(self.menu_file_restore_current)
 
-        self.menu_file_restore_before = \
-            QAction(
-                "   Restore Before", self.menu_file
-            )
-        self.menu_file_restore_before.setIcon(
-            QIcon(":/menu/preview/file_restore")
+        self.menu_file_restore_before = QAction("   Restore Before", self.menu_file)
+        self.menu_file_restore_before.setIcon(QIcon(":/menu/preview/file_restore"))
+        self.menu_file_restore_before.triggered.connect(
+            self.__action_window_restore_before
         )
-        self.menu_file_restore_before.triggered.connect(self.__action_window_restore_before)
         self.menu_file.addAction(self.menu_file_restore_before)
 
-        self.menu_file_restore_after = \
-            QAction(
-                "   Restore After", self.menu_file
-            )
-        self.menu_file_restore_after.setIcon(
-            QIcon(":/menu/preview/file_restore")
+        self.menu_file_restore_after = QAction("   Restore After", self.menu_file)
+        self.menu_file_restore_after.setIcon(QIcon(":/menu/preview/file_restore"))
+        self.menu_file_restore_after.triggered.connect(
+            self.__action_window_restore_after
         )
-        self.menu_file_restore_after.triggered.connect(self.__action_window_restore_after)
         self.menu_file.addAction(self.menu_file_restore_after)
 
-        self.menu_file_restore_all = \
-            QAction(
-                "   Restore All", self.menu_file
-            )
-        self.menu_file_restore_all.setIcon(
-            QIcon(":/menu/preview/file_restore")
-        )
+        self.menu_file_restore_all = QAction("   Restore All", self.menu_file)
+        self.menu_file_restore_all.setIcon(QIcon(":/menu/preview/file_restore"))
         self.menu_file_restore_all.triggered.connect(self.__action_window_restore_all)
         self.menu_file.addAction(self.menu_file_restore_all)
 
         self.menu_file.addSeparator()
 
-        self.menu_file_save_current = \
-            QAction(
-                "Save", self.menu_file
-            )
-        self.menu_file_save_current.setIcon(
-            QIcon(":/menu/preview/file_save")
-        )
+        self.menu_file_save_current = QAction("Save", self.menu_file)
+        self.menu_file_save_current.setIcon(QIcon(":/menu/preview/file_save"))
         self.menu_file_save_current.triggered.connect(self.__action_window_save_current)
         self.menu_file.addAction(self.menu_file_save_current)
 
-        self.menu_file_save_before = \
-            QAction(
-                "   Save Before", self.menu_file
-            )
-        self.menu_file_save_before.setIcon(
-            QIcon(":/menu/preview/file_save")
-        )
+        self.menu_file_save_before = QAction("   Save Before", self.menu_file)
+        self.menu_file_save_before.setIcon(QIcon(":/menu/preview/file_save"))
         self.menu_file_save_before.triggered.connect(self.__action_window_save_before)
         self.menu_file.addAction(self.menu_file_save_before)
 
-        self.menu_file_save_after = \
-            QAction(
-                "   Save After", self.menu_file
-            )
-        self.menu_file_save_after.setIcon(
-            QIcon(":/menu/preview/file_save")
-        )
+        self.menu_file_save_after = QAction("   Save After", self.menu_file)
+        self.menu_file_save_after.setIcon(QIcon(":/menu/preview/file_save"))
         self.menu_file_save_after.triggered.connect(self.__action_window_save_after)
         self.menu_file.addAction(self.menu_file_save_after)
 
-        self.menu_file_save_all = \
-            QAction(
-                "   Save All", self.menu_file
-            )
-        self.menu_file_save_all.setIcon(
-            QIcon(":/menu/preview/file_save")
-        )
+        self.menu_file_save_all = QAction("   Save All", self.menu_file)
+        self.menu_file_save_all.setIcon(QIcon(":/menu/preview/file_save"))
         self.menu_file_save_all.triggered.connect(self.__action_window_save_all)
         self.menu_file.addAction(self.menu_file_save_all)
 
         self.menu_file.addSeparator()
 
-        self.menu_file_exit = \
-            QAction(
-                "Exit", self.menu_file
-            )
-        self.menu_file_exit.setIcon(
-            QIcon(":/menu/preview/file_exit")
-        )
+        self.menu_file_exit = QAction("Exit", self.menu_file)
+        self.menu_file_exit.setIcon(QIcon(":/menu/preview/file_exit"))
         self.menu_file_exit.triggered.connect(self.__try_to_exit)
         self.menu_file.addAction(self.menu_file_exit)
 
@@ -416,12 +374,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Edit Menu
         self.menu_edit = self.menu.addMenu("Edit")
 
-        self.menu_edit_unselect_all = \
-            QAction(
-                "Unselect All", self.menu_edit
-            )
-        self.menu_edit_unselect_all \
-            .triggered.connect(self.__action_obj_unselect_all)
+        self.menu_edit_unselect_all = QAction("Unselect All", self.menu_edit)
+        self.menu_edit_unselect_all.triggered.connect(self.__action_obj_unselect_all)
         self.menu_edit.addAction(self.menu_edit_unselect_all)
 
     def __init_menu_file_list(self):
@@ -429,8 +383,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_file_list = self.menu.addMenu("File List")
 
         # Jump File Count
-        self.menu_file_list_jump_file_count = \
-            QAction("Jump File Count", self.menu_file_list)
+        self.menu_file_list_jump_file_count = QAction(
+            "Jump File Count", self.menu_file_list
+        )
         self.__set_jump_file_count(self.jump_file_count)
         self.menu_file_list_jump_file_count.triggered.connect(
             self.__action_item_jump_file_count
@@ -440,8 +395,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_file_list.addSeparator()
 
         # Remove All Object
-        self.menu_file_list_remove_all_object = \
-            QAction("Remove All Object (All Frames)", self.menu_file_list)
+        self.menu_file_list_remove_all_object = QAction(
+            "Remove All Object (All Frames)", self.menu_file_list
+        )
         self.menu_file_list_remove_all_object.triggered.connect(
             self.__action_file_list_remove_all_object
         )
@@ -450,8 +406,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_file_list.addSeparator()
 
         # OpenCV Show Video
-        self.menu_file_list_show_video_opencv = \
-            QAction("[OpenCV Preview] Preview Video", self.menu_file_list)
+        self.menu_file_list_show_video_opencv = QAction(
+            "[OpenCV Preview] Preview Video", self.menu_file_list
+        )
         self.menu_file_list_show_video_opencv.triggered.connect(
             self.__action_file_list_show_video
         )
@@ -464,57 +421,59 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         action_group_frame_display_type = QActionGroup(self.menu_frame)
 
         # Original
-        self.action_group_frame_display_type_radio_original = \
-            MenuItemRadio(
-                "Original Image",
-                parent=action_group_frame_display_type,
-                action_group=action_group_frame_display_type,
-                menu=self.menu_frame
-            )
-        self.action_group_frame_display_type_radio_original \
-            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_original = MenuItemRadio(
+            "Original Image",
+            parent=action_group_frame_display_type,
+            action_group=action_group_frame_display_type,
+            menu=self.menu_frame,
+        )
+        self.action_group_frame_display_type_radio_original.triggered.connect(
+            self.__action_frame_display_type_changed
+        )
 
         # Outline
-        self.action_group_frame_display_type_radio_outline = \
-            MenuItemRadio(
-                "Outline",
-                parent=action_group_frame_display_type,
-                action_group=action_group_frame_display_type,
-                menu=self.menu_frame
-            )
-        self.action_group_frame_display_type_radio_outline \
-            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_outline = MenuItemRadio(
+            "Outline",
+            parent=action_group_frame_display_type,
+            action_group=action_group_frame_display_type,
+            menu=self.menu_frame,
+        )
+        self.action_group_frame_display_type_radio_outline.triggered.connect(
+            self.__action_frame_display_type_changed
+        )
 
         # Outline + Binary
-        self.action_group_frame_display_type_radio_outline_binary = \
-            MenuItemRadio(
-                "Outline(Binary)",
-                parent=action_group_frame_display_type,
-                action_group=action_group_frame_display_type,
-                menu=self.menu_frame
-            )
-        self.action_group_frame_display_type_radio_outline_binary \
-            .triggered.connect(self.__action_frame_display_type_changed)
+        self.action_group_frame_display_type_radio_outline_binary = MenuItemRadio(
+            "Outline(Binary)",
+            parent=action_group_frame_display_type,
+            action_group=action_group_frame_display_type,
+            menu=self.menu_frame,
+        )
+        self.action_group_frame_display_type_radio_outline_binary.triggered.connect(
+            self.__action_frame_display_type_changed
+        )
 
-        self.menu_frame_outline_binary_threshold = \
-            QAction("   Set 'Binary Threshold Value'", parent=self.menu_frame)
+        self.menu_frame_outline_binary_threshold = QAction(
+            "   Set 'Binary Threshold Value'", parent=self.menu_frame
+        )
         self.menu_frame_outline_binary_threshold.triggered.connect(
             self.__action_set_frame_outline_binary_threshold
         )
         self.menu_frame.addAction(self.menu_frame_outline_binary_threshold)
 
         # Adjustment
-        self.action_group_frame_display_type_radio_adjustment = \
-            MenuItemRadio(
-                "Contrast and Brightness Adjustment",
-                parent=action_group_frame_display_type,
-                action_group=action_group_frame_display_type,
-                menu=self.menu_frame
-            )
-        self.action_group_frame_display_type_radio_adjustment \
-            .triggered.connect(self.__action_frame_display_type_changed)
-        self.menu_frame_set_brightness_contrast = \
-            QAction("   Set `Brightness` and `Contrast`", parent=self.menu_frame)
+        self.action_group_frame_display_type_radio_adjustment = MenuItemRadio(
+            "Contrast and Brightness Adjustment",
+            parent=action_group_frame_display_type,
+            action_group=action_group_frame_display_type,
+            menu=self.menu_frame,
+        )
+        self.action_group_frame_display_type_radio_adjustment.triggered.connect(
+            self.__action_frame_display_type_changed
+        )
+        self.menu_frame_set_brightness_contrast = QAction(
+            "   Set `Brightness` and `Contrast`", parent=self.menu_frame
+        )
         self.menu_frame_set_brightness_contrast.triggered.connect(
             self.__action_set_frame_brightness_contrast
         )
@@ -524,21 +483,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.menu_frame.addSeparator()
 
-        self.action_frame_fix_all = \
-            QAction("Try to Fix All", self.menu_frame)
+        self.action_frame_fix_all = QAction("Try to Fix All", self.menu_frame)
         self.action_frame_fix_all.triggered.connect(self.__action_frame_fix_all)
         self.menu_frame.addAction(self.action_frame_fix_all)
 
         self.menu_frame.addSeparator()
 
-        self.action_frame_opencv_rect = \
-            QAction("[OpenCV Preview] Draw Rect", self.menu_frame)
+        self.action_frame_opencv_rect = QAction(
+            "[OpenCV Preview] Draw Rect", self.menu_frame
+        )
         self.action_frame_opencv_rect.triggered.connect(self.__action_frame_opencv_rect)
         self.menu_frame.addAction(self.action_frame_opencv_rect)
 
-        self.action_frame_opencv_rect_near = \
-            QAction("[OpenCV Preview] Draw Rect Near", self.menu_frame)
-        self.action_frame_opencv_rect_near.triggered.connect(self.__action_frame_opencv_rect_near)
+        self.action_frame_opencv_rect_near = QAction(
+            "[OpenCV Preview] Draw Rect Near", self.menu_frame
+        )
+        self.action_frame_opencv_rect_near.triggered.connect(
+            self.__action_frame_opencv_rect_near
+        )
         self.menu_frame.addAction(self.action_frame_opencv_rect_near)
 
     def __init_menu_rect(self):
@@ -546,8 +508,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_rect = self.menu.addMenu("Rect")
 
         # Show Box
-        self.menu_rect_show_box = \
-            QAction("Show Box", self.menu_frame)
+        self.menu_rect_show_box = QAction("Show Box", self.menu_frame)
         self.menu_rect_show_box.setCheckable(True)
         self.menu_rect_show_box.setChecked(program_settings.menu_rect_show_box)
         self.menu_rect_show_box.triggered.connect(
@@ -556,20 +517,24 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.menu_rect.addAction(self.menu_rect_show_box)
 
         # Show Box Label
-        self.menu_rect_show_box_label = \
-            QAction("Show Box Label", self.menu_frame)
+        self.menu_rect_show_box_label = QAction("Show Box Label", self.menu_frame)
         self.menu_rect_show_box_label.setCheckable(True)
-        self.menu_rect_show_box_label.setChecked(program_settings.menu_rect_show_box_label)
+        self.menu_rect_show_box_label.setChecked(
+            program_settings.menu_rect_show_box_label
+        )
         self.menu_rect_show_box_label.triggered.connect(
             lambda x: self.__action_frame_show_box_label()
         )
         self.menu_rect.addAction(self.menu_rect_show_box_label)
 
         # Only Show Selected
-        self.menu_rect_only_show_selected = \
-            QAction("Only Show Selected (Zen Mode)", self.menu_frame)
+        self.menu_rect_only_show_selected = QAction(
+            "Only Show Selected (Zen Mode)", self.menu_frame
+        )
         self.menu_rect_only_show_selected.setCheckable(True)
-        self.menu_rect_only_show_selected.setChecked(program_settings.menu_rect_only_show_selected)
+        self.menu_rect_only_show_selected.setChecked(
+            program_settings.menu_rect_only_show_selected
+        )
         self.menu_rect_only_show_selected.triggered.connect(
             lambda x: self.__action_frame_set_only_show_selected()
         )
@@ -577,8 +542,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.menu_rect.addSeparator()
 
-        self.menu_rect_add_rect = \
-            QAction("Add Rect", self.menu_frame)
+        self.menu_rect_add_rect = QAction("Add Rect", self.menu_frame)
         self.menu_rect_add_rect.triggered.connect(self.__action_rect_add_rect)
         self.menu_rect.addAction(self.menu_rect_add_rect)
 
@@ -586,52 +550,51 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Settings Menu
         self.menu_settings = self.menu.addMenu("Settings")
 
-        self.menu_settings_settings = \
-            QAction(
-                "Settings", self.menu_settings
-            )
+        self.menu_settings_settings = QAction("Settings", self.menu_settings)
         self.menu_settings.addAction(self.menu_settings_settings)
 
         self.menu_settings.addSeparator()
 
-        self.menu_settings_auto_save = \
-            QAction(
-                "Switching automatically to save", self.menu_settings
-            )
+        self.menu_settings_auto_save = QAction(
+            "Switching automatically to save", self.menu_settings
+        )
         self.menu_settings_auto_save.setCheckable(False)
         self.menu_settings_auto_save.setChecked(program_settings.preview_auto_save)
         self.menu_settings_auto_save.triggered.connect(
             lambda: setattr(
-                program_settings, "preview_auto_save",
-                self.menu_settings_auto_save.isChecked()
+                program_settings,
+                "preview_auto_save",
+                self.menu_settings_auto_save.isChecked(),
             )
         )
         self.menu_settings.addAction(self.menu_settings_auto_save)
 
-        self.menu_settings_auto_select_same_tag = \
-            QAction(
-                "Switching automatically select same tag", self.menu_settings
-            )
+        self.menu_settings_auto_select_same_tag = QAction(
+            "Switching automatically select same tag", self.menu_settings
+        )
         self.menu_settings_auto_select_same_tag.setCheckable(True)
-        self.menu_settings_auto_select_same_tag.setChecked(program_settings.preview_auto_select_same_tag)
+        self.menu_settings_auto_select_same_tag.setChecked(
+            program_settings.preview_auto_select_same_tag
+        )
         self.menu_settings_auto_select_same_tag.triggered.connect(
             lambda: setattr(
-                program_settings, "preview_auto_select_same_tag",
-                self.menu_settings_auto_select_same_tag.isChecked()
+                program_settings,
+                "preview_auto_select_same_tag",
+                self.menu_settings_auto_select_same_tag.isChecked(),
             )
         )
         self.menu_settings.addAction(self.menu_settings_auto_select_same_tag)
 
-        self.menu_settings_auto_center = \
-            QAction(
-                "Auto center object", self.menu_settings
-            )
+        self.menu_settings_auto_center = QAction(
+            "Auto center object", self.menu_settings
+        )
         self.menu_settings_auto_center.setCheckable(True)
         self.menu_settings_auto_center.setChecked(program_settings.preview_auto_center)
         self.menu_settings_auto_center.triggered.connect(
             lambda: setattr(
-                program_settings, "preview_auto_center",
-                self.menu_settings_auto_center.isChecked()
+                program_settings,
+                "preview_auto_center",
+                self.menu_settings_auto_center.isChecked(),
             )
         )
         self.menu_settings.addAction(self.menu_settings_auto_center)
@@ -640,21 +603,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Help Menu
         self.menu_help = self.menu.addMenu("Help")
 
-        self.menu_help_website = \
-            QAction(
-                "Open Website", self.menu_help
-            )
+        self.menu_help_website = QAction("Open Website", self.menu_help)
         self.menu_help_website.triggered.connect(
-            lambda: QDesktopServices.openUrl(QUrl(
-                r"https://github.com/a645162/mot-toolkit"
-            ))
+            lambda: QDesktopServices.openUrl(
+                QUrl(r"https://github.com/a645162/mot-toolkit")
+            )
         )
         self.menu_help.addAction(self.menu_help_website)
 
-        self.menu_help_about = \
-            QAction(
-                "About", self.menu_help
-            )
+        self.menu_help_about = QAction("About", self.menu_help)
         self.menu_help_about.triggered.connect(
             lambda x: InterFaceAbout(parent=self).show()
         )
@@ -676,70 +633,81 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_file_list_widget.menu_show_in_explorer.triggered.connect(
             self.__action_file_list_show_in_explorer
         )
-        self.r_file_list_widget.menu_jump_to \
-            .triggered.connect(self.__action_obj_jump_to)
+        self.r_file_list_widget.menu_jump_to.triggered.connect(
+            self.__action_obj_jump_to
+        )
 
         # Class List
-        self.r_label_class_list_widget.menu_change_class \
-            .triggered.connect(
+        self.r_label_class_list_widget.menu_change_class.triggered.connect(
             self.__action_label_change_class
         )
 
         # Obj List
-        self.r_object_list_widget.menu_subsequent_new_id \
-            .triggered.connect(self.__action_obj_subsequent_new_id)
+        self.r_object_list_widget.menu_subsequent_new_id.triggered.connect(
+            self.__action_obj_subsequent_new_id
+        )
 
-        self.r_object_list_widget.menu_change_class \
-            .triggered.connect(self.__action_obj_change_class)
+        self.r_object_list_widget.menu_change_class.triggered.connect(
+            self.__action_obj_change_class
+        )
 
-        self.r_object_list_widget.menu_copy_subsequent \
-            .triggered.connect(self.__action_obj_copy_subsequent_target)
-        self.r_object_list_widget.menu_copy_between \
-            .triggered.connect(self.__action_obj_copy_between_target)
+        self.r_object_list_widget.menu_copy_subsequent.triggered.connect(
+            self.__action_obj_copy_subsequent_target
+        )
+        self.r_object_list_widget.menu_copy_between.triggered.connect(
+            self.__action_obj_copy_between_target
+        )
 
-        self.r_object_list_widget.menu_linear_interpolation \
-            .triggered.connect(self.__action_obj_linear_interpolation)
-        self.r_object_list_widget.menu_linear_interpolation_previous \
-            .triggered.connect(self.__action_obj_linear_interpolation_previous)
+        self.r_object_list_widget.menu_linear_interpolation.triggered.connect(
+            self.__action_obj_linear_interpolation
+        )
+        self.r_object_list_widget.menu_linear_interpolation_previous.triggered.connect(
+            self.__action_obj_linear_interpolation_previous
+        )
 
-        self.r_object_list_widget.menu_operate_fix_disappear \
-            .triggered.connect(self.__action_obj_fix_disappear)
-        self.r_object_list_widget.menu_operate_del \
-            .triggered.connect(self.__action_obj_del_target)
-        self.r_object_list_widget.menu_operate_del_subsequent \
-            .triggered.connect(self.__action_obj_del_subsequent_target)
-        self.r_object_list_widget.menu_operate_del_between \
-            .triggered.connect(self.__action_obj_del_between_target)
+        self.r_object_list_widget.menu_operate_fix_disappear.triggered.connect(
+            self.__action_obj_fix_disappear
+        )
+        self.r_object_list_widget.menu_operate_del.triggered.connect(
+            self.__action_obj_del_target
+        )
+        self.r_object_list_widget.menu_operate_del_subsequent.triggered.connect(
+            self.__action_obj_del_subsequent_target
+        )
+        self.r_object_list_widget.menu_operate_del_between.triggered.connect(
+            self.__action_obj_del_between_target
+        )
 
-        self.r_object_list_widget.menu_copy_position_float \
-            .triggered.connect(self.__action_obj_copy_position)
-        self.r_object_list_widget.menu_object_info \
-            .triggered.connect(self.__action_obj_info)
-        self.r_object_list_widget.menu_dl_sam2 \
-            .triggered.connect(self.__action_obj_dl_sam2)
-        self.r_object_list_widget.menu_dl_export_task \
-            .triggered.connect(self.__action_obj_dl_export_task)
+        self.r_object_list_widget.menu_copy_position_float.triggered.connect(
+            self.__action_obj_copy_position
+        )
+        self.r_object_list_widget.menu_object_info.triggered.connect(
+            self.__action_obj_info
+        )
+        self.r_object_list_widget.menu_dl_sam2.triggered.connect(
+            self.__action_obj_dl_sam2
+        )
+        self.r_object_list_widget.menu_dl_export_task.triggered.connect(
+            self.__action_obj_dl_export_task
+        )
 
         def __action_obj_dl_sam2_subsequence():
-            copy_previous_rect = \
+            copy_previous_rect = (
                 self.r_object_list_widget.menu_dl_sam2_subsequence_opt_copy.isChecked()
+            )
 
-            enable_expand = \
+            enable_expand = (
                 self.r_object_list_widget.menu_dl_sam2_subsequence_opt_enable_padding.isChecked()
+            )
 
             padding_top, padding_bottom, padding_left, padding_right = 0, 0, 0, 0
 
             if enable_expand:
-                (
-                    padding_top,
-                    padding_bottom,
-                    padding_left,
-                    padding_right
-                ) = (
+                (padding_top, padding_bottom, padding_left, padding_right) = (
                     self.r_object_list_widget.padding_top,
                     self.r_object_list_widget.padding_bottom,
                     self.r_object_list_widget.padding_left,
-                    self.r_object_list_widget.padding_right
+                    self.r_object_list_widget.padding_right,
                 )
 
             run_times = self.r_object_list_widget.run_times
@@ -750,14 +718,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 expand_bottom=padding_bottom,
                 expand_left=padding_left,
                 expand_right=padding_right,
-                run_times=run_times
+                run_times=run_times,
             )
 
-        self.r_object_list_widget.menu_dl_sam2_subsequence \
-            .triggered.connect(__action_obj_dl_sam2_subsequence)
+        self.r_object_list_widget.menu_dl_sam2_subsequence.triggered.connect(
+            __action_obj_dl_sam2_subsequence
+        )
 
-        self.r_object_list_widget.menu_unselect_all \
-            .triggered.connect(self.__action_obj_unselect_all)
+        self.r_object_list_widget.menu_unselect_all.triggered.connect(
+            self.__action_obj_unselect_all
+        )
 
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
@@ -778,16 +748,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 return
             if key == Qt.Key.Key_End:
                 if self.r_file_list_widget.count > 0:
-                    self.r_file_list_widget.selection_index = \
+                    self.r_file_list_widget.selection_index = (
                         self.r_file_list_widget.count - 1
+                    )
                 return
 
         if modifiers == Qt.KeyboardModifier.AltModifier:
             # Alt
             if key == Qt.Key.Key_1:
-                self.action_group_frame_display_type_radio_original.setChecked(
-                    True
-                )
+                self.action_group_frame_display_type_radio_original.setChecked(True)
                 self.__action_frame_display_type_changed()
                 return
             if key == Qt.Key.Key_2:
@@ -795,7 +764,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.__action_frame_display_type_changed()
                 return
             if key == Qt.Key.Key_3:
-                self.action_group_frame_display_type_radio_outline_binary.setChecked(True)
+                self.action_group_frame_display_type_radio_outline_binary.setChecked(
+                    True
+                )
                 self.__action_frame_display_type_changed()
                 return
             if key == Qt.Key.Key_4:
@@ -803,7 +774,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 self.__action_frame_display_type_changed()
                 return
             if key == Qt.Key.Key_H:
-                self.menu_rect_show_box.setChecked(not self.menu_rect_show_box.isChecked())
+                self.menu_rect_show_box.setChecked(
+                    not self.menu_rect_show_box.isChecked()
+                )
                 self.__action_frame_show_box()
                 return
             if key == Qt.Key.Key_Q:
@@ -876,9 +849,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def update(self):
         super().update()
 
-        self.setWindowTitle(
-            self.basic_window_title + " - " + self.work_directory_path
-        )
+        self.setWindowTitle(self.basic_window_title + " - " + self.work_directory_path)
         # self.label_work_path.setText(
         #     "Work Directory: " + self.work_directory_path
         # )
@@ -920,14 +891,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.r_label_class_list_widget.update()
 
         if current_selection_text != "":
-            self.r_label_class_list_widget.list_widget.try_to_select_text(current_selection_text)
+            self.r_label_class_list_widget.list_widget.try_to_select_text(
+                current_selection_text
+            )
 
     def __update_file_list(self):
         # Update File List
-        self.current_file_list = \
-            self.annotation_directory.annotation_file_list
-        self.current_file_str_list = \
-            self.annotation_directory.file_name_list
+        self.current_file_list = self.annotation_directory.annotation_file_list
+        self.current_file_str_list = self.annotation_directory.file_name_list
 
         self.update_file_list_widget()
 
@@ -940,8 +911,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         self.update_detail_info()
 
     def update_file_list_widget(self):
-        annotation_obj_list: List[XAnyLabelingAnnotation] = \
-            self.current_file_list
+        annotation_obj_list: List[XAnyLabelingAnnotation] = self.current_file_list
 
         current_selected_text = self.r_file_list_widget.selection_text
 
@@ -987,11 +957,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Save Current Selected Label
         obj_selection_index = self.r_object_list_widget.selection_index
         current_label_text = ""
-        if 0 <= obj_selection_index < len(self.current_annotation_object.rect_annotation_list):
-            current_label_text = \
-                self.current_annotation_object \
-                    .rect_annotation_list[obj_selection_index] \
-                    .label
+        if (
+            0
+            <= obj_selection_index
+            < len(self.current_annotation_object.rect_annotation_list)
+        ):
+            current_label_text = self.current_annotation_object.rect_annotation_list[
+                obj_selection_index
+            ].label
 
         file_selection_text = self.r_file_list_widget.selection_text
         if file_selection_text.startswith("* "):
@@ -1004,17 +977,20 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if index == -1:
             return
 
-        self.current_annotation_object = \
-            self.annotation_directory.annotation_file_list[index]
+        self.current_annotation_object = self.annotation_directory.annotation_file_list[
+            index
+        ]
         self.current_file_path = self.current_annotation_object.file_path
 
         self.previous_annotation_object = None
         if index != 0:
-            self.previous_annotation_object = self.annotation_directory.annotation_file_list[index - 1]
+            self.previous_annotation_object = (
+                self.annotation_directory.annotation_file_list[index - 1]
+            )
 
         self.main_image_view.update_dataset_annotation_path(
             annotation_obj=self.current_annotation_object,
-            previous_annotation_obj=self.previous_annotation_object
+            previous_annotation_obj=self.previous_annotation_object,
         )
 
         self.r_object_list_widget.list_widget.clear()
@@ -1033,9 +1009,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def is_in_class_filter_mode(self) -> bool:
         return (
-                self.r_label_class_list_widget.count > 1 and
-                self.r_label_class_list_widget.selection_index != -1 and
-                self.r_label_class_list_widget.selection_index != self.r_label_class_list_widget.count - 1
+            self.r_label_class_list_widget.count > 1
+            and self.r_label_class_list_widget.selection_index != -1
+            and self.r_label_class_list_widget.selection_index
+            != self.r_label_class_list_widget.count - 1
         )
 
     def __update_label_class_auto_select(self):
@@ -1049,7 +1026,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return False
 
         target_label_index = -1
-        for i, rect_item in enumerate(self.current_annotation_object.rect_annotation_list):
+        for i, rect_item in enumerate(
+            self.current_annotation_object.rect_annotation_list
+        ):
             if rect_item.label == tag_text:
                 target_label_index = i
                 break
@@ -1066,13 +1045,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         filename_text = self.r_file_list_widget.selection_text
 
         if (
-                self.r_label_class_list_widget.count == 1 or
-                self.r_label_class_list_widget.is_selected_last()
+            self.r_label_class_list_widget.count == 1
+            or self.r_label_class_list_widget.is_selected_last()
         ):
-            self.current_file_list = \
-                self.annotation_directory.annotation_file_list
-            self.current_file_str_list = \
-                self.annotation_directory.file_name_list
+            self.current_file_list = self.annotation_directory.annotation_file_list
+            self.current_file_str_list = self.annotation_directory.file_name_list
         else:
             label_text = self.r_label_class_list_widget.selection_text
 
@@ -1082,8 +1059,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             if label_text not in self.annotation_directory.label_obj_list_dict:
                 return
 
-            self.current_file_list = \
-                self.annotation_directory.label_obj_list_dict[label_text]
+            self.current_file_list = self.annotation_directory.label_obj_list_dict[
+                label_text
+            ]
 
             self.current_file_str_list = []
             for annotation_obj in self.current_file_list:
@@ -1162,7 +1140,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to restore current?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1176,7 +1154,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to restore before?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         have_file_reload = False
@@ -1196,17 +1174,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 return False
 
             self.annotation_directory.do_for_each_file(
-                func=restore_before,
-                end_index=file_index - 1
+                func=restore_before, end_index=file_index - 1
             )
 
             self.__update_object_list_widget()
 
-            QMessageBox.information(
-                self,
-                "Restore",
-                "Restore before successful."
-            )
+            QMessageBox.information(self, "Restore", "Restore before successful.")
 
         return have_file_reload
 
@@ -1216,7 +1189,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to restore after?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         have_file_reload = False
@@ -1236,17 +1209,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 return False
 
             self.annotation_directory.do_for_each_file(
-                func=restore_after,
-                start_index=file_index + 1
+                func=restore_after, start_index=file_index + 1
             )
 
             self.__update_object_list_widget()
 
-            QMessageBox.information(
-                self,
-                "Restore",
-                "Restore after successful."
-            )
+            QMessageBox.information(self, "Restore", "Restore after successful.")
 
         return have_file_reload
 
@@ -1256,7 +1224,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to restore all?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1268,11 +1236,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
             self.__update_object_list_widget()
 
-            QMessageBox.information(
-                self,
-                "Restore",
-                "All files restored."
-            )
+            QMessageBox.information(self, "Restore", "All files restored.")
 
     def __action_window_save_current(self):
         reply = QMessageBox.question(
@@ -1280,7 +1244,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to save current file?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1291,10 +1255,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         reply = QMessageBox.question(
             self,
             "Question",
-            "Are you sure you want to save before?\n"
-            "Not include current file.",
+            "Are you sure you want to save before?\n" "Not include current file.",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         have_saved = False
@@ -1316,15 +1279,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     return
 
             self.annotation_directory.do_for_each_file(
-                func=save_before,
-                end_index=file_index - 1
+                func=save_before, end_index=file_index - 1
             )
 
-            QMessageBox.information(
-                self,
-                "Information",
-                "Save before successful."
-            )
+            QMessageBox.information(self, "Information", "Save before successful.")
 
         return have_saved
 
@@ -1332,10 +1290,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         reply = QMessageBox.question(
             self,
             "Question",
-            "Are you sure you want to save after?\n"
-            "Not include current file.",
+            "Are you sure you want to save after?\n" "Not include current file.",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -1356,15 +1313,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     return
 
             self.annotation_directory.do_for_each_file(
-                func=save_after,
-                start_index=file_index + 1
+                func=save_after, start_index=file_index + 1
             )
 
-            QMessageBox.information(
-                self,
-                "Information",
-                "Save after successful."
-            )
+            QMessageBox.information(self, "Information", "Save after successful.")
 
         return reply == QMessageBox.StandardButton.Yes
 
@@ -1374,7 +1326,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to save all?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         def save_all(annotation_file_obj: XAnyLabelingAnnotation, index: int):
@@ -1387,11 +1339,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             #         self.__successful_saved(annotation)
             self.annotation_directory.do_for_each_file(save_all)
 
-            QMessageBox.information(
-                self,
-                "Information",
-                "All files saved."
-            )
+            QMessageBox.information(self, "Information", "All files saved.")
 
             return True
 
@@ -1438,7 +1386,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Warning",
             "Are you sure you want to reload?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
         if ok != QMessageBox.StandardButton.Yes:
             return
@@ -1525,8 +1473,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return
 
         logger.info(
-            f"[{file_index}]Subsequent New ID: "
-            f"{current_label_id} -> {new_label_id}"
+            f"[{file_index}]Subsequent New ID: " f"{current_label_id} -> {new_label_id}"
         )
 
         def change_id(annotation_obj: XAnyLabelingAnnotation, index: int):
@@ -1534,8 +1481,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 annotation_obj.change_annotation_label(current_label_id, new_label_id)
 
         self.annotation_directory.do_for_each_file(
-            func=change_id,
-            start_index=file_index
+            func=change_id, start_index=file_index
         )
 
         self.update_annotation_object_display()
@@ -1553,10 +1499,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         select_rect_index = self.r_object_list_widget.selection_index
         if select_rect_index == -1:
             return
-        selected_rect_obj = \
-            self.current_annotation_object.rect_annotation_list[
-                select_rect_index
-            ]
+        selected_rect_obj = self.current_annotation_object.rect_annotation_list[
+            select_rect_index
+        ]
 
         selected_rect_id = selected_rect_obj.label
         selected_rect_class_id = selected_rect_obj.group_id
@@ -1574,7 +1519,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         dialog = ClassSelectionDialog(
             class_configure=object_class_configure,
             class_id=selected_rect_class_id,
-            parent=self
+            parent=self,
         )
         if dialog.exec() != QDialog.DialogCode.Accepted:
             logger.info("Dialog was canceled")
@@ -1591,9 +1536,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                     annotation_obj.modifying()
                     break
 
-        self.annotation_directory.do_for_each_file(
-            func=change_class
-        )
+        self.annotation_directory.do_for_each_file(func=change_class)
 
         self.update_annotation_object_display()
 
@@ -1618,10 +1561,12 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #
         #     annotation_obj.add_or_update_rect(selected_rect_obj)
         self.annotation_directory.do_for_each_file(
-            func=lambda annotation_obj, i:
-            annotation_obj.add_or_update_rect(selected_rect_obj)
-            if i >= file_index else None,
-            start_index=file_index
+            func=lambda annotation_obj, i: (
+                annotation_obj.add_or_update_rect(selected_rect_obj)
+                if i >= file_index
+                else None
+            ),
+            start_index=file_index,
         )
 
         # self.__update_object_list_widget()
@@ -1641,24 +1586,23 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         frame_start_index, frame_end_index = (
             self.annotation_directory.get_index_by_frame_index(frame_start),
-            self.annotation_directory.get_index_by_frame_index(frame_end)
+            self.annotation_directory.get_index_by_frame_index(frame_end),
         )
         if frame_start_index == -1 or frame_end_index == -1:
-            QMessageBox.critical(
-                self,
-                "Error",
-                "Frame not found."
-            )
+            QMessageBox.critical(self, "Error", "Frame not found.")
             return
 
         # 添加"跳过已存在"选项
-        skip_exist = QMessageBox.question(
-            self,
-            "Skip Existing",
-            "是否跳过已存在相同标签的帧？",
-            QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
-        ) == QMessageBox.StandardButton.Yes
+        skip_exist = (
+            QMessageBox.question(
+                self,
+                "Skip Existing",
+                "是否跳过已存在相同标签的帧？",
+                QMessageBox.StandardButton.Yes,
+                QMessageBox.StandardButton.No,
+            )
+            == QMessageBox.StandardButton.Yes
+        )
 
         ok = QMessageBox.question(
             self,
@@ -1668,31 +1612,31 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             f"\n跳过已存在: {skip_exist}"
             "\n\nThis operation is irreversible!",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if ok != QMessageBox.StandardButton.Yes:
             return
-        
+
         target_label = selected_rect_obj.label
-        
+
         def process_frame(annotation_obj, i):
             if frame_start_index <= i <= frame_end_index:
                 # 如果设置跳过已存在，则检查是否已有相同标签
                 if skip_exist:
                     for rect in annotation_obj.rect_annotation_list:
                         if rect.label == target_label:
-                            logger.info(f"跳过帧 {annotation_obj.file_name_no_extension}: 已存在标签 {target_label}")
+                            logger.info(
+                                f"跳过帧 {annotation_obj.file_name_no_extension}: 已存在标签 {target_label}"
+                            )
                             return
-                
+
                 # 没有相同标签或不跳过，则添加或更新矩形
                 annotation_obj.add_or_update_rect(selected_rect_obj)
             return None
 
         self.annotation_directory.do_for_each_file(
-            func=process_frame,
-            start_index=frame_start_index,
-            end_index=frame_end_index
+            func=process_frame, start_index=frame_start_index, end_index=frame_end_index
         )
 
         self.update_annotation_object_display()
@@ -1704,19 +1648,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         label = self.current_annotation_object.rect_annotation_list[label_index].label
 
         if label == "":
-            QMessageBox.critical(
-                self,
-                "Error",
-                "Please select a target."
-            )
+            QMessageBox.critical(self, "Error", "Please select a target.")
             return
 
         frame_start, frame_end = int(start_frame), int(end_frame)
         if frame_start >= frame_end:
             QMessageBox.critical(
-                self,
-                "Error",
-                "Start frame must be less than end frame."
+                self, "Error", "Start frame must be less than end frame."
             )
             return
 
@@ -1730,7 +1668,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             f"Start Frame: {start_file_obj.file_name_no_extension}\n"
             f"End Frame: {end_file_obj.file_name_no_extension}",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply != QMessageBox.StandardButton.Yes:
@@ -1744,23 +1682,19 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         )
 
         if start_file_obj is None or end_file_obj is None:
-            QMessageBox.critical(
-                self,
-                "Error",
-                "Start frame or end frame not found."
-            )
+            QMessageBox.critical(self, "Error", "Start frame or end frame not found.")
             return
 
         self.annotation_directory.linear_interpolation(
-            start=start_file_obj,
-            end=end_file_obj,
-            label=label
+            start=start_file_obj, end=end_file_obj, label=label
         )
 
     def __action_obj_linear_interpolation(self):
         current_frame_index = 0
         try:
-            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+            current_frame_index = int(
+                self.current_annotation_object.file_name_no_extension
+            )
         except Exception:
             pass
 
@@ -1772,7 +1706,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             min_value=0,
             max_value=len(self.annotation_directory.annotation_file_list) - 1,
             title="Linear Interpolation",
-            parent=self
+            parent=self,
         )
 
         if dialog.exec() != QDialog.DialogCode.Accepted:
@@ -1781,7 +1715,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __action_obj_linear_interpolation_previous(self):
         current_frame_index = 0
         try:
-            current_frame_index = int(self.current_annotation_object.file_name_no_extension)
+            current_frame_index = int(
+                self.current_annotation_object.file_name_no_extension
+            )
         except Exception:
             pass
 
@@ -1791,8 +1727,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             previous_frame_index = 0
 
         self.linear_interpolation(
-            start_frame=previous_frame_index,
-            end_frame=current_frame_index
+            start_frame=previous_frame_index, end_frame=current_frame_index
         )
 
     def __action_obj_restore_first_rect(self):
@@ -1813,7 +1748,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 if rect_obj.label == label:
                     first_rect_obj = rect_obj
 
-                    logger.info(f"Restore First Rect({label}): {file_obj.file_name_no_extension}")
+                    logger.info(
+                        f"Restore First Rect({label}): {file_obj.file_name_no_extension}"
+                    )
 
                     is_found = True
                     break
@@ -1829,7 +1766,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if rect_widget is None:
             return
 
-        logger.info(f"- Restore Width: {first_rect_obj.width} Height: {first_rect_obj.height}")
+        logger.info(
+            f"- Restore Width: {first_rect_obj.width} Height: {first_rect_obj.height}"
+        )
 
         rect_widget.width_original = first_rect_obj.width
         rect_widget.height_original = first_rect_obj.height
@@ -1882,30 +1821,30 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Warning",
             "Are you sure you want to fix disappear?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
-        
+
         if reply != QMessageBox.StandardButton.Yes:
             return
-        
+
         index = self.r_object_list_widget.selection_index
         if index == -1:
             return
-        
+
         # Reset BBox to 0,0,10,10
         rect_annotation_list = self.current_annotation_object.rect_annotation_list
-        
+
         obj = rect_annotation_list[index]
-        
+
         obj.x1 = 0
         obj.y1 = 0
         obj.width = 10
         obj.height = 10
-        
+
         obj.modifying()
-        
+
         self.update_annotation_object_display()
-        
+
         # Update Widget
         self.main_image_view.annotation_widget_rect_list[index].update()
 
@@ -1915,7 +1854,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Warning",
             "Are you sure you want to del target?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply != QMessageBox.StandardButton.Yes:
@@ -1945,7 +1884,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             f"Are you sure you want to del subsequent target({label})?\n\n"
             f"Include current frame.",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply != QMessageBox.StandardButton.Yes:
@@ -1955,7 +1894,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         if file_index == -1:
             return
 
-        logger.info(f"[{index}]Delete the target in subsequent frames(Start from {file_index})")
+        logger.info(
+            f"[{index}]Delete the target in subsequent frames(Start from {file_index})"
+        )
         logger.info(f"Delete Label: {label}")
 
         # self.current_annotation_object.del_by_label(label)
@@ -1965,8 +1906,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #
         #     annotation_obj.del_by_label(label)
         self.annotation_directory.do_for_each_file(
-            func=lambda annotation_obj, i: annotation_obj.del_by_label(label) if i >= file_index else None,
-            start_index=file_index
+            func=lambda annotation_obj, i: (
+                annotation_obj.del_by_label(label) if i >= file_index else None
+            ),
+            start_index=file_index,
         )
 
         self.r_object_list_widget.selection_index = -1
@@ -1991,7 +1934,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             min_value=first_file_index,
             max_value=last_file_index,
             title="Select Frame Range",
-            parent=self
+            parent=self,
         )
         dialog.setGeometry(100, 100, 200, 150)
 
@@ -2013,14 +1956,10 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         frame_start_index, frame_end_index = (
             self.annotation_directory.get_index_by_frame_index(frame_start),
-            self.annotation_directory.get_index_by_frame_index(frame_end)
+            self.annotation_directory.get_index_by_frame_index(frame_end),
         )
         if frame_start_index == -1 or frame_end_index == -1:
-            QMessageBox.critical(
-                self,
-                "Error",
-                "Frame not found."
-            )
+            QMessageBox.critical(self, "Error", "Frame not found.")
             return
 
         ret = QMessageBox.question(
@@ -2030,7 +1969,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             f"{frame_start} - {frame_end}\n"
             f"※Include start and end frame!!!",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
         if ret != QMessageBox.StandardButton.Yes:
             return
@@ -2044,11 +1983,13 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #
         #     annotation_obj.del_by_label(label)
         self.annotation_directory.do_for_each_file(
-            func=lambda annotation_obj, i:
-            annotation_obj.del_by_label(label)
-            if frame_start_index <= i <= frame_end_index else None,
+            func=lambda annotation_obj, i: (
+                annotation_obj.del_by_label(label)
+                if frame_start_index <= i <= frame_end_index
+                else None
+            ),
             start_index=frame_start_index,
-            end_index=frame_end_index
+            end_index=frame_end_index,
         )
 
         # self.__update_object_list_widget()
@@ -2061,9 +2002,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             return None
 
         obj_index = self.r_object_list_widget.selection_index
-        if (
-                obj_index == -1 or
-                obj_index >= len(self.current_annotation_object.rect_annotation_list)
+        if obj_index == -1 or obj_index >= len(
+            self.current_annotation_object.rect_annotation_list
         ):
             return None
         return self.current_annotation_object.rect_annotation_list[obj_index]
@@ -2098,7 +2038,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         width, height = annotation_object.width, annotation_object.height
 
         QMessageBox.information(
-            self, "Object Info",
+            self,
+            "Object Info",
             (
                 f"Label: {annotation_object.label}\n"
                 f"Group: {annotation_object.group_id}\n"
@@ -2106,7 +2047,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 f"Position: {position_str}\n"
                 f"Width: {width} x {height}\n"
                 f"Area: {width * height}"
-            )
+            ),
         )
 
     def __action_obj_dl_sam2(self):
@@ -2133,13 +2074,11 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         if self.r_object_list_widget.menu_dl_near_mode.isChecked():
             result_list = sam2.sam_predict_xyxy_near(
-                self.current_annotation_object.pic_path,
-                original_bbox
+                self.current_annotation_object.pic_path, original_bbox
             )
         else:
             result_list = sam2.sam_predict_xyxy(
-                self.current_annotation_object.pic_path,
-                original_bbox
+                self.current_annotation_object.pic_path, original_bbox
             )
 
         logger.info(f"Result Count: {len(result_list)}")
@@ -2158,7 +2097,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             result_bbox[0],
             result_bbox[1],
             result_bbox[2],
-            result_bbox[3]
+            result_bbox[3],
         )
 
         iou = calculate_iou(original_bbox, result_bbox)
@@ -2199,9 +2138,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         parent_dir_path = os.path.dirname(parent_dir_path)
         dataset_name = os.path.basename(parent_dir_path)
 
-        json_name = os.path.basename(
-            self.current_annotation_object.file_path
-        )
+        json_name = os.path.basename(self.current_annotation_object.file_path)
         target_label = self.get_selection_object().label
 
         export_window = ExportSamTaskWindow(
@@ -2213,14 +2150,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         export_window.exec()
 
     def __obj_dl_sam2_subsequence(
-            self,
-            copy_previous: bool = False,
-            expand_left: float = 0,
-            expand_top: float = 0,
-            expand_right: float = 0,
-            expand_bottom: float = 0,
-            run_times: int = 1,
-            iou_threshold: float = 0.3
+        self,
+        copy_previous: bool = False,
+        expand_left: float = 0,
+        expand_top: float = 0,
+        expand_right: float = 0,
+        expand_bottom: float = 0,
+        run_times: int = 1,
+        iou_threshold: float = 0.3,
     ):
         import mot_toolkit.dl as dl
 
@@ -2264,10 +2201,14 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         enable_expand = expand_left or expand_top or expand_right or expand_bottom
 
         expand_str = (
-            "\n\nExpand:"
-            f"\nTop: {expand_top} Bottom: {expand_bottom}"
-            f"\nLeft: {expand_left} Right: {expand_right}"
-        ) if enable_expand else ""
+            (
+                "\n\nExpand:"
+                f"\nTop: {expand_top} Bottom: {expand_bottom}"
+                f"\nLeft: {expand_left} Right: {expand_right}"
+            )
+            if enable_expand
+            else ""
+        )
         ok = QMessageBox.question(
             self,
             "Warning",
@@ -2278,7 +2219,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 f"{expand_str}"
             ),
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
         if ok != QMessageBox.StandardButton.Yes:
             return
@@ -2286,8 +2227,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         # Get Previous File Object
         previous_file_obj: Optional[XAnyLabelingAnnotation] = None
         if start_index != 0:
-            previous_file_obj = \
-                self.annotation_directory.annotation_file_list[start_index - 1]
+            previous_file_obj = self.annotation_directory.annotation_file_list[
+                start_index - 1
+            ]
 
         total_count = len(task_file_obj_list)
         logger.info(f"Batch SAM2 Task Count: {total_count}")
@@ -2320,7 +2262,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
                 # Copy Last Frame
                 if copy_previous and previous_rect_obj is not None:
-                    logger.info(f"Copy Previous Frame Object: {previous_file_obj.file_name_no_extension}")
+                    logger.info(
+                        f"Copy Previous Frame Object: {previous_file_obj.file_name_no_extension}"
+                    )
                     original_bbox = previous_rect_obj.get_xyxy_list()
 
                 input_bbox = original_bbox.copy()
@@ -2356,10 +2300,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 for _ in range(run_times):
                     input_bbox = [x1, y1, x2, y2]
 
-                    result_list = sam2.sam_predict_xyxy(
-                        file_obj.pic_path,
-                        input_bbox
-                    )
+                    result_list = sam2.sam_predict_xyxy(file_obj.pic_path, input_bbox)
 
                     if len(result_list) == 0:
                         logger.warning(f"No result for Object:{rect_obj.label}")
@@ -2377,7 +2318,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                             max_index = iou_list.index(max(iou_list))
                             max_iou = max(iou_list)
                             if max_iou < iou_threshold:
-                                logger.warning(f"Max IOU is too low: {max_iou} < {iou_threshold}")
+                                logger.warning(
+                                    f"Max IOU is too low: {max_iou} < {iou_threshold}"
+                                )
                                 have_error = True
                             else:
                                 result_list = result_list[max_index]
@@ -2385,7 +2328,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                             result_list = result_list[0]
 
                         if not have_error and len(result_list) != 4:
-                            logger.warning(f"Error: SAM result bbox length({len(result_list)}) != 4")
+                            logger.warning(
+                                f"Error: SAM result bbox length({len(result_list)}) != 4"
+                            )
                             have_error = True
 
                     if have_error:
@@ -2395,7 +2340,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                         result_list[0],
                         result_list[1],
                         result_list[2],
-                        result_list[3]
+                        result_list[3],
                     )
 
                 if have_error:
@@ -2462,7 +2407,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             min_value=first_int,
             max_value=last_int,
             title="Jump to Frame",
-            parent=self
+            parent=self,
         )
 
         if dialog.exec() != QDialog.DialogCode.Accepted:
@@ -2507,15 +2452,21 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         elif type == ImageDisplayType.Outline:
             # Outline Image
             logger.info("Outline Image")
-            self.main_image_view.image_view.image_display_type = ImageDisplayType.Outline
+            self.main_image_view.image_view.image_display_type = (
+                ImageDisplayType.Outline
+            )
         elif type == ImageDisplayType.OutlineBinary:
             # Outline Binary Image
             logger.info("Outline Binary Image")
-            self.main_image_view.image_view.image_display_type = ImageDisplayType.OutlineBinary
+            self.main_image_view.image_view.image_display_type = (
+                ImageDisplayType.OutlineBinary
+            )
         elif type == ImageDisplayType.Adjustment:
             # Adjustment Image
             logger.info("Adjust Image Contrast and Brightness")
-            self.main_image_view.image_view.image_display_type = ImageDisplayType.Adjustment
+            self.main_image_view.image_view.image_display_type = (
+                ImageDisplayType.Adjustment
+            )
         else:
             logger.error("Unknown mode")
 
@@ -2525,7 +2476,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Warning",
             "Are you sure you want to fix all?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
         if ok != QMessageBox.StandardButton.Yes:
             return
@@ -2550,7 +2501,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         #         2
         #     )
 
-        img = self.current_annotation_object.get_cv_mat_with_box()
+        img = self.current_annotation_object.get_cv_mat_with_box_old()
 
         cv2.imshow(img_path, img)
         cv2.waitKey(0)
@@ -2558,8 +2509,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
     def __action_frame_opencv_rect_near(self):
         # Widget
-        selected_widget: AnnotationWidgetRect | None = \
+        selected_widget: AnnotationWidgetRect | None = (
             self.main_image_view.selection_widget
+        )
         if selected_widget is None:
             QMessageBox.warning(self, "Warning", "Please select a rect first.")
             return
@@ -2572,9 +2524,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         x1, y1, x2, y2 = rect_obj.x1, rect_obj.y1, rect_obj.x2, rect_obj.y2
         x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
 
-        crop_image = self.current_annotation_object.get_cv_mat_with_box(
-            with_text=False,
-            crop_xyxy=(x1, y1, x2, y2)
+        crop_image = self.current_annotation_object.get_cv_mat_with_box_old(
+            with_text=False, crop_xyxy=(x1, y1, x2, y2)
         )
         if crop_image is None:
             QMessageBox.warning(self, "Warning", "Image is None.")
@@ -2589,7 +2540,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         selection_label = ""
         try:
-            for _, widget in enumerate(self.main_image_view.annotation_widget_rect_list):
+            for _, widget in enumerate(
+                self.main_image_view.annotation_widget_rect_list
+            ):
                 if widget.selecting:
                     selection_label = widget.label_text
                     break
@@ -2610,7 +2563,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             start_frame=1,
             end_frame=len(self.annotation_directory.annotation_file_list),
             selection_label=selection_label,
-            color_dict=color_dict
+            color_dict=color_dict,
         )
         option_window.show()
 
@@ -2619,7 +2572,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self,
             "Input Dialog",
             "Enter the threshold value:",
-            value=self.main_image_view.image_view.outline_binary_threshold
+            value=self.main_image_view.image_view.outline_binary_threshold,
         )
         if ok:
             self.main_image_view.image_view.outline_binary_threshold = number
@@ -2628,20 +2581,18 @@ class InterFacePreview(BaseWorkInterfaceWindow):
     def __action_set_frame_brightness_contrast(self):
         dialog_brightness_contrast = DialogBrightnessContrast(parent=self)
 
-        dialog_brightness_contrast.brightness = self.main_image_view.image_view.image_brightness
-        dialog_brightness_contrast.contrast = self.main_image_view.image_view.image_contrast
+        dialog_brightness_contrast.brightness = (
+            self.main_image_view.image_view.image_brightness
+        )
+        dialog_brightness_contrast.contrast = (
+            self.main_image_view.image_view.image_contrast
+        )
 
         dialog_brightness_contrast.slot_brightness_changed.connect(
-            lambda x: setattr(
-                self.main_image_view.image_view, "image_brightness",
-                x
-            )
+            lambda x: setattr(self.main_image_view.image_view, "image_brightness", x)
         )
         dialog_brightness_contrast.slot_contrast_changed.connect(
-            lambda x: setattr(
-                self.main_image_view.image_view, "image_contrast",
-                x
-            )
+            lambda x: setattr(self.main_image_view.image_view, "image_contrast", x)
         )
 
         dialog_brightness_contrast.show()
@@ -2651,30 +2602,21 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 
         self.main_image_view.show_box = value
 
-        setattr(
-            program_settings, "frame_show_box",
-            value
-        )
+        setattr(program_settings, "frame_show_box", value)
 
     def __action_frame_show_box_label(self):
         value = self.menu_rect_show_box_label.isChecked()
 
         self.main_image_view.show_box_label = value
 
-        setattr(
-            program_settings, "frame_show_box_label",
-            value
-        )
+        setattr(program_settings, "frame_show_box_label", value)
 
     def __action_frame_set_only_show_selected(self):
         value = self.menu_rect_only_show_selected.isChecked()
 
         self.main_image_view.only_show_selected = value
 
-        setattr(
-            program_settings, "menu_rect_only_show_selected",
-            value
-        )
+        setattr(program_settings, "menu_rect_only_show_selected", value)
 
     def __input_new_id(self) -> Optional[str]:
         default_label_name: str = ""
@@ -2711,11 +2653,8 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         label_name, ok = QInputDialog.getText(
             self,
             "Input Dialog",
-            (
-                    "Enter the label name:" +
-                    f" (Suggest: {default_label_name})"
-            ),
-            text=default_label_name
+            ("Enter the label name:" + f" (Suggest: {default_label_name})"),
+            text=default_label_name,
         )
 
         if not ok:
@@ -2726,10 +2665,9 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             ok = QMessageBox.question(
                 self,
                 "Question",
-                "Label name already exists.\n"
-                "Do you want to continue?",
+                "Label name already exists.\n" "Do you want to continue?",
                 QMessageBox.StandardButton.Yes,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
 
             if not ok:
@@ -2770,7 +2708,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             self,
             "Input Dialog",
             "Enter a number for Jump File Count:",
-            value=self.jump_file_count
+            value=self.jump_file_count,
         )
         if ok:
             self.__set_jump_file_count(number)
@@ -2781,14 +2719,16 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "Question",
             "Are you sure you want to remove all objects?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
             # for annotation_obj in self.annotation_directory.annotation_file:
             #     annotation_obj.remove_all_annotations()
 
-            def remove_frame_annotation(annotation_file_obj: XAnyLabelingAnnotation, index: int):
+            def remove_frame_annotation(
+                annotation_file_obj: XAnyLabelingAnnotation, index: int
+            ):
                 print("Removing", annotation_file_obj.file_name)
                 annotation_file_obj.remove_all_annotations()
 
@@ -2802,11 +2742,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             #     # Wait
             #     executor.shutdown(wait=True)
 
-            QMessageBox.information(self, "Information", "Remove all objects successfully.")
+            QMessageBox.information(
+                self, "Information", "Remove all objects successfully."
+            )
 
     def __set_jump_file_count(self, jump_file_count: int = 1):
         self.jump_file_count = jump_file_count
-        self.menu_file_list_jump_file_count.setText(f"Jump File Count: {self.jump_file_count}")
+        self.menu_file_list_jump_file_count.setText(
+            f"Jump File Count: {self.jump_file_count}"
+        )
 
     def __successful_saved(self, annotation_obj: XAnyLabelingAnnotation):
         # print("Save Successful!")
@@ -2838,17 +2782,17 @@ class InterFacePreview(BaseWorkInterfaceWindow):
         img_height = 0
 
         if self.current_annotation_object is not None:
-            img_width = \
-                self.current_annotation_object.image_width
-            img_height = \
-                self.current_annotation_object.image_height
+            img_width = self.current_annotation_object.image_width
+            img_height = self.current_annotation_object.image_height
 
         image_rect.img_width = img_width
         image_rect.img_height = img_height
 
         index = -1
         selected_rect_widget = None
-        for i, rect_widget in enumerate(self.main_image_view.annotation_widget_rect_list):
+        for i, rect_widget in enumerate(
+            self.main_image_view.annotation_widget_rect_list
+        ):
             if rect_widget.selecting:
                 index = i
                 selected_rect_widget = rect_widget
@@ -2887,17 +2831,15 @@ class InterFacePreview(BaseWorkInterfaceWindow):
                 int(x1 / scale_factor),
                 int(y1 / scale_factor),
                 int(x2 / scale_factor),
-                int(y2 / scale_factor)
+                int(y2 / scale_factor),
             )
 
             img_width = 0
             img_height = 0
 
             if self.current_annotation_object is not None:
-                img_width = \
-                    self.current_annotation_object.image_width
-                img_height = \
-                    self.current_annotation_object.image_height
+                img_width = self.current_annotation_object.image_width
+                img_height = self.current_annotation_object.image_height
 
             display_rect.img_width = img_width
             display_rect.img_height = img_height
@@ -2924,7 +2866,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
             "You have not saved some files.\n"
             "Are you sure you want to quit without save?",
             QMessageBox.StandardButton.Yes,
-            QMessageBox.StandardButton.No
+            QMessageBox.StandardButton.No,
         )
 
         if reply == QMessageBox.StandardButton.Yes:
@@ -2939,9 +2881,7 @@ class InterFacePreview(BaseWorkInterfaceWindow):
 if __name__ == "__main__":
     app = QApplication([])
 
-    window = InterFacePreview(
-        work_directory_path=r"."
-    )
+    window = InterFacePreview(work_directory_path=r".")
     window.show()
 
     sys.exit(app.exec())

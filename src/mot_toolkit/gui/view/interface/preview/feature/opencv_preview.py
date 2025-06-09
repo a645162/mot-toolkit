@@ -501,7 +501,7 @@ class OpenCVPreviewOptionWindow(BaseQMainWindow):
                     continue
 
                 if show_box:
-                    image = annotation.get_cv_mat_with_box(
+                    image = annotation.get_cv_mat_with_box_old(
                         with_text=with_text,
                         color=unselected_color,
                         text_color=text_color,

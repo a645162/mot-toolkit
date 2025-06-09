@@ -19,8 +19,17 @@ from mot_toolkit.datatype.common.rect_data_annotation import RectDataAnnotation
 from mot_toolkit.datatype.math.interpolate import liner_interpolate_position
 from mot_toolkit.parser.json_parser import parse_json_to_dict
 
+# Import optional dependencies
+try:
+    from mot_toolkit.utils.image_renderer import (
+        render_image_with_config,
+        render_image_with_annotations_legacy,
+        RenderConfig,
+    )
+except ImportError as e:
+    print("Skip mport option dependency", e)
+
 from mot_toolkit.utils.logs import get_logger
-from mot_toolkit.utils.image_renderer import render_image_with_annotations
 
 logger = get_logger()
 
@@ -472,7 +481,19 @@ class XAnyLabelingAnnotation(AnnotationFile):
 
         return img_np
 
-    def get_cv_mat_with_box(
+    def get_cv_mat_with_box(self, config: "RenderConfig") -> Optional[np.ndarray]:
+        """获取带有标注框的OpenCV图像矩阵（使用配置对象）"""
+        img_np = self.get_cv_mat()
+
+        if img_np is None:
+            return None
+
+        # 使用新版接口渲染
+        return render_image_with_config(
+            img_np=img_np, rect_annotation_list=self.rect_annotation_list, config=config
+        )
+
+    def get_cv_mat_with_box_old(
         self,
         with_text=True,
         color: Union[tuple, QColor] = (0, 255, 0),
@@ -493,7 +514,7 @@ class XAnyLabelingAnnotation(AnnotationFile):
     ) -> Optional[np.ndarray]:
         img_np = self.get_cv_mat()
 
-        return render_image_with_annotations(
+        return render_image_with_annotations_legacy(
             img_np=img_np,
             rect_annotation_list=self.rect_annotation_list,
             with_text=with_text,

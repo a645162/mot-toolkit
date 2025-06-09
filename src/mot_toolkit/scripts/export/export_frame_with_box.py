@@ -30,7 +30,7 @@ def handle_dir(dir_path):
 
     for annotation_file in annotation_directory.annotation_file_list:
         name = annotation_file.file_name_no_extension
-        image = annotation_file.get_cv_mat_with_box()
+        image = annotation_file.get_cv_mat_with_box_old()
 
         if image is None:
             print(f"Failed to load image: {name}")
@@ -41,5 +41,5 @@ def handle_dir(dir_path):
         # cv2.waitKey(1)
 
 
-if __name__ == '__main__':
-    handle_dir('/home/konghaomin/BV1bF411z7nK-2OJs5XeOn2rSXOri/00000000-00000268')
+if __name__ == "__main__":
+    handle_dir("/home/konghaomin/BV1bF411z7nK-2OJs5XeOn2rSXOri/00000000-00000268")

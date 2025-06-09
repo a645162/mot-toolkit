@@ -4,6 +4,46 @@ import numpy as np
 from PySide6.QtGui import QColor
 
 
+class RenderConfig:
+    """渲染配置类，封装所有渲染参数"""
+
+    def __init__(
+        self,
+        with_text: bool = True,
+        color: Union[tuple, QColor] = (0, 255, 0),
+        text_color: Union[tuple, QColor] = (0, 0, 255),
+        thickness: int = 2,
+        center_point_trajectory: dict = None,
+        draw_trajectory: bool = False,
+        trajectory_line_mode: bool = True,
+        selection_label: str = "",
+        selection_color: Union[tuple, QColor] = (0, 255, 255),
+        not_found_return_none: bool = False,
+        only_selection_box: bool = False,
+        crop_selection: bool = False,
+        crop_xyxy: Tuple[int, int, int, int] = (0, 0, 0, 0),
+        crop_padding: int = 50,
+        crop_min_size: int = 1000,
+        color_dict: dict = None,
+    ):
+        self.with_text = with_text
+        self.color = color
+        self.text_color = text_color
+        self.thickness = thickness
+        self.center_point_trajectory = center_point_trajectory or {}
+        self.draw_trajectory = draw_trajectory
+        self.trajectory_line_mode = trajectory_line_mode
+        self.selection_label = selection_label
+        self.selection_color = selection_color
+        self.not_found_return_none = not_found_return_none
+        self.only_selection_box = only_selection_box
+        self.crop_selection = crop_selection
+        self.crop_xyxy = crop_xyxy
+        self.crop_padding = crop_padding
+        self.crop_min_size = crop_min_size
+        self.color_dict = color_dict or {}
+
+
 def _convert_color_to_bgr(color: Union[tuple, QColor]) -> tuple:
     """将颜色转换为BGR格式"""
     if isinstance(color, QColor):
@@ -204,7 +244,67 @@ def _crop_image(
     return crop_image
 
 
-def render_image_with_annotations(
+def render_image_with_config(
+    img_np: np.ndarray,
+    rect_annotation_list: List,
+    config: RenderConfig,
+) -> Optional[np.ndarray]:
+    """使用配置类渲染带有标注框的图像（新接口）"""
+    if img_np is None:
+        return None
+
+    new_image = img_np.copy()
+
+    # 转换颜色格式
+    color = _convert_color_to_bgr(config.color)
+    text_color = _convert_color_to_bgr(config.text_color)
+    selection_color = _convert_color_to_bgr(config.selection_color)
+
+    # 处理所有标注
+    found_selection = False
+    selection_rect = None
+
+    for rect_item in rect_annotation_list:
+        new_image, current_selection = _process_single_annotation(
+            new_image,
+            rect_item,
+            config.center_point_trajectory,
+            color,
+            text_color,
+            config.thickness,
+            config.selection_label,
+            selection_color,
+            config.color_dict,
+            config.draw_trajectory,
+            config.trajectory_line_mode,
+            config.with_text,
+            config.only_selection_box,
+        )
+
+        if current_selection is not None:
+            selection_rect = current_selection
+            found_selection = True
+
+    # 检查选择结果
+    if config.not_found_return_none and len(config.selection_label) > 0 and not found_selection:
+        return None
+
+    # 处理裁剪
+    crop_selection = config.crop_selection and found_selection
+
+    if not crop_selection and config.crop_xyxy == (0, 0, 0, 0):
+        return new_image
+
+    # 确定裁剪区域
+    crop_xyxy = config.crop_xyxy
+    if crop_selection and selection_rect:
+        crop_xyxy = selection_rect
+
+    # 执行裁剪
+    return _crop_image(new_image, crop_xyxy, config.crop_padding, config.crop_min_size)
+
+
+def render_image_with_annotations_legacy(
     img_np: np.ndarray,
     rect_annotation_list: List,
     with_text: bool = True,
@@ -224,61 +324,27 @@ def render_image_with_annotations(
     crop_min_size: int = 1000,
     color_dict: dict = None,
 ) -> Optional[np.ndarray]:
-    """渲染带有标注框的图像"""
-    # 初始化参数
-    if center_point_trajectory is None:
-        center_point_trajectory = {}
-    if color_dict is None:
-        color_dict = {}
+    """渲染带有标注框的图像（旧接口，已重命名，调用新接口）"""
+    config = RenderConfig(
+        with_text=with_text,
+        color=color,
+        text_color=text_color,
+        thickness=thickness,
+        center_point_trajectory=center_point_trajectory,
+        draw_trajectory=draw_trajectory,
+        trajectory_line_mode=trajectory_line_mode,
+        selection_label=selection_label,
+        selection_color=selection_color,
+        not_found_return_none=not_found_return_none,
+        only_selection_box=only_selection_box,
+        crop_selection=crop_selection,
+        crop_xyxy=crop_xyxy,
+        crop_padding=crop_padding,
+        crop_min_size=crop_min_size,
+        color_dict=color_dict,
+    )
+    return render_image_with_config(img_np, rect_annotation_list, config)
 
-    if img_np is None:
-        return None
 
-    new_image = img_np.copy()
-
-    # 转换颜色格式
-    color = _convert_color_to_bgr(color)
-    text_color = _convert_color_to_bgr(text_color)
-    selection_color = _convert_color_to_bgr(selection_color)
-
-    # 处理所有标注
-    found_selection = False
-    selection_rect = None
-
-    for rect_item in rect_annotation_list:
-        new_image, current_selection = _process_single_annotation(
-            new_image,
-            rect_item,
-            center_point_trajectory,
-            color,
-            text_color,
-            thickness,
-            selection_label,
-            selection_color,
-            color_dict,
-            draw_trajectory,
-            trajectory_line_mode,
-            with_text,
-            only_selection_box,
-        )
-
-        if current_selection is not None:
-            selection_rect = current_selection
-            found_selection = True
-
-    # 检查选择结果
-    if not_found_return_none and len(selection_label) > 0 and not found_selection:
-        return None
-
-    # 处理裁剪
-    crop_selection = crop_selection and found_selection
-
-    if not crop_selection and crop_xyxy == (0, 0, 0, 0):
-        return new_image
-
-    # 确定裁剪区域
-    if crop_selection and selection_rect:
-        crop_xyxy = selection_rect
-
-    # 执行裁剪
-    return _crop_image(new_image, crop_xyxy, crop_padding, crop_min_size)
+# 为了向后兼容，保留原函数名作为别名
+# render_image_with_annotations = render_image_with_annotations_legacy
