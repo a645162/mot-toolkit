@@ -2,19 +2,63 @@ import os
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-from typing import Optional, List, Tuple
+from typing import Optional, Tuple
 import warnings
 
 warnings.filterwarnings("ignore")
 
-# 导入希格雯配色方案
+# 导入配色方案
+from mot_toolkit.vis.common.base_colors import BaseColorScheme
+
+# 配色方案-希格雯
 from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
+
+# 配色方案-神里绫华
+from mot_toolkit.vis.scheme.genshin.ayaka_colors import AyakaColorScheme
+
+# 配色方案-枫原万叶
+from mot_toolkit.vis.scheme.genshin.kazuha_colors import KazuhaColorScheme
+
+# 配色方案-三月七
+from mot_toolkit.vis.scheme.genshin.march_seventh_colors import (
+    MarchSeventhColorScheme,
+)
+
+
+# =============================================================================
+# 全局参数设置
+# =============================================================================
+EXPANSION_ITERATIONS = 2  # 设置扩大迭代次数，可调整此值来控制差异程度
 
 # Current py directory
 py_dir_path = os.path.dirname(os.path.abspath(__file__))
 
 csv_path = "metrics.local.csv"
 csv_path = os.path.join(py_dir_path, csv_path)
+
+
+def recursive_expand_differences(
+    normalized_values: np.ndarray, iterations: int = 1
+) -> np.ndarray:
+    """
+    递归扩大数值差异的函数
+
+    Args:
+        normalized_values: 归一化的数值数组 (0-1范围)
+        iterations: 扩大迭代次数
+
+    Returns:
+        扩大差异后的数值数组 (仍在0-1范围内)
+    """
+    if iterations <= 0:
+        return normalized_values
+
+    # 使用指数函数来扩大差异 (小值变更小，大值变得更大)
+    # 使用 x^2 会让差异更明显，而不是 x^0.5
+    expanded_values = normalized_values**2
+
+    # 递归调用，继续扩大差异
+    return recursive_expand_differences(expanded_values, iterations - 1)
 
 
 def setup_plot_style():
@@ -66,10 +110,11 @@ def create_bubble_chart(
     save_prefix: Optional[str] = None,
     output_dir: Optional[str] = None,
     figsize: Tuple[float, float] = (12, 8),
-    size_scale: float = 500.0,  # 从300.0增加到500.0
+    size_scale: float = 2500.0,  # 从1500.0增加到2500.0，总体放大
     alpha: float = 0.7,
     show_labels: bool = True,
     grid: bool = True,
+    prefer_dark_colors: Optional[bool] = True,  # 新增颜色偏好参数
 ) -> Optional[plt.Figure]:
     """
     创建气泡图
@@ -88,10 +133,13 @@ def create_bubble_chart(
         alpha: 透明度
         show_labels: 是否显示方法名标签
         grid: 是否显示网格
+        prefer_dark_colors: 颜色偏好设置
+            - True: 偏好深色
+            - False: 偏好浅色
+            - None: 无偏好（默认）
 
     Returns:
-        matplotlib Figure对象
-    """
+        matplotlib Figure对象"""
     if data is None or data.empty:
         print("✗ 错误: 数据为空")
         return None
@@ -105,16 +153,27 @@ def create_bubble_chart(
 
     setup_plot_style()
 
-    # 创建希格雯配色方案
-    color_scheme = SIGEWINNEColorScheme()
-    colors = color_scheme.hex_colors()
-
-    # 创建图形
-    fig, ax = plt.subplots(figsize=figsize)
+    # 创建多个配色方案实例列表，方便扩展
+    color_schemes = [
+        SIGEWINNEColorScheme(),
+        AyakaColorScheme(),
+        KazuhaColorScheme(),
+        MarchSeventhColorScheme(),
+        # 您可以在这里添加更多配色方案
+    ]
 
     # 获取唯一的方法
     methods = data[method_column].unique()
-    n_methods = len(methods)
+    n_methods = len(methods)  # 使用基类的智能取色函数
+    colors = BaseColorScheme.get_smart_colors_from_schemes(
+        count=n_methods,
+        color_schemes=color_schemes,
+        seed=42,  # 固定随机数种子确保可重现
+        prefer_dark=prefer_dark_colors,  # 使用传入的颜色偏好参数
+    )
+
+    # 创建图形
+    fig, ax = plt.subplots(figsize=figsize)
 
     # 为每个方法分配颜色
     color_map = {}
@@ -127,12 +186,13 @@ def create_bubble_chart(
     max_size = size_values.max()
     size_range = max_size - min_size
 
-    # 设置最小和最大气泡半径 - 扩大差异
-    min_bubble_size = 30  # 从50减少到30
+    # 设置最小和最大气泡半径 - 总体放大
+    min_bubble_size = 200  # 从100增加到200
     max_bubble_size = size_scale  # 最大气泡大小
 
     print(f"📏 HOTA Range: {min_size:.3f} - {max_size:.3f}")
     print(f"📏 Bubble Size Range: {min_bubble_size} - {max_bubble_size}")
+    print(f"🔄 Expansion Iterations: {EXPANSION_ITERATIONS}")
 
     # 创建scatter plot数据
     scatter_data = []
@@ -148,10 +208,14 @@ def create_bubble_chart(
         if pd.isna(x_val) or pd.isna(y_val) or pd.isna(size_val):
             continue
 
-        # 计算归一化的气泡大小 - 线性映射到指定范围
+        # 计算归一化的气泡大小 - 使用递归扩大函数
         if size_range > 0:
             normalized_size = (size_val - min_size) / size_range
-            bubble_size = min_bubble_size + normalized_size * (
+            # 使用递归扩大函数来增大差异
+            expanded_normalized_size = recursive_expand_differences(
+                np.array([normalized_size]), iterations=EXPANSION_ITERATIONS
+            )[0]
+            bubble_size = min_bubble_size + expanded_normalized_size * (
                 max_bubble_size - min_bubble_size
             )
         else:
@@ -193,43 +257,43 @@ def create_bubble_chart(
                 bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7),
             )
 
-    # 设置轴标签和标题
+    # 设置轴标签 - 移除标题设置
     ax.set_xlabel(f"{x_column}", fontsize=12, fontweight="bold")
     ax.set_ylabel(f"{y_column}", fontsize=12, fontweight="bold")
-
-    if title is None:
-        title = f"MOT Method Performance Bubble Chart: {x_column} vs {y_column}"
-    ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
 
     # 添加网格
     if grid:
         ax.grid(True, linestyle="--", alpha=0.3)
 
-    # 创建图例 - 只显示唯一的方法
-    handles, labels = ax.get_legend_handles_labels()
-    unique_labels = []
-    unique_handles = []
-    seen_methods = set()
+    # 移除所有图例
+    # handles, labels = ax.get_legend_handles_labels()
+    # unique_labels = []
+    # unique_handles = []
+    # seen_methods = set()
 
-    for handle, label in zip(handles, labels):
-        if label not in seen_methods:
-            unique_labels.append(label)
-            unique_handles.append(handle)
-            seen_methods.add(label)
+    # for handle, label in zip(handles, labels):
+    #     if label not in seen_methods:
+    #         unique_labels.append(label)
+    #         unique_handles.append(handle)
+    #         seen_methods.add(label)
 
-    if unique_handles:
-        legend1 = ax.legend(
-            unique_handles,
-            unique_labels,
-            loc="center left",
-            bbox_to_anchor=(1.02, 0.7),
-            title="Methods",
-            title_fontsize=11,
-            fontsize=10,
-            frameon=True,
-            fancybox=True,
-            shadow=True,
-        )
+    # if unique_handles:
+    #     legend1 = ax.legend(
+    #         unique_handles,
+    #         unique_labels,
+    #         loc="center left",
+    #         bbox_to_anchor=(1.02, 0.7),
+    #         title="Methods",
+    #         title_fontsize=11,
+    #         fontsize=10,
+    #         frameon=True,
+    #         fancybox=True,
+    #         shadow=False,
+    #         borderaxespad=0,  # 减少边框填充
+    #         columnspacing=1.0,  # 列间距
+    #         handletextpad=0.5,  # 图例标记和文本间距
+    #         handlelength=1.5,  # 图例标记长度
+    #     )
 
     # 添加气泡大小说明 - 使用实际的HOTA值范围
     if data[size_column].nunique() > 1:
@@ -259,21 +323,25 @@ def create_bubble_chart(
                 )
             )
 
-        legend2 = ax.legend(
-            handles=size_legend_elements,
-            loc="center left",
-            bbox_to_anchor=(1.02, 0.3),
-            title="Bubble Size (HOTA)",
-            title_fontsize=11,
-            fontsize=10,
-            frameon=True,
-            fancybox=True,
-            shadow=True,
-        )
+        # legend2 = ax.legend(
+        #     handles=size_legend_elements,
+        #     loc="center left",
+        #     bbox_to_anchor=(1.02, 0.25),  # 从0.3调整到0.25，增加与上方图例的距离
+        #     title="Bubble Size (HOTA)",
+        #     title_fontsize=11,
+        #     fontsize=10,
+        #     frameon=True,
+        #     fancybox=True,
+        #     shadow=False,
+        #     borderaxespad=0,  # 减少边框填充
+        #     columnspacing=1.0,  # 列间距
+        #     handletextpad=0.5,  # 图例标记和文本间距
+        #     handlelength=1.5,  # 图例标记长度
+        # )
 
-        # 同时显示两个图例
-        if unique_handles:
-            ax.add_artist(legend1)
+        # # 同时显示两个图例
+        # if unique_handles:
+        #     ax.add_artist(legend1)
 
     # 美化坐标轴
     ax.spines["top"].set_visible(False)
@@ -284,19 +352,19 @@ def create_bubble_chart(
     # 调整布局
     plt.tight_layout()
 
-    # 添加数据统计信息到图表上
-    stats_text = (
-        f"Data Points: {len(scatter_data)}\nHOTA Range: {min_size:.3f}-{max_size:.3f}"
-    )
-    ax.text(
-        0.02,
-        0.98,
-        stats_text,
-        transform=ax.transAxes,
-        verticalalignment="top",
-        fontsize=9,
-        bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.7),
-    )
+    # 移除数据统计信息
+    # stats_text = (
+    #     f"Data Points: {len(scatter_data)}\nHOTA Range: {min_size:.3f}-{max_size:.3f}"
+    # )
+    # ax.text(
+    #     0.02,
+    #     0.98,
+    #     stats_text,
+    #     transform=ax.transAxes,
+    #     verticalalignment="top",
+    #     fontsize=9,
+    #     bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgray", alpha=0.7),
+    # )
 
     # 保存图片
     if save_prefix and output_dir:
@@ -482,16 +550,16 @@ def main():
         output_dir=output_dir,
     )
 
-    # 创建多种组合的气泡图
-    print(f"\n🎨 Creating bubble charts with multiple axis combinations...")
-    created_charts = create_multiple_bubble_charts(data, output_dir)
+    # # 创建多种组合的气泡图
+    # print(f"\n🎨 Creating bubble charts with multiple axis combinations...")
+    # created_charts = create_multiple_bubble_charts(data, output_dir)
 
-    print(f"\n✅ Bubble chart generation completed!")
-    print(
-        f"   - Number of charts generated: {len(created_charts) + (1 if fig_default else 0)}"
-    )
-    print(f"   - Output directory: {output_dir}")
-    print(f"   - Supported formats: PNG, EPS, SVG")
+    # print(f"\n✅ Bubble chart generation completed!")
+    # print(
+    #     f"   - Number of charts generated: {len(created_charts) + (1 if fig_default else 0)}"
+    # )
+    # print(f"   - Output directory: {output_dir}")
+    # print(f"   - Supported formats: PNG, EPS, SVG")
 
     # 显示第一个图（如果存在）
     if fig_default:
