@@ -11,6 +11,7 @@ runs/
 *.mp4
 
 .~lock.*
+*.local.*
 
 /Output/
 
