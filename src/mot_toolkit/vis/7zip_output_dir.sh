@@ -26,4 +26,4 @@ fi
 echo "Compressing directory: $parent_dir"
 echo "Output zip file: $zip_path"
 
-7z a -t7z "$zip_path" "$parent_dir"/*
+7z a -t7z "$zip_path" "$source_dir"/*
