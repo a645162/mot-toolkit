@@ -66,7 +66,7 @@ def create_bubble_chart(
     save_prefix: Optional[str] = None,
     output_dir: Optional[str] = None,
     figsize: Tuple[float, float] = (12, 8),
-    size_scale: float = 300.0,  # 增加到300.0
+    size_scale: float = 500.0,  # 从300.0增加到500.0
     alpha: float = 0.7,
     show_labels: bool = True,
     grid: bool = True,
@@ -127,12 +127,12 @@ def create_bubble_chart(
     max_size = size_values.max()
     size_range = max_size - min_size
 
-    # 设置最小和最大气泡半径
-    min_bubble_size = 50  # 最小气泡大小
+    # 设置最小和最大气泡半径 - 扩大差异
+    min_bubble_size = 30  # 从50减少到30
     max_bubble_size = size_scale  # 最大气泡大小
 
-    print(f"📏 HOTA值范围: {min_size:.3f} - {max_size:.3f}")
-    print(f"📏 气泡大小范围: {min_bubble_size} - {max_bubble_size}")
+    print(f"📏 HOTA Range: {min_size:.3f} - {max_size:.3f}")
+    print(f"📏 Bubble Size Range: {min_bubble_size} - {max_bubble_size}")
 
     # 创建scatter plot数据
     scatter_data = []
@@ -198,7 +198,7 @@ def create_bubble_chart(
     ax.set_ylabel(f"{y_column}", fontsize=12, fontweight="bold")
 
     if title is None:
-        title = f"MOT方法性能气泡图: {x_column} vs {y_column}"
+        title = f"MOT Method Performance Bubble Chart: {x_column} vs {y_column}"
     ax.set_title(title, fontsize=14, fontweight="bold", pad=20)
 
     # 添加网格
@@ -223,7 +223,7 @@ def create_bubble_chart(
             unique_labels,
             loc="center left",
             bbox_to_anchor=(1.02, 0.7),
-            title="方法",
+            title="Methods",
             title_fontsize=11,
             fontsize=10,
             frameon=True,
@@ -263,7 +263,7 @@ def create_bubble_chart(
             handles=size_legend_elements,
             loc="center left",
             bbox_to_anchor=(1.02, 0.3),
-            title="气泡大小 (HOTA)",
+            title="Bubble Size (HOTA)",
             title_fontsize=11,
             fontsize=10,
             frameon=True,
@@ -285,7 +285,9 @@ def create_bubble_chart(
     plt.tight_layout()
 
     # 添加数据统计信息到图表上
-    stats_text = f"数据点: {len(scatter_data)}\nHOTA范围: {min_size:.3f}-{max_size:.3f}"
+    stats_text = (
+        f"Data Points: {len(scatter_data)}\nHOTA Range: {min_size:.3f}-{max_size:.3f}"
+    )
     ax.text(
         0.02,
         0.98,
@@ -442,52 +444,54 @@ def create_custom_bubble_chart(
 def main():
     """主函数 - 演示气泡图功能"""
     print("=" * 60)
-    print("🎯 MOT指标气泡图绘制工具（希格雯配色方案）")
+    print("🎯 MOT Metrics Bubble Chart Tool (Sigewinne Color Scheme)")
     print("=" * 60)
 
     # 加载数据
-    print(f"\n📁 正在加载数据: {csv_path}")
+    print(f"\n📁 Loading data: {csv_path}")
     data = load_metrics_data(csv_path)
     if data is None:
-        print("❌ 数据加载失败，程序退出")
+        print("❌ Data loading failed, program exits")
         return
 
     # 显示数据概览
-    print(f"\n📊 数据概览:")
-    print(f"   - 数据形状: {data.shape}")
-    print(f"   - 列名: {list(data.columns)}")
+    print(f"\n📊 Data Overview:")
+    print(f"   - Data shape: {data.shape}")
+    print(f"   - Columns: {list(data.columns)}")
     print(
-        f"   - 方法数量: {data['Method'].nunique() if 'Method' in data.columns else 'N/A'}"
+        f"   - Number of methods: {data['Method'].nunique() if 'Method' in data.columns else 'N/A'}"
     )
 
     if "Method" in data.columns:
-        print(f"   - 方法列表: {list(data['Method'].unique())}")
+        print(f"   - Method list: {list(data['Method'].unique())}")
 
     # 创建输出目录
     output_dir = os.path.join(py_dir_path, "output", "bubble")
     if not os.path.exists(output_dir):
         os.makedirs(output_dir, exist_ok=True)
-    print(f"\n📂 输出目录: {output_dir}")
+    print(f"\n📂 Output directory: {output_dir}")
 
     # 创建默认气泡图 (DetA vs AssA)
-    print(f"\n🎨 创建默认气泡图 (DetA vs AssA)...")
+    print(f"\n🎨 Creating default bubble chart (DetA vs AssA)...")
     fig_default = create_bubble_chart(
         data=data,
         x_column="DetA",
         y_column="AssA",
-        title="MOT方法性能对比: Detection vs Association",
+        title="MOT Method Performance Comparison: Detection vs Association",
         save_prefix="default_bubble",
         output_dir=output_dir,
     )
 
     # 创建多种组合的气泡图
-    print(f"\n🎨 创建多种轴组合的气泡图...")
+    print(f"\n🎨 Creating bubble charts with multiple axis combinations...")
     created_charts = create_multiple_bubble_charts(data, output_dir)
 
-    print(f"\n✅ 气泡图生成完成!")
-    print(f"   - 生成图表数量: {len(created_charts) + (1 if fig_default else 0)}")
-    print(f"   - 输出目录: {output_dir}")
-    print(f"   - 支持格式: PNG, EPS, SVG")
+    print(f"\n✅ Bubble chart generation completed!")
+    print(
+        f"   - Number of charts generated: {len(created_charts) + (1 if fig_default else 0)}"
+    )
+    print(f"   - Output directory: {output_dir}")
+    print(f"   - Supported formats: PNG, EPS, SVG")
 
     # 显示第一个图（如果存在）
     if fig_default:
@@ -498,7 +502,7 @@ def main():
 def demo_custom_chart():
     """演示如何创建自定义气泡图"""
     print("\n" + "=" * 50)
-    print("🎨 自定义气泡图演示")
+    print("🎨 Custom Bubble Chart Demo")
     print("=" * 50)
 
     # 加载数据
@@ -511,7 +515,7 @@ def demo_custom_chart():
         data=data, x_column="HOTA", y_column="MOTA", show_plot=True
     )
 
-    print("✅ 自定义气泡图创建完成!")
+    print("✅ Custom bubble chart creation completed!")
 
 
 if __name__ == "__main__":
