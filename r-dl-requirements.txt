@@ -7,3 +7,5 @@ ultralytics>=8.3.0
 
 # Only for NVIDIA GPU
 nvitop
+
+li-group-center>=2.0.0

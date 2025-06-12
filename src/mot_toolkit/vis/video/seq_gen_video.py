@@ -13,6 +13,71 @@ use_gpu = "0,1,2,3,4,5,6,7"
 # use_gpu = "0"
 task_count_per_gpu = 2
 
+# ========== 视频质量配置参数 ==========
+# 质量级别预设: "low", "medium", "high", "best", "custom"
+QUALITY_PRESET = "high"
+
+# 自定义质量参数 (当QUALITY_PRESET="custom"时生效)
+VIDEO_CONFIG = {
+    # 通用参数
+    "framerate": 25,  # 视频帧率
+    "pixel_format": "yuv420p",  # 像素格式
+    # 质量控制参数
+    "crf_qp": 18,  # CRF/QP值 (越小质量越高: 0-51, 推荐: 18-28)
+    "bitrate": "5M",  # 目标比特率 (如: "2M", "5M", "10M")
+    "max_bitrate": "8M",  # 最大比特率
+    "buffer_size": "10M",  # 缓冲区大小
+    # 编码预设 (速度vs质量平衡)
+    "nvidia_preset": "slow",  # NVIDIA: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow
+    "amd_quality": "quality",  # AMD: speed, balanced, quality
+    "intel_preset": "slower",  # Intel: veryfast, faster, fast, medium, slow, slower, veryslow
+    "cpu_preset": "slower",  # CPU: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow
+}
+
+# 预定义质量级别
+QUALITY_PRESETS = {
+    "low": {
+        "crf_qp": 28,
+        "bitrate": "1M",
+        "max_bitrate": "2M",
+        "buffer_size": "3M",
+        "nvidia_preset": "fast",
+        "amd_quality": "speed",
+        "intel_preset": "fast",
+        "cpu_preset": "fast",
+    },
+    "medium": {
+        "crf_qp": 23,
+        "bitrate": "3M",
+        "max_bitrate": "5M",
+        "buffer_size": "7M",
+        "nvidia_preset": "medium",
+        "amd_quality": "balanced",
+        "intel_preset": "medium",
+        "cpu_preset": "medium",
+    },
+    "high": {
+        "crf_qp": 18,
+        "bitrate": "5M",
+        "max_bitrate": "8M",
+        "buffer_size": "10M",
+        "nvidia_preset": "slow",
+        "amd_quality": "quality",
+        "intel_preset": "slower",
+        "cpu_preset": "slow",
+    },
+    "best": {
+        "crf_qp": 15,
+        "bitrate": "8M",
+        "max_bitrate": "12M",
+        "buffer_size": "15M",
+        "nvidia_preset": "slower",
+        "amd_quality": "quality",
+        "intel_preset": "veryslow",
+        "cpu_preset": "slower",
+    },
+}
+
 seq_list_dir = r"/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe"
 
 video_output_dir = "/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe_video"
@@ -90,18 +155,50 @@ def detect_gpu_type():
 
 def get_encoder_config(gpu_type, gpu_id=None):
     """根据GPU类型返回相应的编码器配置"""
+    # 获取当前配置
+    if QUALITY_PRESET == "custom":
+        config = VIDEO_CONFIG
+    else:
+        config = QUALITY_PRESETS.get(QUALITY_PRESET, QUALITY_PRESETS["high"])
+
     if gpu_type == "nvidia":
         encoder = "h264_nvenc"
-        return f"-c:v {encoder} -preset fast -crf 23"
+        return (
+            f"-c:v {encoder} "
+            f"-preset {config['nvidia_preset']} "
+            f"-crf {config['crf_qp']} "
+            f"-b:v {config['bitrate']} "
+            f"-maxrate {config['max_bitrate']} "
+            f"-bufsize {config['buffer_size']}"
+        )
     elif gpu_type == "amd":
         encoder = "h264_amf"
-        return f"-c:v {encoder} -quality speed -rc cqp -qp 23"
+        return (
+            f"-c:v {encoder} "
+            f"-quality {config['amd_quality']} "
+            f"-rc cqp "
+            f"-qp {config['crf_qp']} "
+            f"-b:v {config['bitrate']}"
+        )
     elif gpu_type == "intel":
         encoder = "h264_qsv"
         gpu_option = f"-init_hw_device qsv=hw:{gpu_id}" if gpu_id is not None else ""
-        return f"{gpu_option} -c:v {encoder} -preset fast -global_quality 23"
+        return (
+            f"{gpu_option} "
+            f"-c:v {encoder} "
+            f"-preset {config['intel_preset']} "
+            f"-global_quality {config['crf_qp']} "
+            f"-b:v {config['bitrate']}"
+        )
     else:  # CPU
-        return "-c:v libx264 -preset fast -crf 23"
+        return (
+            f"-c:v libx264 "
+            f"-preset {config['cpu_preset']} "
+            f"-crf {config['crf_qp']} "
+            f"-b:v {config['bitrate']} "
+            f"-maxrate {config['max_bitrate']} "
+            f"-bufsize {config['buffer_size']}"
+        )
 
 
 def get_start_frame_and_pattern(seq_dir_path):
@@ -172,9 +269,20 @@ def handle_seq(seq_dir_path, gpu_type="cpu", gpu_id=None, failed_list=None):
 
     # 构建FFmpeg命令，使用检测到的起始帧号
     input_pattern = os.path.join(seq_dir_path, pattern)
+
+    # 获取当前配置用于帧率和像素格式
+    if QUALITY_PRESET == "custom":
+        config = VIDEO_CONFIG
+    else:
+        config = QUALITY_PRESETS.get(QUALITY_PRESET, QUALITY_PRESETS["high"])
+
     ffmpeg_cmd = (
-        f"ffmpeg -y -start_number {start_frame} -r 25 -f image2 -i '{input_pattern}' "
-        f"{encoder_config} -pix_fmt yuv420p '{video_path}'"
+        f"ffmpeg -y -start_number {start_frame} "
+        f"-r {config.get('framerate', VIDEO_CONFIG['framerate'])} "
+        f"-f image2 -i '{input_pattern}' "
+        f"{encoder_config} "
+        f"-pix_fmt {config.get('pixel_format', VIDEO_CONFIG['pixel_format'])} "
+        f"'{video_path}'"
     )
 
     try:
@@ -289,7 +397,8 @@ def main():
     failed_count = len(failed_list)
 
     print(f"\n{'='*60}")
-    print(f"处理完成！")
+    print("处理完成！\n")
+    
     print(f"总序列数: {total_sequences}")
     print(f"成功: {successful_count}")
     print(f"失败: {failed_count}")
