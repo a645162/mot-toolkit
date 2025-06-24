@@ -79,8 +79,10 @@ QUALITY_PRESETS = {
 }
 
 seq_list_dir = r"/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe"
+seq_list_dir = r"/home/konghaomin/MOTIP/inference_outputs/MT_All_mt_anchor_v4_ffn_v2_c_20250624164142/submit/default/DanceTrack/val/checkpoint_8/tracker/plot_img"
 
 video_output_dir = "/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/seq_gt_frames/MT20250319/LabelMe_video"
+video_output_dir = "/home/konghaomin/mot-toolkit/src/mot_toolkit/vis/plot/output/infer_result/All"
 
 if os.path.exists(video_output_dir):
     shutil.rmtree(video_output_dir)

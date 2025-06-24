@@ -369,6 +369,7 @@ def parse_args():
     opt = parser.parse_args()
 
     opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
+    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
 
     return opt
 
