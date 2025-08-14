@@ -1,0 +1,228 @@
+"""配置窗口"""
+
+import os
+
+from PySide6.QtWidgets import (
+    QDialog,
+    QVBoxLayout,
+    QHBoxLayout,
+    QListWidget,
+    QListWidgetItem,
+    QPushButton,
+    QLabel,
+    QFileDialog,
+    QGroupBox,
+    QComboBox,
+    QMessageBox,
+)
+from PySide6.QtCore import Qt, Signal
+from PySide6.QtGui import QCloseEvent
+
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core import MOTResultLoader
+
+
+class ConfigWindow(QDialog):
+    """配置窗口 - 用于设置算法目录和数据集路径"""
+
+    config_changed = Signal(dict)  # 配置改变信号
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("配置设置")
+        self.setModal(True)
+        self.setFixedSize(600, 500)
+
+        self.mot_loader = MOTResultLoader()
+        self.dataset_path = ""
+
+        self.init_ui()
+
+    def init_ui(self):
+        """初始化UI"""
+        layout = QVBoxLayout(self)
+
+        # 算法目录组
+        algo_group = QGroupBox("算法结果目录")
+        algo_layout = QVBoxLayout(algo_group)
+
+        # 目录列表
+        self.dir_list = QListWidget()
+        self.dir_list.itemDoubleClicked.connect(self.edit_algorithm_name)
+        algo_layout.addWidget(self.dir_list)
+
+        # 按钮组
+        button_layout = QHBoxLayout()
+
+        self.add_btn = QPushButton("添加目录")
+        self.add_btn.clicked.connect(self.add_algorithm_directory)
+        button_layout.addWidget(self.add_btn)
+
+        self.remove_btn = QPushButton("移除选中")
+        self.remove_btn.clicked.connect(self.remove_selected_directory)
+        button_layout.addWidget(self.remove_btn)
+
+        self.rename_btn = QPushButton("重命名")
+        self.rename_btn.clicked.connect(self.edit_algorithm_name)
+        button_layout.addWidget(self.rename_btn)
+
+        algo_layout.addLayout(button_layout)
+
+        # 数据集路径组
+        dataset_group = QGroupBox("数据集路径")
+        dataset_layout = QVBoxLayout(dataset_group)
+
+        self.dataset_label = QLabel("未设置")
+        dataset_layout.addWidget(self.dataset_label)
+
+        dataset_btn_layout = QHBoxLayout()
+
+        self.set_dataset_btn = QPushButton("设置数据集路径")
+        self.set_dataset_btn.clicked.connect(self.set_dataset_path)
+        dataset_btn_layout.addWidget(self.set_dataset_btn)
+
+        self.auto_detect_btn = QPushButton("自动检测")
+        self.auto_detect_btn.clicked.connect(self.auto_detect_dataset)
+        dataset_btn_layout.addWidget(self.auto_detect_btn)
+
+        dataset_layout.addLayout(dataset_btn_layout)
+
+        # 序列选择组
+        seq_group = QGroupBox("可用序列")
+        seq_layout = QVBoxLayout(seq_group)
+
+        self.sequence_combo = QComboBox()
+        seq_layout.addWidget(self.sequence_combo)
+
+        # 底部按钮
+        bottom_layout = QHBoxLayout()
+
+        self.ok_btn = QPushButton("确定")
+        self.ok_btn.clicked.connect(self.accept)
+        bottom_layout.addWidget(self.ok_btn)
+
+        self.cancel_btn = QPushButton("取消")
+        self.cancel_btn.clicked.connect(self.reject)
+        bottom_layout.addWidget(self.cancel_btn)
+
+        # 添加到主布局
+        layout.addWidget(algo_group)
+        layout.addWidget(dataset_group)
+        layout.addWidget(seq_group)
+        layout.addLayout(bottom_layout)
+
+    def add_algorithm_directory(self):
+        """添加算法目录"""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "选择算法结果目录",
+            "",
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
+        )
+
+        if directory:
+            algorithm_name = (
+                os.path.basename(directory)
+                or f"算法{len(self.mot_loader.get_algorithms()) + 1}"
+            )
+
+            if self.mot_loader.add_algorithm_directory(directory, algorithm_name):
+                item = QListWidgetItem(f"{algorithm_name} - {directory}")
+                item.setData(Qt.UserRole, (algorithm_name, directory))
+                self.dir_list.addItem(item)
+                self.update_sequences()
+            else:
+                QMessageBox.warning(self, "警告", "目录中没有找到有效的MOT结果文件")
+
+    def remove_selected_directory(self):
+        """移除选中的目录"""
+        current_item = self.dir_list.currentItem()
+        if current_item:
+            algorithm_name, _ = current_item.data(Qt.UserRole)
+            self.mot_loader.remove_algorithm(algorithm_name)
+            self.dir_list.takeItem(self.dir_list.row(current_item))
+            self.update_sequences()
+
+    def edit_algorithm_name(self):
+        """编辑算法名称"""
+        current_item = self.dir_list.currentItem()
+        if current_item:
+            # 这里可以实现重命名功能
+            QMessageBox.information(self, "提示", "重命名功能待实现")
+
+    def set_dataset_path(self):
+        """设置数据集路径"""
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "选择数据集目录",
+            "",
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
+        )
+
+        if directory:
+            self.dataset_path = directory
+            self.dataset_label.setText(directory)
+
+    def auto_detect_dataset(self):
+        """自动检测数据集"""
+        if not self.dataset_path:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        # 检测DanceTrack格式
+        dance_track_path = os.path.join(self.dataset_path, "train")
+        if os.path.exists(dance_track_path):
+            sequences = [
+                d
+                for d in os.listdir(dance_track_path)
+                if os.path.isdir(os.path.join(dance_track_path, d))
+            ]
+            if sequences:
+                QMessageBox.information(
+                    self, "成功", f"检测到DanceTrack格式，共{len(sequences)}个序列"
+                )
+                return
+
+        QMessageBox.warning(self, "警告", "未检测到标准数据集格式")
+
+    def update_sequences(self):
+        """更新序列列表"""
+        self.sequence_combo.clear()
+        sequences = self.mot_loader.get_sequences()
+        self.sequence_combo.addItems(sequences)
+
+    def get_config(self) -> dict:
+        """获取当前配置"""
+        algorithms = {}
+        for i in range(self.dir_list.count()):
+            item = self.dir_list.item(i)
+            name, path = item.data(Qt.UserRole)
+            algorithms[name] = path
+
+        return {
+            "algorithms": algorithms,
+            "dataset_path": self.dataset_path,
+            "sequences": self.mot_loader.get_sequences(),
+        }
+
+    def set_config(self, config: dict):
+        """设置配置"""
+        self.mot_loader = MOTResultLoader()
+        self.dir_list.clear()
+
+        algorithms = config.get("algorithms", {})
+        for name, path in algorithms.items():
+            if self.mot_loader.add_algorithm_directory(path, name):
+                item = QListWidgetItem(f"{name} - {path}")
+                item.setData(Qt.UserRole, (name, path))
+                self.dir_list.addItem(item)
+
+        self.dataset_path = config.get("dataset_path", "")
+        self.dataset_label.setText(self.dataset_path or "未设置")
+
+        self.update_sequences()
+
+    def closeEvent(self, event: QCloseEvent):
+        """关闭事件"""
+        config = self.get_config()
+        self.config_changed.emit(config)
+        super().closeEvent(event)
