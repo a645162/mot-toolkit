@@ -41,7 +41,8 @@ python main.py
 1. 点击"配置设置"按钮打开配置窗口
 2. 添加算法结果目录（包含.txt跟踪结果文件）
 3. 设置数据集路径（支持DanceTrack格式）
-4. 选择要预览的序列
+4. 选择要使用的数据集split（train/val/test复选框）
+5. 选择要预览的序列
 
 ### 3. 开始预览
 
@@ -69,8 +70,18 @@ python main.py
   │   │   └── gt/
   │   └── ...
   ├── val/
+  │   ├── sequence1/
+  │   │   ├── sequence1.mp4
+  │   │   └── gt/
+  │   └── ...
   └── test/
+      ├── sequence1/
+      │   ├── sequence1.mp4
+      │   └── gt/
+      └── ...
   ```
+
+- 支持多split混合选择，可同时选择train/val/test中的序列进行对比
 
 ## 功能特点
 

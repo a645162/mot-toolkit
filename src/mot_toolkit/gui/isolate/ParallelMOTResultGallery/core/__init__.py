@@ -3,5 +3,6 @@
 from .mot_loader import MOTResultLoader
 from .video_loader import VideoFrameLoader
 from .mot_parser import MOTResultParser
+from .dataset_manager import DatasetManager
 
-__all__ = ["MOTResultLoader", "VideoFrameLoader", "MOTResultParser"]
+__all__ = ["MOTResultLoader", "VideoFrameLoader", "MOTResultParser", "DatasetManager"]

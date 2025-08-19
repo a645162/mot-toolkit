@@ -28,6 +28,7 @@ from PySide6.QtGui import QCloseEvent
 
 from gui.config_window import ConfigWindow
 from gui.preview_window import PreviewWindow
+from core.dataset_manager import DatasetManager
 
 
 class MainWindow(QMainWindow):
@@ -39,8 +40,14 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 400, 300)
 
         # 配置
-        self.config = {"algorithms": {}, "dataset_path": "", "sequences": []}
+        self.config = {
+            "algorithms": {},
+            "dataset_path": "",
+            "selected_splits": ["train", "val", "test"],
+            "sequence_paths": {}
+        }
         self.config_file = Path(__file__).parent / "config.json"
+        self.dataset_manager = DatasetManager()
 
         # 子窗口
         self.config_window = None
@@ -65,6 +72,12 @@ class MainWindow(QMainWindow):
 
         self.dataset_label = QLabel("数据集路径: 未设置")
         config_layout.addWidget(self.dataset_label)
+
+        self.splits_label = QLabel("选择Split: 未设置")
+        config_layout.addWidget(self.splits_label)
+
+        self.sequences_label = QLabel("可用序列: 0")
+        config_layout.addWidget(self.sequences_label)
 
         # 序列选择组
         seq_group = QGroupBox("序列选择")
@@ -114,9 +127,21 @@ class MainWindow(QMainWindow):
         self.dataset_label.setText(
             f"数据集路径: {self.config['dataset_path'] or '未设置'}"
         )
+        
+        # 更新dataset manager
+        self.dataset_manager.set_dataset_path(self.config.get('dataset_path', ''))
+        selected_splits = self.config.get('selected_splits', ['train', 'val', 'test'])
+        self.dataset_manager.set_selected_splits(selected_splits)
+        
+        self.splits_label.setText(
+            f"选择Split: {', '.join(selected_splits) if selected_splits else '未设置'}"
+        )
+        
+        sequences = self.dataset_manager.get_sequences()
+        self.sequences_label.setText(f"可用序列: {len(sequences)}")
 
         self.sequence_combo.clear()
-        self.sequence_combo.addItems(self.config["sequences"])
+        self.sequence_combo.addItems(sequences)
 
     def open_config(self):
         """打开配置窗口"""
@@ -134,6 +159,16 @@ class MainWindow(QMainWindow):
         self.config = config
         self.update_ui_from_config()
         self.save_config()
+        
+        # 确保dataset manager同步更新
+        if self.config.get('dataset_path'):
+            self.dataset_manager.set_dataset_path(self.config['dataset_path'])
+            selected_splits = self.config.get('selected_splits', ['train', 'val', 'test'])
+            self.dataset_manager.set_selected_splits(selected_splits)
+            # 强制刷新序列列表
+            sequences = self.dataset_manager.get_sequences()
+            self.sequence_combo.clear()
+            self.sequence_combo.addItems(sequences)
 
     def open_preview(self):
         """打开预览窗口"""

@@ -1,6 +1,7 @@
 """配置窗口"""
 
 import os
+import json
 
 from PySide6.QtWidgets import (
     QDialog,
@@ -14,11 +15,15 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QComboBox,
     QMessageBox,
+    QCheckBox,
+    QScrollArea,
+    QWidget,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCloseEvent
 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core import MOTResultLoader
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import DatasetManager
 
 
 class ConfigWindow(QDialog):
@@ -30,10 +35,12 @@ class ConfigWindow(QDialog):
         super().__init__(parent)
         self.setWindowTitle("配置设置")
         self.setModal(True)
-        self.setFixedSize(600, 500)
+        self.setFixedSize(700, 600)
 
         self.mot_loader = MOTResultLoader()
+        self.dataset_manager = DatasetManager()
         self.dataset_path = ""
+        self.selected_splits = ["train", "val", "test"]
 
         self.init_ui()
 
@@ -86,6 +93,22 @@ class ConfigWindow(QDialog):
 
         dataset_layout.addLayout(dataset_btn_layout)
 
+        # Split选择组
+        split_group = QGroupBox("数据集Split选择")
+        split_layout = QVBoxLayout(split_group)
+        
+        # 创建滚动区域用于split复选框
+        split_scroll = QScrollArea()
+        split_scroll.setWidgetResizable(True)
+        split_scroll.setMaximumHeight(100)
+        
+        self.split_widget = QWidget()
+        self.split_layout = QVBoxLayout(self.split_widget)
+        self.split_checkboxes = {}
+        
+        split_scroll.setWidget(self.split_widget)
+        split_layout.addWidget(split_scroll)
+
         # 序列选择组
         seq_group = QGroupBox("可用序列")
         seq_layout = QVBoxLayout(seq_group)
@@ -107,6 +130,7 @@ class ConfigWindow(QDialog):
         # 添加到主布局
         layout.addWidget(algo_group)
         layout.addWidget(dataset_group)
+        layout.addWidget(split_group)
         layout.addWidget(seq_group)
         layout.addLayout(bottom_layout)
 
@@ -161,6 +185,9 @@ class ConfigWindow(QDialog):
         if directory:
             self.dataset_path = directory
             self.dataset_label.setText(directory)
+            self.dataset_manager.set_dataset_path(directory)
+            self.update_split_checkboxes()
+            self.update_sequences()
 
     def auto_detect_dataset(self):
         """自动检测数据集"""
@@ -168,26 +195,55 @@ class ConfigWindow(QDialog):
             QMessageBox.warning(self, "警告", "请先设置数据集路径")
             return
 
-        # 检测DanceTrack格式
-        dance_track_path = os.path.join(self.dataset_path, "train")
-        if os.path.exists(dance_track_path):
-            sequences = [
-                d
-                for d in os.listdir(dance_track_path)
-                if os.path.isdir(os.path.join(dance_track_path, d))
-            ]
-            if sequences:
-                QMessageBox.information(
-                    self, "成功", f"检测到DanceTrack格式，共{len(sequences)}个序列"
-                )
-                return
+        available_splits = self.dataset_manager.get_available_splits()
+        if available_splits:
+            sequences = self.dataset_manager.get_sequences()
+            QMessageBox.information(
+                self, "成功",
+                f"检测到DanceTrack格式，可用split: {', '.join(available_splits)}\n"
+                f"共{len(sequences)}个序列"
+            )
+            self.update_split_checkboxes()
+            self.update_sequences()
+        else:
+            QMessageBox.warning(self, "警告", "未检测到标准数据集格式")
 
-        QMessageBox.warning(self, "警告", "未检测到标准数据集格式")
+    def update_split_checkboxes(self):
+        """更新split复选框"""
+        # 清除现有复选框
+        for checkbox in self.split_checkboxes.values():
+            checkbox.deleteLater()
+        self.split_checkboxes.clear()
+
+        # 获取可用split
+        available_splits = self.dataset_manager.get_available_splits()
+        
+        for split in available_splits:
+            checkbox = QCheckBox(split)
+            checkbox.setChecked(split in self.selected_splits)
+            checkbox.stateChanged.connect(self.on_split_changed)
+            self.split_checkboxes[split] = checkbox
+            self.split_layout.addWidget(checkbox)
+
+    def on_split_changed(self):
+        """split选择改变时的处理"""
+        selected_splits = []
+        for split, checkbox in self.split_checkboxes.items():
+            if checkbox.isChecked():
+                selected_splits.append(split)
+        
+        self.selected_splits = selected_splits
+        self.dataset_manager.set_selected_splits(selected_splits)
+        self.update_sequences()
+        
+        # 立即保存配置
+        config = self.get_config()
+        self.config_changed.emit(config)
 
     def update_sequences(self):
         """更新序列列表"""
         self.sequence_combo.clear()
-        sequences = self.mot_loader.get_sequences()
+        sequences = self.dataset_manager.get_sequences()
         self.sequence_combo.addItems(sequences)
 
     def get_config(self) -> dict:
@@ -201,7 +257,8 @@ class ConfigWindow(QDialog):
         return {
             "algorithms": algorithms,
             "dataset_path": self.dataset_path,
-            "sequences": self.mot_loader.get_sequences(),
+            "selected_splits": self.selected_splits,
+            "sequence_paths": self.dataset_manager.sequence_paths,
         }
 
     def set_config(self, config: dict):
@@ -218,7 +275,16 @@ class ConfigWindow(QDialog):
 
         self.dataset_path = config.get("dataset_path", "")
         self.dataset_label.setText(self.dataset_path or "未设置")
-
+        
+        # 设置dataset manager
+        self.dataset_manager.set_dataset_path(self.dataset_path)
+        
+        # 设置选择的splits
+        self.selected_splits = config.get("selected_splits", ["train", "val", "test"])
+        self.dataset_manager.set_selected_splits(self.selected_splits)
+        
+        # 更新UI
+        self.update_split_checkboxes()
         self.update_sequences()
 
     def closeEvent(self, event: QCloseEvent):

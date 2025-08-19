@@ -24,6 +24,7 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core import (
     MOTResultParser,
     MOTResultLoader,
 )
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import DatasetManager
 
 
 class VideoDisplayWidget(QWidget):
@@ -168,6 +169,7 @@ class PreviewWindow(QMainWindow):
         self.video_loader = VideoFrameLoader()
         self.result_parser = MOTResultParser()
         self.mot_loader = MOTResultLoader()
+        self.dataset_manager = DatasetManager()
 
         # 状态
         self.current_sequence = None
@@ -236,12 +238,17 @@ class PreviewWindow(QMainWindow):
     def set_config(self, config: dict):
         """设置配置"""
         self.mot_loader = MOTResultLoader()
+        self.dataset_manager = DatasetManager()
 
         algorithms = config.get("algorithms", {})
         for name, path in algorithms.items():
             self.mot_loader.add_algorithm_directory(path, name)
 
         self.dataset_path = config.get("dataset_path", "")
+        if self.dataset_path:
+            self.dataset_manager.set_dataset_path(self.dataset_path)
+            selected_splits = config.get("selected_splits", ["train", "val", "test"])
+            self.dataset_manager.set_selected_splits(selected_splits)
 
     def set_sequence(self, sequence: str):
         """设置当前序列"""
@@ -266,20 +273,8 @@ class PreviewWindow(QMainWindow):
         if not self.dataset_path:
             return None
 
-        # DanceTrack格式
-        possible_paths = [
-            os.path.join(self.dataset_path, "train", sequence, f"{sequence}.mp4"),
-            os.path.join(self.dataset_path, "val", sequence, f"{sequence}.mp4"),
-            os.path.join(self.dataset_path, "test", sequence, f"{sequence}.mp4"),
-            os.path.join(self.dataset_path, f"{sequence}.mp4"),
-            os.path.join(self.dataset_path, f"{sequence}.avi"),
-        ]
-
-        for path in possible_paths:
-            if os.path.exists(path):
-                return path
-
-        return None
+        # 使用dataset manager查找视频文件
+        return self.dataset_manager.get_video_path(sequence)
 
     def toggle_play(self):
         """切换播放状态"""
