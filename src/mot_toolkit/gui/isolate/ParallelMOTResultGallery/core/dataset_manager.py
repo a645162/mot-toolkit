@@ -2,6 +2,9 @@
 
 import os
 from typing import List, Dict, Optional
+from mot_toolkit.utils.logs import get_logger
+
+LOGGER = get_logger()
 
 
 class DatasetManager:
@@ -24,7 +27,6 @@ class DatasetManager:
 
     def set_selected_splits(self, splits: List[str]) -> None:
         """设置选择的split"""
-        print(f"[DEBUG] DatasetManager.set_selected_splits: {splits}")
         self.selected_splits = set(splits)
         self.scan_sequences()
 
@@ -32,57 +34,32 @@ class DatasetManager:
         """扫描所有选择的split中的序列"""
         self.sequence_paths = {}
 
-        print(f"[DatasetManager] 开始扫描序列...")
-        print(f"[DatasetManager] 数据集路径: {self.dataset_path}")
-        print(f"[DatasetManager] 选择的splits: {self.selected_splits}")
-
         if not self.dataset_path:
-            print("[DatasetManager] 数据集路径为空，跳过扫描")
+            LOGGER.debug("数据集路径为空，跳过扫描")
             return
 
         for split in self.selected_splits:
             split_path = os.path.join(self.dataset_path, split)
-            print(f"[DatasetManager] 检查split路径: {split_path}")
-
             if not os.path.exists(split_path):
-                print(f"[DatasetManager] split路径不存在: {split_path}")
                 continue
 
-            print(f"[DatasetManager] 扫描split: {split}")
             items = os.listdir(split_path)
-            print(f"[DatasetManager] 在{split}中找到{len(items)}个条目")
 
             # 扫描该split下的所有序列
             for item in items:
                 seq_path = os.path.join(split_path, item)
-                print(f"[DatasetManager] 检查序列目录: {seq_path}")
-
                 if os.path.isdir(seq_path):
                     # 检查DanceTrack格式：必须有img1目录
                     all_files = os.listdir(seq_path)
                     has_img1 = "img1" in all_files and os.path.isdir(
                         os.path.join(seq_path, "img1")
                     )
-                    has_gt = "gt" in all_files and os.path.isdir(
-                        os.path.join(seq_path, "gt")
-                    )
-                    has_seqinfo = "seqinfo.ini" in all_files
-
-                    print(f"[DatasetManager] 在{seq_path}中找到文件: {all_files}")
-                    print(
-                        f"[DatasetManager] 检查DanceTrack格式: img1={has_img1}, gt={has_gt}, seqinfo.ini={has_seqinfo}"
-                    )
 
                     # 只要是有效的DanceTrack序列就添加
                     if has_img1:
-                        # 使用序列名作为key，完整路径作为value
                         self.sequence_paths[item] = seq_path
-                        print(
-                            f"[DatasetManager] 添加DanceTrack序列: {item} -> {seq_path}"
-                        )
 
-        print(f"[DatasetManager] 扫描完成，共找到{len(self.sequence_paths)}个序列")
-        print(f"[DatasetManager] 序列列表: {list(self.sequence_paths.keys())}")
+        LOGGER.info(f"[DatasetManager] 扫描完成，共找到{len(self.sequence_paths)}个序列")
 
     def get_sequences(self) -> List[str]:
         """获取所有可用序列名称"""

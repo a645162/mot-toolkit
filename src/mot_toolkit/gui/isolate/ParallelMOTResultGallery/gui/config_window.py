@@ -170,13 +170,13 @@ class ConfigWindow(QDialog):
         # 底部按钮
         bottom_layout = QHBoxLayout()
 
-        self.ok_btn = QPushButton("确定")
-        self.ok_btn.clicked.connect(self.accept)
-        bottom_layout.addWidget(self.ok_btn)
+        self.save_btn = QPushButton("保存")
+        self.save_btn.clicked.connect(self.save_configuration)
+        bottom_layout.addWidget(self.save_btn)
 
-        self.cancel_btn = QPushButton("取消")
-        self.cancel_btn.clicked.connect(self.reject)
-        bottom_layout.addWidget(self.cancel_btn)
+        self.close_btn = QPushButton("关闭")
+        self.close_btn.clicked.connect(self.close)
+        bottom_layout.addWidget(self.close_btn)
 
         # 添加到主布局
         layout.addWidget(algo_group)
@@ -202,10 +202,9 @@ class ConfigWindow(QDialog):
                 or f"算法{len(self.mot_loader.get_algorithms()) + 1}"
             )
 
-            print(f"[DEBUG] 尝试添加算法目录: {directory}")
+            LOGGER.info(f"添加算法目录: {directory}")
             success = self.mot_loader.add_algorithm_directory(directory, algorithm_name)
-            print(f"[DEBUG] 添加算法结果: {success}")
-            print(f"[DEBUG] 当前算法列表: {self.mot_loader.get_algorithms()}")
+            LOGGER.info(f"算法添加结果: {success}, 当前算法数量: {len(self.mot_loader.get_algorithms())}")
 
             if success:
                 item = QListWidgetItem(f"{algorithm_name} - {directory}")
@@ -216,7 +215,7 @@ class ConfigWindow(QDialog):
                 # 立即保存配置
                 config = self.get_config()
                 self.config_changed.emit(config)
-                print("[DEBUG] 添加算法后立即发送配置信号")
+                LOGGER.info("算法添加完成，配置已更新")
             else:
                 QMessageBox.warning(self, "警告", "目录中没有找到有效的MOT结果文件")
 
@@ -225,7 +224,7 @@ class ConfigWindow(QDialog):
         current_item = self.dir_list.currentItem()
         if current_item:
             algorithm_name, _ = current_item.data(Qt.UserRole)
-            print(f"[DEBUG] 移除算法: {algorithm_name}")
+            LOGGER.info(f"移除算法: {algorithm_name}")
             self.mot_loader.remove_algorithm(algorithm_name)
             self.dir_list.takeItem(self.dir_list.row(current_item))
             self.update_sequences()
@@ -233,7 +232,7 @@ class ConfigWindow(QDialog):
             # 立即保存配置
             config = self.get_config()
             self.config_changed.emit(config)
-            print("[DEBUG] 移除算法后立即发送配置信号")
+            LOGGER.info("算法移除完成，配置已更新")
 
     def edit_algorithm_name(self):
         """编辑算法名称"""
@@ -289,8 +288,7 @@ class ConfigWindow(QDialog):
             QMessageBox.information(
                 self,
                 "成功",
-                f"检测到DanceTrack格式，可用split: {', '.join(available_splits)}\n"
-                f"共{len(sequences)}个序列",
+                f"检测到DanceTrack格式，共{len(sequences)}个序列",
             )
             self.update_split_checkboxes()
             self.update_sequences()
@@ -321,14 +319,12 @@ class ConfigWindow(QDialog):
             if checkbox.isChecked():
                 selected_splits.append(split)
 
-        print(f"[DEBUG] on_split_changed: 选择的splits = {selected_splits}")
         self.selected_splits = selected_splits
         self.dataset_manager.set_selected_splits(selected_splits)
         self.update_sequences()
 
         # 立即保存配置
         config = self.get_config()
-        print(f"[DEBUG] on_split_changed: 发送配置信号")
         self.config_changed.emit(config)
 
     def update_sequences(self):
@@ -359,32 +355,28 @@ class ConfigWindow(QDialog):
                 "fill_alpha": self.alpha_spin.value() / 100.0,
             },
         }
-        print(
-            f"[DEBUG] ConfigWindow.get_config() 返回配置: {json.dumps(config, indent=2, ensure_ascii=False)}"
-        )
-        print(f"[DEBUG] 算法列表: {list(algorithms.keys())}")
+        LOGGER.debug(f"配置已生成，算法数量: {len(algorithms)}")
         return config
 
     def set_config(self, config: dict):
         """设置配置"""
-        print(
-            f"[DEBUG] ConfigWindow.set_config() 接收到配置: {json.dumps(config, indent=2, ensure_ascii=False)}"
-        )
-        print(f"[DEBUG] 配置中的算法: {list(config.get('algorithms', {}).keys())}")
+        LOGGER.info(f"加载配置，算法数量: {len(config.get('algorithms', {}))}")
 
         self.mot_loader = MOTResultLoader()
         self.dir_list.clear()
 
         algorithms = config.get("algorithms", {})
+        loaded_count = 0
         for name, path in algorithms.items():
-            print(f"[DEBUG] 设置算法: {name} -> {path}")
             if self.mot_loader.add_algorithm_directory(path, name):
                 item = QListWidgetItem(f"{name} - {path}")
                 item.setData(Qt.UserRole, (name, path))
                 self.dir_list.addItem(item)
-                print(f"[DEBUG] 成功添加算法到列表: {name}")
+                loaded_count += 1
             else:
-                print(f"[DEBUG] 添加算法失败: {name}")
+                LOGGER.warning(f"加载算法失败: {name}")
+
+        LOGGER.info(f"成功加载算法: {loaded_count}/{len(algorithms)}")
 
         self.dataset_path = config.get("dataset_path", "")
         self.dataset_label.setText(self.dataset_path or "未设置")
@@ -395,10 +387,6 @@ class ConfigWindow(QDialog):
         # 设置选择的splits
         self.selected_splits = config.get("selected_splits", ["train", "val", "test"])
         self.dataset_manager.set_selected_splits(self.selected_splits)
-
-        print(
-            f"[DEBUG] ConfigWindow.set_config() 设置selected_splits: {self.selected_splits}"
-        )
 
         # 更新UI
         self.update_split_checkboxes()
@@ -416,12 +404,12 @@ class ConfigWindow(QDialog):
         self.thickness_spin.setValue(bbox_config.get("bbox_thickness", 2))
         self.alpha_spin.setValue(int(bbox_config.get("fill_alpha", 0.3) * 100))
 
-    def closeEvent(self, event: QCloseEvent):
-        """关闭事件"""
-        print("[DEBUG] ConfigWindow.closeEvent: 窗口关闭，发送最终配置")
+    def save_configuration(self):
+        """保存配置并显示成功提示"""
         config = self.get_config()
-        print(
-            f"[DEBUG] ConfigWindow.closeEvent: 最终配置 = {json.dumps(config, indent=2, ensure_ascii=False)}"
-        )
         self.config_changed.emit(config)
+        QMessageBox.information(self, "保存成功", "配置已保存成功！")
+        
+    def closeEvent(self, event: QCloseEvent):
+        """关闭事件 - 不再自动保存"""
         super().closeEvent(event)

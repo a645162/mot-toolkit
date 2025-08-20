@@ -33,6 +33,9 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.preview_window import 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
     DatasetManager,
 )
+from mot_toolkit.utils.logs import get_logger
+
+LOGGER = get_logger()
 
 
 class MainWindow(QMainWindow):
@@ -111,18 +114,24 @@ class MainWindow(QMainWindow):
         """加载配置"""
         if self.config_file.exists():
             try:
-                print(f"[DEBUG] 正在从 {self.config_file} 加载配置")
+                LOGGER.info(f"正在加载配置: {self.config_file}")
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
                 # 确保新配置项存在
                 if "preview_frames" not in self.config:
                     self.config["preview_frames"] = 5
-                print(
-                    f"[DEBUG] 加载到的配置: {json.dumps(self.config, indent=2, ensure_ascii=False)}"
-                )
+                if "bbox_config" not in self.config:
+                    self.config["bbox_config"] = {
+                        "show_bbox": True,
+                        "show_id": True,
+                        "show_fill": True,
+                        "bbox_thickness": 2,
+                        "fill_alpha": 0.3,
+                    }
+                LOGGER.info(f"配置加载完成，算法数量: {len(self.config.get('algorithms', {}))}")
                 self.update_ui_from_config()
             except Exception as e:
-                print(f"[ERROR] 加载配置文件失败: {e}")
+                LOGGER.error(f"加载配置文件失败: {e}")
                 QMessageBox.warning(self, "警告", f"加载配置文件失败: {e}")
         else:
             # 默认配置
@@ -132,20 +141,24 @@ class MainWindow(QMainWindow):
                 "selected_splits": ["train", "val", "test"],
                 "sequence_paths": {},
                 "preview_frames": 5,
+                "bbox_config": {
+                    "show_bbox": True,
+                    "show_id": True,
+                    "show_fill": True,
+                    "bbox_thickness": 2,
+                    "fill_alpha": 0.3,
+                },
             }
 
     def save_config(self):
         """保存配置"""
         try:
-            print(f"[DEBUG] 正在保存配置到: {self.config_file}")
-            print(
-                f"[DEBUG] 配置内容: {json.dumps(self.config, indent=2, ensure_ascii=False)}"
-            )
+            LOGGER.info("正在保存配置")
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
-            print("[DEBUG] 配置保存成功")
+            LOGGER.info("配置保存成功")
         except Exception as e:
-            print(f"[ERROR] 保存配置文件失败: {e}")
+            LOGGER.error(f"保存配置文件失败: {e}")
             QMessageBox.warning(self, "警告", f"保存配置文件失败: {e}")
 
     def update_ui_from_config(self):
@@ -183,7 +196,6 @@ class MainWindow(QMainWindow):
 
     def on_config_changed(self, config: dict):
         """配置改变时的处理"""
-        print("[DEBUG] MainWindow.on_config_changed: 接收到配置")
         self.config = config
         self.update_ui_from_config()
         self.save_config()
@@ -194,14 +206,12 @@ class MainWindow(QMainWindow):
             selected_splits = self.config.get(
                 "selected_splits", ["train", "val", "test"]
             )
-            print(
-                f"[DEBUG] MainWindow.on_config_changed: 设置selected_splits = {selected_splits}"
-            )
             self.dataset_manager.set_selected_splits(selected_splits)
             # 强制刷新序列列表
             sequences = self.dataset_manager.get_sequences()
             self.sequence_combo.clear()
             self.sequence_combo.addItems(sequences)
+            LOGGER.info(f"配置已更新，可用序列数量: {len(sequences)}")
 
     def open_preview(self):
         """打开预览窗口 - 支持多个独立窗口"""
