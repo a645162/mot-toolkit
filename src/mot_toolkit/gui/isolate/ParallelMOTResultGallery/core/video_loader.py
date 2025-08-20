@@ -4,7 +4,6 @@ import os
 import cv2
 import numpy as np
 from typing import List, Optional
-from pathlib import Path
 
 
 class VideoFrameLoader:
@@ -25,35 +24,38 @@ class VideoFrameLoader:
             return False
 
         self.video_path = video_path
-        
+
         # 检查是否为图像序列目录
         if os.path.isdir(video_path):
             # 检查是否为img1目录（DanceTrack格式）
-            if os.path.basename(video_path) == 'img1':
+            if os.path.basename(video_path) == "img1":
                 self.image_dir = video_path
             else:
                 # 检查是否有img1子目录
-                img1_path = os.path.join(video_path, 'img1')
+                img1_path = os.path.join(video_path, "img1")
                 if os.path.exists(img1_path) and os.path.isdir(img1_path):
                     self.image_dir = img1_path
                 else:
                     # 直接使用该目录
                     self.image_dir = video_path
-            
+
             # 获取图像文件列表
-            self.image_files = sorted([
-                f for f in os.listdir(self.image_dir)
-                if f.lower().endswith(('.jpg', '.jpeg', '.png', '.bmp'))
-            ])
-            
+            self.image_files = sorted(
+                [
+                    f
+                    for f in os.listdir(self.image_dir)
+                    if f.lower().endswith((".jpg", ".jpeg", ".png", ".bmp"))
+                ]
+            )
+
             if not self.image_files:
                 return False
-            
+
             self.total_frames = len(self.image_files)
             self.is_image_sequence = True
             self.current_frame = 0
             return True
-        
+
         # 处理视频文件
         self.cap = cv2.VideoCapture(video_path)
         if not self.cap.isOpened():
@@ -80,7 +82,7 @@ class VideoFrameLoader:
             # 从视频文件加载
             if not self.cap:
                 return None
-            
+
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, frame_num)
             ret, frame = self.cap.read()
             return frame if ret else None
@@ -117,7 +119,7 @@ class VideoFrameLoader:
 
     def release(self):
         """释放资源"""
-        if hasattr(self, 'cap') and self.cap is not None:
+        if hasattr(self, "cap") and self.cap is not None:
             self.cap.release()
             self.cap = None
         self.image_files = []
@@ -125,5 +127,5 @@ class VideoFrameLoader:
 
     def __del__(self):
         """析构函数"""
-        if hasattr(self, 'cap') and self.cap is not None:
+        if hasattr(self, "cap") and self.cap is not None:
             self.release()

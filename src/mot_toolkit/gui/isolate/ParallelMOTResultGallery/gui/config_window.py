@@ -24,7 +24,12 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCloseEvent
 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core import MOTResultLoader
-from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import DatasetManager
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
+    DatasetManager,
+)
+from mot_toolkit.utils.logs import get_logger
+
+LOGGER = get_logger()
 
 
 class ConfigWindow(QDialog):
@@ -36,7 +41,8 @@ class ConfigWindow(QDialog):
         super().__init__(parent)
         self.setWindowTitle("配置设置")
         self.setModal(True)
-        self.setFixedSize(700, 600)
+        self.setMinimumWidth(700)
+        self.resize(700, 600)  # 初始大小，但允许调整
 
         self.mot_loader = MOTResultLoader()
         self.dataset_manager = DatasetManager()
@@ -97,29 +103,62 @@ class ConfigWindow(QDialog):
         # Split选择组
         split_group = QGroupBox("数据集Split选择")
         split_layout = QVBoxLayout(split_group)
-        
+
         # 创建滚动区域用于split复选框
         split_scroll = QScrollArea()
         split_scroll.setWidgetResizable(True)
         split_scroll.setMaximumHeight(100)
-        
+
         self.split_widget = QWidget()
         self.split_layout = QVBoxLayout(self.split_widget)
         self.split_checkboxes = {}
-        
+
         split_scroll.setWidget(self.split_widget)
         split_layout.addWidget(split_scroll)
 
         # 预览设置组
         preview_group = QGroupBox("预览设置")
         preview_layout = QVBoxLayout(preview_group)
-        
+
         self.preview_frames_spin = QSpinBox()
         self.preview_frames_spin.setRange(1, 10)
         self.preview_frames_spin.setValue(5)
         self.preview_frames_spin.setSuffix(" 张")
         preview_layout.addWidget(QLabel("连续帧预览数量:"))
         preview_layout.addWidget(self.preview_frames_spin)
+
+        # 框绘制设置组
+        bbox_group = QGroupBox("框绘制设置")
+        bbox_layout = QVBoxLayout(bbox_group)
+
+        self.show_bbox_check = QCheckBox("显示边界框")
+        self.show_bbox_check.setChecked(True)
+        bbox_layout.addWidget(self.show_bbox_check)
+
+        self.show_id_check = QCheckBox("显示跟踪ID")
+        self.show_id_check.setChecked(True)
+        bbox_layout.addWidget(self.show_id_check)
+
+        self.show_fill_check = QCheckBox("显示填充")
+        self.show_fill_check.setChecked(True)
+        bbox_layout.addWidget(self.show_fill_check)
+
+        thickness_layout = QHBoxLayout()
+        thickness_layout.addWidget(QLabel("线条粗细:"))
+        self.thickness_spin = QSpinBox()
+        self.thickness_spin.setRange(1, 10)
+        self.thickness_spin.setValue(2)
+        thickness_layout.addWidget(self.thickness_spin)
+        bbox_layout.addLayout(thickness_layout)
+
+        alpha_layout = QHBoxLayout()
+        alpha_layout.addWidget(QLabel("填充透明度:"))
+        self.alpha_spin = QSpinBox()
+        self.alpha_spin.setRange(0, 100)
+        self.alpha_spin.setValue(30)
+        self.alpha_spin.setSuffix(" %")
+        alpha_layout.addWidget(self.alpha_spin)
+        bbox_layout.addLayout(alpha_layout)
 
         # 序列选择组
         seq_group = QGroupBox("可用序列")
@@ -144,6 +183,7 @@ class ConfigWindow(QDialog):
         layout.addWidget(dataset_group)
         layout.addWidget(split_group)
         layout.addWidget(preview_group)
+        layout.addWidget(bbox_group)
         layout.addWidget(seq_group)
         layout.addLayout(bottom_layout)
 
@@ -166,13 +206,13 @@ class ConfigWindow(QDialog):
             success = self.mot_loader.add_algorithm_directory(directory, algorithm_name)
             print(f"[DEBUG] 添加算法结果: {success}")
             print(f"[DEBUG] 当前算法列表: {self.mot_loader.get_algorithms()}")
-            
+
             if success:
                 item = QListWidgetItem(f"{algorithm_name} - {directory}")
                 item.setData(Qt.UserRole, (algorithm_name, directory))
                 self.dir_list.addItem(item)
                 self.update_sequences()
-                
+
                 # 立即保存配置
                 config = self.get_config()
                 self.config_changed.emit(config)
@@ -189,7 +229,7 @@ class ConfigWindow(QDialog):
             self.mot_loader.remove_algorithm(algorithm_name)
             self.dir_list.takeItem(self.dir_list.row(current_item))
             self.update_sequences()
-            
+
             # 立即保存配置
             config = self.get_config()
             self.config_changed.emit(config)
@@ -200,26 +240,23 @@ class ConfigWindow(QDialog):
         current_item = self.dir_list.currentItem()
         if current_item:
             from PySide6.QtWidgets import QInputDialog
-            
+
             old_name, old_path = current_item.data(Qt.UserRole)
             new_name, ok = QInputDialog.getText(
-                self,
-                "重命名算法",
-                "请输入新的算法名称：",
-                text=old_name
+                self, "重命名算法", "请输入新的算法名称：", text=old_name
             )
-            
+
             if ok and new_name and new_name != old_name:
                 # 更新显示
                 current_item.setText(f"{new_name} - {old_path}")
                 current_item.setData(Qt.UserRole, (new_name, old_path))
-                
+
                 # 更新MOT加载器
                 self.mot_loader.remove_algorithm(old_name)
                 self.mot_loader.add_algorithm_directory(old_path, new_name)
-                
+
                 self.update_sequences()
-                
+
                 # 立即保存配置
                 config = self.get_config()
                 self.config_changed.emit(config)
@@ -250,9 +287,10 @@ class ConfigWindow(QDialog):
         if available_splits:
             sequences = self.dataset_manager.get_sequences()
             QMessageBox.information(
-                self, "成功",
+                self,
+                "成功",
                 f"检测到DanceTrack格式，可用split: {', '.join(available_splits)}\n"
-                f"共{len(sequences)}个序列"
+                f"共{len(sequences)}个序列",
             )
             self.update_split_checkboxes()
             self.update_sequences()
@@ -268,7 +306,7 @@ class ConfigWindow(QDialog):
 
         # 获取可用split
         available_splits = self.dataset_manager.get_available_splits()
-        
+
         for split in available_splits:
             checkbox = QCheckBox(split)
             checkbox.setChecked(split in self.selected_splits)
@@ -282,12 +320,12 @@ class ConfigWindow(QDialog):
         for split, checkbox in self.split_checkboxes.items():
             if checkbox.isChecked():
                 selected_splits.append(split)
-        
+
         print(f"[DEBUG] on_split_changed: 选择的splits = {selected_splits}")
         self.selected_splits = selected_splits
         self.dataset_manager.set_selected_splits(selected_splits)
         self.update_sequences()
-        
+
         # 立即保存配置
         config = self.get_config()
         print(f"[DEBUG] on_split_changed: 发送配置信号")
@@ -313,16 +351,27 @@ class ConfigWindow(QDialog):
             "selected_splits": self.selected_splits,
             "sequence_paths": self.dataset_manager.sequence_paths,
             "preview_frames": self.preview_frames_spin.value(),
+            "bbox_config": {
+                "show_bbox": self.show_bbox_check.isChecked(),
+                "show_id": self.show_id_check.isChecked(),
+                "show_fill": self.show_fill_check.isChecked(),
+                "bbox_thickness": self.thickness_spin.value(),
+                "fill_alpha": self.alpha_spin.value() / 100.0,
+            },
         }
-        print(f"[DEBUG] ConfigWindow.get_config() 返回配置: {json.dumps(config, indent=2, ensure_ascii=False)}")
+        print(
+            f"[DEBUG] ConfigWindow.get_config() 返回配置: {json.dumps(config, indent=2, ensure_ascii=False)}"
+        )
         print(f"[DEBUG] 算法列表: {list(algorithms.keys())}")
         return config
 
     def set_config(self, config: dict):
         """设置配置"""
-        print(f"[DEBUG] ConfigWindow.set_config() 接收到配置: {json.dumps(config, indent=2, ensure_ascii=False)}")
+        print(
+            f"[DEBUG] ConfigWindow.set_config() 接收到配置: {json.dumps(config, indent=2, ensure_ascii=False)}"
+        )
         print(f"[DEBUG] 配置中的算法: {list(config.get('algorithms', {}).keys())}")
-        
+
         self.mot_loader = MOTResultLoader()
         self.dir_list.clear()
 
@@ -339,28 +388,40 @@ class ConfigWindow(QDialog):
 
         self.dataset_path = config.get("dataset_path", "")
         self.dataset_label.setText(self.dataset_path or "未设置")
-        
+
         # 设置dataset manager
         self.dataset_manager.set_dataset_path(self.dataset_path)
-        
+
         # 设置选择的splits
         self.selected_splits = config.get("selected_splits", ["train", "val", "test"])
         self.dataset_manager.set_selected_splits(self.selected_splits)
-        
-        print(f"[DEBUG] ConfigWindow.set_config() 设置selected_splits: {self.selected_splits}")
-        
+
+        print(
+            f"[DEBUG] ConfigWindow.set_config() 设置selected_splits: {self.selected_splits}"
+        )
+
         # 更新UI
         self.update_split_checkboxes()
         self.update_sequences()
-        
+
         # 设置预览帧数
         preview_frames = config.get("preview_frames", 5)
         self.preview_frames_spin.setValue(preview_frames)
+
+        # 设置框绘制配置
+        bbox_config = config.get("bbox_config", {})
+        self.show_bbox_check.setChecked(bbox_config.get("show_bbox", True))
+        self.show_id_check.setChecked(bbox_config.get("show_id", True))
+        self.show_fill_check.setChecked(bbox_config.get("show_fill", True))
+        self.thickness_spin.setValue(bbox_config.get("bbox_thickness", 2))
+        self.alpha_spin.setValue(int(bbox_config.get("fill_alpha", 0.3) * 100))
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
         print("[DEBUG] ConfigWindow.closeEvent: 窗口关闭，发送最终配置")
         config = self.get_config()
-        print(f"[DEBUG] ConfigWindow.closeEvent: 最终配置 = {json.dumps(config, indent=2, ensure_ascii=False)}")
+        print(
+            f"[DEBUG] ConfigWindow.closeEvent: 最终配置 = {json.dumps(config, indent=2, ensure_ascii=False)}"
+        )
         self.config_changed.emit(config)
         super().closeEvent(event)

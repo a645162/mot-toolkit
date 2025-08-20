@@ -8,7 +8,6 @@
 
 import sys
 import json
-import os
 from pathlib import Path
 
 from PySide6.QtWidgets import (
@@ -23,12 +22,17 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QMessageBox,
 )
-from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCloseEvent
 
-from gui.config_window import ConfigWindow
-from gui.preview_window import PreviewWindow
-from core.dataset_manager import DatasetManager
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.config_window import (
+    ConfigWindow,
+)
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.preview_window import (
+    PreviewWindow,
+)
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
+    DatasetManager,
+)
 
 
 class MainWindow(QMainWindow):
@@ -44,14 +48,14 @@ class MainWindow(QMainWindow):
             "algorithms": {},
             "dataset_path": "",
             "selected_splits": ["train", "val", "test"],
-            "sequence_paths": {}
+            "sequence_paths": {},
         }
         self.config_file = Path(__file__).parent / "config.json"
         self.dataset_manager = DatasetManager()
 
-        # 子窗口
+        # 子窗口 - 只保留配置窗口
         self.config_window = None
-        self.preview_window = None
+        self.preview_windows = []
 
         self.init_ui()
         self.load_config()
@@ -113,7 +117,9 @@ class MainWindow(QMainWindow):
                 # 确保新配置项存在
                 if "preview_frames" not in self.config:
                     self.config["preview_frames"] = 5
-                print(f"[DEBUG] 加载到的配置: {json.dumps(self.config, indent=2, ensure_ascii=False)}")
+                print(
+                    f"[DEBUG] 加载到的配置: {json.dumps(self.config, indent=2, ensure_ascii=False)}"
+                )
                 self.update_ui_from_config()
             except Exception as e:
                 print(f"[ERROR] 加载配置文件失败: {e}")
@@ -125,14 +131,16 @@ class MainWindow(QMainWindow):
                 "dataset_path": "",
                 "selected_splits": ["train", "val", "test"],
                 "sequence_paths": {},
-                "preview_frames": 5
+                "preview_frames": 5,
             }
 
     def save_config(self):
         """保存配置"""
         try:
             print(f"[DEBUG] 正在保存配置到: {self.config_file}")
-            print(f"[DEBUG] 配置内容: {json.dumps(self.config, indent=2, ensure_ascii=False)}")
+            print(
+                f"[DEBUG] 配置内容: {json.dumps(self.config, indent=2, ensure_ascii=False)}"
+            )
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
             print("[DEBUG] 配置保存成功")
@@ -146,16 +154,16 @@ class MainWindow(QMainWindow):
         self.dataset_label.setText(
             f"数据集路径: {self.config['dataset_path'] or '未设置'}"
         )
-        
+
         # 更新dataset manager
-        self.dataset_manager.set_dataset_path(self.config.get('dataset_path', ''))
-        selected_splits = self.config.get('selected_splits', ['train', 'val', 'test'])
+        self.dataset_manager.set_dataset_path(self.config.get("dataset_path", ""))
+        selected_splits = self.config.get("selected_splits", ["train", "val", "test"])
         self.dataset_manager.set_selected_splits(selected_splits)
-        
+
         self.splits_label.setText(
             f"选择Split: {', '.join(selected_splits) if selected_splits else '未设置'}"
         )
-        
+
         sequences = self.dataset_manager.get_sequences()
         self.sequences_label.setText(f"可用序列: {len(sequences)}")
 
@@ -175,16 +183,20 @@ class MainWindow(QMainWindow):
 
     def on_config_changed(self, config: dict):
         """配置改变时的处理"""
-        print(f"[DEBUG] MainWindow.on_config_changed: 接收到配置")
+        print("[DEBUG] MainWindow.on_config_changed: 接收到配置")
         self.config = config
         self.update_ui_from_config()
         self.save_config()
-        
+
         # 确保dataset manager同步更新
-        if self.config.get('dataset_path'):
-            self.dataset_manager.set_dataset_path(self.config['dataset_path'])
-            selected_splits = self.config.get('selected_splits', ['train', 'val', 'test'])
-            print(f"[DEBUG] MainWindow.on_config_changed: 设置selected_splits = {selected_splits}")
+        if self.config.get("dataset_path"):
+            self.dataset_manager.set_dataset_path(self.config["dataset_path"])
+            selected_splits = self.config.get(
+                "selected_splits", ["train", "val", "test"]
+            )
+            print(
+                f"[DEBUG] MainWindow.on_config_changed: 设置selected_splits = {selected_splits}"
+            )
             self.dataset_manager.set_selected_splits(selected_splits)
             # 强制刷新序列列表
             sequences = self.dataset_manager.get_sequences()
@@ -192,7 +204,7 @@ class MainWindow(QMainWindow):
             self.sequence_combo.addItems(sequences)
 
     def open_preview(self):
-        """打开预览窗口"""
+        """打开预览窗口 - 支持多个独立窗口"""
         if not self.config["algorithms"]:
             QMessageBox.warning(self, "警告", "请先添加算法结果目录")
             return
@@ -205,26 +217,45 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "警告", "请先选择序列")
             return
 
-        if not self.preview_window:
-            self.preview_window = PreviewWindow(self)
+        # 创建新的独立预览窗口
+        preview_window = PreviewWindow()
+        preview_window.set_config(self.config)
+        preview_window.set_sequence(self.sequence_combo.currentText())
 
-        self.preview_window.set_config(self.config)
-        self.preview_window.set_sequence(self.sequence_combo.currentText())
-        self.preview_window.show()
-        self.preview_window.raise_()
-        self.preview_window.activateWindow()
+        # 设置窗口位置偏移，避免重叠
+        base_x, base_y = self.x(), self.y()
+        offset = (
+            len(
+                [
+                    w
+                    for w in QApplication.topLevelWidgets()
+                    if isinstance(w, PreviewWindow)
+                ]
+            )
+            * 50
+        )
+        preview_window.move(base_x + 50 + offset, base_y + 50 + offset)
+
+        preview_window.show()
+        preview_window.raise_()
+        preview_window.activateWindow()
+
+        self.preview_windows.append(preview_window)
+
+        # GC
+        for _window in self.preview_windows:
+            if not _window.isVisible():
+                self.preview_windows.remove(_window)
 
     def on_sequence_changed(self, sequence: str):
-        """序列改变时的处理"""
-        if sequence and self.preview_window and self.preview_window.isVisible():
-            self.preview_window.set_sequence(sequence)
+        """序列改变时的处理 - 不再管理预览窗口"""
+        pass
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
         if self.config_window:
             self.config_window.close()
-        if self.preview_window:
-            self.preview_window.close()
+        # 不再管理预览窗口，让它们独立存在
 
         self.save_config()
         super().closeEvent(event)
