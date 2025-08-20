@@ -100,9 +100,24 @@ class VideoFrameLoader:
         """获取总帧数"""
         return self.total_frames
 
+    def get_frame_path(self, frame_num: int) -> Optional[str]:
+        """获取指定帧的文件路径"""
+        if frame_num >= self.total_frames or frame_num < 0:
+            return None
+
+        if self.is_image_sequence:
+            # 从图像序列加载
+            if frame_num < len(self.image_files):
+                image_path = os.path.join(self.image_dir, self.image_files[frame_num])
+                return image_path
+            return None
+        else:
+            # 从视频文件加载
+            return None  # 视频文件不支持直接获取路径
+
     def release(self):
         """释放资源"""
-        if self.cap:
+        if hasattr(self, 'cap') and self.cap is not None:
             self.cap.release()
             self.cap = None
         self.image_files = []
@@ -110,4 +125,5 @@ class VideoFrameLoader:
 
     def __del__(self):
         """析构函数"""
-        self.release()
+        if hasattr(self, 'cap') and self.cap is not None:
+            self.release()

@@ -17,14 +17,19 @@ class MOTResultLoader:
         """添加算法结果目录"""
         directory = Path(directory)
         if not directory.exists():
+            print(f"[DEBUG] MOTResultLoader: 目录不存在 {directory}")
             return False
 
         # 扫描目录中的txt文件
         txt_files = list(directory.glob("*.txt"))
+        print(f"[DEBUG] MOTResultLoader: 在 {directory} 中找到 {len(txt_files)} 个txt文件")
+        
         if not txt_files:
+            print(f"[DEBUG] MOTResultLoader: 没有找到txt文件")
             return False
 
         self.algorithms[algorithm_name] = str(directory)
+        print(f"[DEBUG] MOTResultLoader: 添加算法 {algorithm_name} -> {directory}")
 
         # 提取序列名称
         for txt_file in txt_files:
@@ -34,7 +39,10 @@ class MOTResultLoader:
             if seq_name not in self.results:
                 self.results[seq_name] = {}
             self.results[seq_name][algorithm_name] = str(txt_file)
+            print(f"[DEBUG] MOTResultLoader: 添加序列 {seq_name} -> {txt_file}")
 
+        print(f"[DEBUG] MOTResultLoader: 当前算法列表: {list(self.algorithms.keys())}")
+        print(f"[DEBUG] MOTResultLoader: 当前序列列表: {list(self.sequences)}")
         return True
 
     def remove_algorithm(self, algorithm_name: str) -> bool:

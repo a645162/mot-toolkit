@@ -18,6 +18,7 @@ from PySide6.QtWidgets import (
     QCheckBox,
     QScrollArea,
     QWidget,
+    QSpinBox,
 )
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QCloseEvent
@@ -109,6 +110,17 @@ class ConfigWindow(QDialog):
         split_scroll.setWidget(self.split_widget)
         split_layout.addWidget(split_scroll)
 
+        # 预览设置组
+        preview_group = QGroupBox("预览设置")
+        preview_layout = QVBoxLayout(preview_group)
+        
+        self.preview_frames_spin = QSpinBox()
+        self.preview_frames_spin.setRange(1, 10)
+        self.preview_frames_spin.setValue(5)
+        self.preview_frames_spin.setSuffix(" 张")
+        preview_layout.addWidget(QLabel("连续帧预览数量:"))
+        preview_layout.addWidget(self.preview_frames_spin)
+
         # 序列选择组
         seq_group = QGroupBox("可用序列")
         seq_layout = QVBoxLayout(seq_group)
@@ -131,6 +143,7 @@ class ConfigWindow(QDialog):
         layout.addWidget(algo_group)
         layout.addWidget(dataset_group)
         layout.addWidget(split_group)
+        layout.addWidget(preview_group)
         layout.addWidget(seq_group)
         layout.addLayout(bottom_layout)
 
@@ -149,11 +162,21 @@ class ConfigWindow(QDialog):
                 or f"算法{len(self.mot_loader.get_algorithms()) + 1}"
             )
 
-            if self.mot_loader.add_algorithm_directory(directory, algorithm_name):
+            print(f"[DEBUG] 尝试添加算法目录: {directory}")
+            success = self.mot_loader.add_algorithm_directory(directory, algorithm_name)
+            print(f"[DEBUG] 添加算法结果: {success}")
+            print(f"[DEBUG] 当前算法列表: {self.mot_loader.get_algorithms()}")
+            
+            if success:
                 item = QListWidgetItem(f"{algorithm_name} - {directory}")
                 item.setData(Qt.UserRole, (algorithm_name, directory))
                 self.dir_list.addItem(item)
                 self.update_sequences()
+                
+                # 立即保存配置
+                config = self.get_config()
+                self.config_changed.emit(config)
+                print("[DEBUG] 添加算法后立即发送配置信号")
             else:
                 QMessageBox.warning(self, "警告", "目录中没有找到有效的MOT结果文件")
 
@@ -162,16 +185,44 @@ class ConfigWindow(QDialog):
         current_item = self.dir_list.currentItem()
         if current_item:
             algorithm_name, _ = current_item.data(Qt.UserRole)
+            print(f"[DEBUG] 移除算法: {algorithm_name}")
             self.mot_loader.remove_algorithm(algorithm_name)
             self.dir_list.takeItem(self.dir_list.row(current_item))
             self.update_sequences()
+            
+            # 立即保存配置
+            config = self.get_config()
+            self.config_changed.emit(config)
+            print("[DEBUG] 移除算法后立即发送配置信号")
 
     def edit_algorithm_name(self):
         """编辑算法名称"""
         current_item = self.dir_list.currentItem()
         if current_item:
-            # 这里可以实现重命名功能
-            QMessageBox.information(self, "提示", "重命名功能待实现")
+            from PySide6.QtWidgets import QInputDialog
+            
+            old_name, old_path = current_item.data(Qt.UserRole)
+            new_name, ok = QInputDialog.getText(
+                self,
+                "重命名算法",
+                "请输入新的算法名称：",
+                text=old_name
+            )
+            
+            if ok and new_name and new_name != old_name:
+                # 更新显示
+                current_item.setText(f"{new_name} - {old_path}")
+                current_item.setData(Qt.UserRole, (new_name, old_path))
+                
+                # 更新MOT加载器
+                self.mot_loader.remove_algorithm(old_name)
+                self.mot_loader.add_algorithm_directory(old_path, new_name)
+                
+                self.update_sequences()
+                
+                # 立即保存配置
+                config = self.get_config()
+                self.config_changed.emit(config)
 
     def set_dataset_path(self):
         """设置数据集路径"""
@@ -232,12 +283,14 @@ class ConfigWindow(QDialog):
             if checkbox.isChecked():
                 selected_splits.append(split)
         
+        print(f"[DEBUG] on_split_changed: 选择的splits = {selected_splits}")
         self.selected_splits = selected_splits
         self.dataset_manager.set_selected_splits(selected_splits)
         self.update_sequences()
         
         # 立即保存配置
         config = self.get_config()
+        print(f"[DEBUG] on_split_changed: 发送配置信号")
         self.config_changed.emit(config)
 
     def update_sequences(self):
@@ -254,24 +307,35 @@ class ConfigWindow(QDialog):
             name, path = item.data(Qt.UserRole)
             algorithms[name] = path
 
-        return {
+        config = {
             "algorithms": algorithms,
             "dataset_path": self.dataset_path,
             "selected_splits": self.selected_splits,
             "sequence_paths": self.dataset_manager.sequence_paths,
+            "preview_frames": self.preview_frames_spin.value(),
         }
+        print(f"[DEBUG] ConfigWindow.get_config() 返回配置: {json.dumps(config, indent=2, ensure_ascii=False)}")
+        print(f"[DEBUG] 算法列表: {list(algorithms.keys())}")
+        return config
 
     def set_config(self, config: dict):
         """设置配置"""
+        print(f"[DEBUG] ConfigWindow.set_config() 接收到配置: {json.dumps(config, indent=2, ensure_ascii=False)}")
+        print(f"[DEBUG] 配置中的算法: {list(config.get('algorithms', {}).keys())}")
+        
         self.mot_loader = MOTResultLoader()
         self.dir_list.clear()
 
         algorithms = config.get("algorithms", {})
         for name, path in algorithms.items():
+            print(f"[DEBUG] 设置算法: {name} -> {path}")
             if self.mot_loader.add_algorithm_directory(path, name):
                 item = QListWidgetItem(f"{name} - {path}")
                 item.setData(Qt.UserRole, (name, path))
                 self.dir_list.addItem(item)
+                print(f"[DEBUG] 成功添加算法到列表: {name}")
+            else:
+                print(f"[DEBUG] 添加算法失败: {name}")
 
         self.dataset_path = config.get("dataset_path", "")
         self.dataset_label.setText(self.dataset_path or "未设置")
@@ -283,12 +347,20 @@ class ConfigWindow(QDialog):
         self.selected_splits = config.get("selected_splits", ["train", "val", "test"])
         self.dataset_manager.set_selected_splits(self.selected_splits)
         
+        print(f"[DEBUG] ConfigWindow.set_config() 设置selected_splits: {self.selected_splits}")
+        
         # 更新UI
         self.update_split_checkboxes()
         self.update_sequences()
+        
+        # 设置预览帧数
+        preview_frames = config.get("preview_frames", 5)
+        self.preview_frames_spin.setValue(preview_frames)
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
+        print("[DEBUG] ConfigWindow.closeEvent: 窗口关闭，发送最终配置")
         config = self.get_config()
+        print(f"[DEBUG] ConfigWindow.closeEvent: 最终配置 = {json.dumps(config, indent=2, ensure_ascii=False)}")
         self.config_changed.emit(config)
         super().closeEvent(event)

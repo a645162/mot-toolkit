@@ -25,6 +25,7 @@ class DatasetManager:
 
     def set_selected_splits(self, splits: List[str]) -> None:
         """设置选择的split"""
+        print(f"[DEBUG] DatasetManager.set_selected_splits: {splits}")
         self.selected_splits = set(splits)
         self.scan_sequences()
 

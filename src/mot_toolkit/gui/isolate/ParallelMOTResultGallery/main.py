@@ -107,18 +107,37 @@ class MainWindow(QMainWindow):
         """加载配置"""
         if self.config_file.exists():
             try:
+                print(f"[DEBUG] 正在从 {self.config_file} 加载配置")
                 with open(self.config_file, "r", encoding="utf-8") as f:
                     self.config = json.load(f)
+                # 确保新配置项存在
+                if "preview_frames" not in self.config:
+                    self.config["preview_frames"] = 5
+                print(f"[DEBUG] 加载到的配置: {json.dumps(self.config, indent=2, ensure_ascii=False)}")
                 self.update_ui_from_config()
             except Exception as e:
+                print(f"[ERROR] 加载配置文件失败: {e}")
                 QMessageBox.warning(self, "警告", f"加载配置文件失败: {e}")
+        else:
+            # 默认配置
+            self.config = {
+                "algorithms": {},
+                "dataset_path": "",
+                "selected_splits": ["train", "val", "test"],
+                "sequence_paths": {},
+                "preview_frames": 5
+            }
 
     def save_config(self):
         """保存配置"""
         try:
+            print(f"[DEBUG] 正在保存配置到: {self.config_file}")
+            print(f"[DEBUG] 配置内容: {json.dumps(self.config, indent=2, ensure_ascii=False)}")
             with open(self.config_file, "w", encoding="utf-8") as f:
                 json.dump(self.config, f, indent=2, ensure_ascii=False)
+            print("[DEBUG] 配置保存成功")
         except Exception as e:
+            print(f"[ERROR] 保存配置文件失败: {e}")
             QMessageBox.warning(self, "警告", f"保存配置文件失败: {e}")
 
     def update_ui_from_config(self):
@@ -156,6 +175,7 @@ class MainWindow(QMainWindow):
 
     def on_config_changed(self, config: dict):
         """配置改变时的处理"""
+        print(f"[DEBUG] MainWindow.on_config_changed: 接收到配置")
         self.config = config
         self.update_ui_from_config()
         self.save_config()
@@ -164,6 +184,7 @@ class MainWindow(QMainWindow):
         if self.config.get('dataset_path'):
             self.dataset_manager.set_dataset_path(self.config['dataset_path'])
             selected_splits = self.config.get('selected_splits', ['train', 'val', 'test'])
+            print(f"[DEBUG] MainWindow.on_config_changed: 设置selected_splits = {selected_splits}")
             self.dataset_manager.set_selected_splits(selected_splits)
             # 强制刷新序列列表
             sequences = self.dataset_manager.get_sequences()
