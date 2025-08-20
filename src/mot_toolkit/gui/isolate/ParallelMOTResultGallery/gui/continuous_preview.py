@@ -116,6 +116,37 @@ class ContinuousPreviewWidget(QWidget):
         image_width = max(100, image_total_width // self.preview_frames)
         image_height = int(image_width * 0.75)  # 4:3比例
 
+        # 添加表头
+        header_widget = QWidget()
+        header_layout = QHBoxLayout(header_widget)
+        header_layout.setContentsMargins(0, 0, 0, 0)
+        header_layout.setSpacing(2)
+
+        # 空白占位符（算法名称列）
+        placeholder_label = QLabel()
+        placeholder_label.setFixedWidth(self.algo_name_width)
+        header_layout.addWidget(placeholder_label)
+
+        # 添加帧名称到表头
+        for i in range(self.preview_frames):
+            frame_num = self.current_frame + i
+            frame_label = QLabel(f"{frame_num:08d}.jpg")
+            frame_label.setAlignment(Qt.AlignCenter)
+            frame_label.setStyleSheet("""
+                QLabel {
+                    font-weight: bold;
+                    background-color: #e0e0e0;
+                    border: 1px solid #ccc;
+                    padding: 5px;
+                }
+            """)
+            frame_label.setFixedSize(image_width, 30)  # 固定高度为30
+            header_layout.addWidget(frame_label)
+
+        # 添加弹性空间
+        header_layout.addStretch()
+        self.content_layout.addWidget(header_widget)
+
         # 为每个算法创建一行
         for algo_name, loader in self.video_loaders.items():
             row_widget = QWidget()
