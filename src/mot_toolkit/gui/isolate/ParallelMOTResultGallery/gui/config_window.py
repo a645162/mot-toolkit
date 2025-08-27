@@ -79,6 +79,15 @@ class ConfigWindow(QDialog):
         self.rename_btn.clicked.connect(self.edit_algorithm_name)
         button_layout.addWidget(self.rename_btn)
 
+        # 新增上下移动按钮
+        self.move_up_btn = QPushButton("上移")
+        self.move_up_btn.clicked.connect(self.move_algorithm_up)
+        button_layout.addWidget(self.move_up_btn)
+
+        self.move_down_btn = QPushButton("下移")
+        self.move_down_btn.clicked.connect(self.move_algorithm_down)
+        button_layout.addWidget(self.move_down_btn)
+
         algo_layout.addLayout(button_layout)
 
         # 数据集路径组
@@ -204,7 +213,9 @@ class ConfigWindow(QDialog):
 
             LOGGER.info(f"添加算法目录: {directory}")
             success = self.mot_loader.add_algorithm_directory(directory, algorithm_name)
-            LOGGER.info(f"算法添加结果: {success}, 当前算法数量: {len(self.mot_loader.get_algorithms())}")
+            LOGGER.info(
+                f"算法添加结果: {success}, 当前算法数量: {len(self.mot_loader.get_algorithms())}"
+            )
 
             if success:
                 item = QListWidgetItem(f"{algorithm_name} - {directory}")
@@ -409,7 +420,39 @@ class ConfigWindow(QDialog):
         config = self.get_config()
         self.config_changed.emit(config)
         QMessageBox.information(self, "保存成功", "配置已保存成功！")
-        
+
     def closeEvent(self, event: QCloseEvent):
         """关闭事件 - 不再自动保存"""
         super().closeEvent(event)
+
+    def move_algorithm_up(self):
+        """上移选中的算法"""
+        current_row = self.dir_list.currentRow()
+        if current_row > 0:
+            current_item = self.dir_list.takeItem(current_row)
+            self.dir_list.insertItem(current_row - 1, current_item)
+            self.dir_list.setCurrentRow(current_row - 1)
+            self.update_algorithm_order()
+
+    def move_algorithm_down(self):
+        """下移选中的算法"""
+        current_row = self.dir_list.currentRow()
+        if current_row < self.dir_list.count() - 1:
+            current_item = self.dir_list.takeItem(current_row)
+            self.dir_list.insertItem(current_row + 1, current_item)
+            self.dir_list.setCurrentRow(current_row + 1)
+            self.update_algorithm_order()
+
+    def update_algorithm_order(self):
+        """更新算法顺序"""
+        algorithms = {}
+        for i in range(self.dir_list.count()):
+            item = self.dir_list.item(i)
+            name, path = item.data(Qt.UserRole)
+            algorithms[name] = path
+        self.mot_loader.set_algorithms(algorithms)
+
+        # 立即保存配置
+        config = self.get_config()
+        self.config_changed.emit(config)
+        LOGGER.info("算法顺序已更新")

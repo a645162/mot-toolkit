@@ -11,9 +11,10 @@ from PySide6.QtWidgets import (
     QSpinBox,
     QGroupBox,
     QSplitter,
+    QMessageBox,
 )
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QCloseEvent
+from PySide6.QtGui import QCloseEvent, QGuiApplication
 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.video_loader import (
     VideoFrameLoader,
@@ -86,6 +87,11 @@ class PreviewWindow(QMainWindow):
         self.play_btn = QPushButton("播放")
         self.play_btn.clicked.connect(self.toggle_play)
         control_layout.addWidget(self.play_btn)
+
+        # 复制信息按钮
+        self.copy_btn = QPushButton("复制信息")
+        self.copy_btn.clicked.connect(self.copy_sequence_info)
+        control_layout.addWidget(self.copy_btn)
 
         layout.addWidget(control_group)
 
@@ -257,6 +263,37 @@ class PreviewWindow(QMainWindow):
         self.is_playing = False
         self.play_btn.setText("播放")
         self.timer.stop()
+
+    def copy_sequence_info(self):
+        """复制序列信息到剪贴板"""
+        if not self.current_sequence:
+            QMessageBox.warning(self, "警告", "请先选择序列")
+            return
+            
+        # 获取当前序列名称
+        sequence_name = self.current_sequence
+        
+        # 获取第一张图的名称
+        first_frame_name = f"{self.current_frame + 1:08d}.jpg"
+        
+        # 获取连续帧数
+        continuous_frames = self.config.get("preview_frames", 5)
+        
+        # 格式化信息为每行一种
+        info_text = f"序列名称: {sequence_name}\n第一张图: {first_frame_name}\n连续帧数: {continuous_frames}"
+        
+        # 复制到剪贴板
+        clipboard = QGuiApplication.clipboard()
+        clipboard.setText(info_text)
+        
+        # 弹框显示
+        QMessageBox.information(
+            self,
+            "复制成功",
+            f"已复制以下信息到剪贴板：\n\n{info_text}"
+        )
+        
+        LOGGER.info(f"已复制到剪贴板:\n{info_text}")
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
