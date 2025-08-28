@@ -1,18 +1,20 @@
-"""MOT结果加载器"""
+"""MOT结果加载器 - 使用新的MOTResult数据类"""
 
 import os
 from pathlib import Path
 from typing import List, Dict, Optional
 
+from mot_toolkit.datatype.dataset.mot_result import MOTResult, MOTResultLoader as BaseMOTResultLoader
 from mot_toolkit.utils.logs import get_logger
 
 LOGGER = get_logger()
 
 
 class MOTResultLoader:
-    """MOT结果加载器"""
+    """MOT结果加载器 - 适配器类，用于向后兼容"""
 
     def __init__(self):
+        self.base_loader = BaseMOTResultLoader()
         self.results = {}  # {sequence_name: {algorithm_name: result_path}}
         self.sequences = set()
         self.algorithms = {}
@@ -24,32 +26,21 @@ class MOTResultLoader:
             LOGGER.error(f"[MOTResultLoader] 目录不存在: {directory}")
             return False
 
-        # 扫描目录中的txt文件
-        txt_files = list(directory.glob("*.txt"))
-        LOGGER.info(
-            f"[MOTResultLoader] 在 {directory} 中找到 {len(txt_files)} 个txt文件"
-        )
-
-        for txt_file in txt_files:
-            LOGGER.debug(f"[MOTResultLoader] 发现文件: {txt_file.name}")
-
-        if not txt_files:
-            LOGGER.warning(f"[MOTResultLoader] 目录 {directory} 中没有找到txt文件")
+        # 使用基础加载器添加目录
+        added_results = self.base_loader.add_result_directory(directory, algorithm_name)
+        if not added_results:
+            LOGGER.warning(f"[MOTResultLoader] 目录 {directory} 中没有找到有效的txt文件")
             return False
 
+        # 更新内部状态
         self.algorithms[algorithm_name] = str(directory)
-        LOGGER.info(f"[MOTResultLoader] 添加算法: {algorithm_name} -> {directory}")
-
-        # 提取序列名称
-        for txt_file in txt_files:
-            seq_name = txt_file.stem
+        for seq_name in added_results.keys():
             self.sequences.add(seq_name)
-
             if seq_name not in self.results:
                 self.results[seq_name] = {}
-            self.results[seq_name][algorithm_name] = str(txt_file)
-            LOGGER.debug(f"[MOTResultLoader] 添加序列: {seq_name} -> {txt_file}")
+            self.results[seq_name][algorithm_name] = str(directory / f"{seq_name}.txt")
 
+        LOGGER.info(f"[MOTResultLoader] 添加算法: {algorithm_name} -> {directory}")
         LOGGER.info(f"[MOTResultLoader] 当前算法: {list(self.algorithms.keys())}")
         LOGGER.info(f"[MOTResultLoader] 当前序列: {list(self.sequences)}")
         return True
@@ -59,9 +50,16 @@ class MOTResultLoader:
         if algorithm_name not in self.algorithms:
             return False
 
-        del self.algorithms[algorithm_name]
+        # 从基础加载器中移除相关结果
+        sequences_to_remove = []
+        for seq_name in self.sequences:
+            key = f"{algorithm_name}_{seq_name}"
+            if key in self.base_loader.results:
+                del self.base_loader.results[key]
 
-        # 从结果中移除该算法的所有记录
+        # 更新内部状态
+        del self.algorithms[algorithm_name]
+        
         to_remove_sequences = []
         for seq_name, algo_results in self.results.items():
             if algorithm_name in algo_results:
@@ -99,56 +97,36 @@ class MOTResultLoader:
         self, sequence: str, algorithm: str, frame_idx: int
     ) -> List[Dict]:
         """获取指定帧的跟踪结果"""
-        result_path = self.get_result_path(sequence, algorithm)
-        if not result_path or not os.path.exists(result_path):
+        # 使用新的MOTResult类获取结果
+        key = f"{algorithm}_{sequence}"
+        result = self.base_loader.results.get(key)
+        if not result:
             return []
 
+        # MOT格式通常从1开始计数
+        frame_id = frame_idx + 1
+        tracks = result.get_tracks_for_frame(frame_id)
+        
+        # 转换为旧格式以保持兼容性
         results = []
-        try:
-            with open(result_path, "r") as f:
-                lines = f.readlines()
-
-            for line in lines:
-                line = line.strip()
-                if not line:
-                    continue
-
-                parts = line.split(",")
-                if len(parts) < 6:
-                    continue
-
-                try:
-                    frame = int(parts[0])
-                    if frame != frame_idx + 1:  # MOT格式通常从1开始
-                        continue
-
-                    track_id = int(parts[1])
-                    x1 = float(parts[2])
-                    y1 = float(parts[3])
-                    width = float(parts[4])
-                    height = float(parts[5])
-                    confidence = float(parts[6]) if len(parts) > 6 else 1.0
-
-                    results.append(
-                        {
-                            "track_id": track_id,
-                            "x1": x1,
-                            "y1": y1,
-                            "x2": x1 + width,
-                            "y2": y1 + height,
-                            "width": width,
-                            "height": height,
-                            "confidence": confidence,
-                        }
-                    )
-
-                except (ValueError, IndexError):
-                    continue
-
-        except Exception as e:
-            LOGGER.error(f"[MOTResultLoader] 读取结果文件失败: {e}")
+        for track in tracks:
+            results.append({
+                "track_id": track.track_id,
+                "x1": track.x,
+                "y1": track.y,
+                "x2": track.x + track.width,
+                "y2": track.y + track.height,
+                "width": track.width,
+                "height": track.height,
+                "confidence": track.confidence,
+            })
 
         LOGGER.debug(
             f"[MOTResultLoader] 序列={sequence}, 算法={algorithm}, 帧={frame_idx}, 结果数量={len(results)}"
         )
         return results
+
+    def get_mot_result(self, sequence: str, algorithm: str) -> Optional[MOTResult]:
+        """获取MOTResult对象（新方法）"""
+        key = f"{algorithm}_{sequence}"
+        return self.base_loader.results.get(key)

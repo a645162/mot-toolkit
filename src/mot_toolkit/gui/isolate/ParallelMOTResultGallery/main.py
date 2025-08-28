@@ -30,6 +30,9 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.config_window import (
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.preview_window import (
     PreviewWindow,
 )
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.pre_render_window import (
+    PreRenderWindow,
+)
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
     DatasetManager,
 )
@@ -56,9 +59,10 @@ class MainWindow(QMainWindow):
         self.config_file = Path(__file__).parent / "config.json"
         self.dataset_manager = DatasetManager()
 
-        # 子窗口 - 只保留配置窗口
+        # 子窗口
         self.config_window = None
         self.preview_windows = []
+        self.pre_render_window = None
 
         self.init_ui()
         self.load_config()
@@ -104,6 +108,10 @@ class MainWindow(QMainWindow):
         self.preview_btn = QPushButton("开始预览")
         self.preview_btn.clicked.connect(self.open_preview)
         button_layout.addWidget(self.preview_btn)
+
+        self.pre_render_btn = QPushButton("预渲染")
+        self.pre_render_btn.clicked.connect(self.open_pre_render)
+        button_layout.addWidget(self.pre_render_btn)
 
         # 添加到主布局
         layout.addWidget(config_group)
@@ -183,6 +191,7 @@ class MainWindow(QMainWindow):
         self.sequence_combo.clear()
         self.sequence_combo.addItems(sequences)
 
+
     def open_config(self):
         """打开配置窗口"""
         if not self.config_window:
@@ -256,6 +265,25 @@ class MainWindow(QMainWindow):
         for _window in self.preview_windows:
             if not _window.isVisible():
                 self.preview_windows.remove(_window)
+
+    def open_pre_render(self):
+        """打开预渲染窗口"""
+        if not self.config["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.config["dataset_path"]:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        if not self.pre_render_window:
+            self.pre_render_window = PreRenderWindow(self)
+            
+        self.pre_render_window.set_config(self.config)
+        self.pre_render_window.show()
+        self.pre_render_window.raise_()
+        self.pre_render_window.activateWindow()
+
 
     def on_sequence_changed(self, sequence: str):
         """序列改变时的处理 - 不再管理预览窗口"""

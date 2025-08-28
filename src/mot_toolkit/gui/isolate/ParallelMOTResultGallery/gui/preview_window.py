@@ -1,4 +1,4 @@
-"""预览窗口"""
+"""预览窗口 - 支持预渲染功能"""
 
 from PySide6.QtWidgets import (
     QMainWindow,
@@ -12,9 +12,15 @@ from PySide6.QtWidgets import (
     QGroupBox,
     QSplitter,
     QMessageBox,
+    QProgressBar,
+    QComboBox,
 )
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal, QThread
 from PySide6.QtGui import QCloseEvent, QGuiApplication
+import os
+from pathlib import Path
+import threading
+import time
 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.video_loader import (
     VideoFrameLoader,
@@ -25,13 +31,69 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.result_plotter import
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.continuous_preview import (
     ContinuousPreviewWidget,
 )
+from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.pre_render_window import (
+    PreRenderWindow,
+)
 from mot_toolkit.utils.logs import get_logger
 
 LOGGER = get_logger()
 
 
+class PreRenderWorker(QThread):
+    """预渲染工作线程"""
+    
+    progress_updated = Signal(int, int, str)  # current, total, message
+    finished = Signal(bool, str)  # success, message
+    
+    def __init__(self, config, cache_dir):
+        super().__init__()
+        self.config = config
+        self.cache_dir = Path(cache_dir) if cache_dir else None
+        self._is_running = True
+        
+    def run(self):
+        """执行预渲染任务"""
+        try:
+            if not self.cache_dir:
+                self.finished.emit(False, "缓存目录未设置")
+                return
+                
+            # 创建缓存目录
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            
+            # 获取所有序列和算法
+            algorithms = self.config.get("algorithms", {})
+            sequence_paths = self.config.get("sequence_paths", {})
+            
+            total_tasks = len(algorithms) * len(sequence_paths)
+            current_task = 0
+            
+            for algo_name, algo_path in algorithms.items():
+                for seq_name, seq_path in sequence_paths.items():
+                    if not self._is_running:
+                        self.finished.emit(False, "预渲染被用户取消")
+                        return
+                        
+                    current_task += 1
+                    task_info = f"预渲染: {algo_name} - {seq_name}"
+                    self.progress_updated.emit(current_task, total_tasks, task_info)
+                    
+                    # 这里可以添加具体的预渲染逻辑
+                    # 例如生成缓存图像或预处理数据
+                    time.sleep(0.1)  # 模拟处理时间
+                    
+            self.finished.emit(True, f"预渲染完成，共处理 {total_tasks} 个任务")
+            
+        except Exception as e:
+            self.finished.emit(False, f"预渲染失败: {str(e)}")
+            
+    def stop(self):
+        """停止预渲染"""
+        self._is_running = False
+
+
 class PreviewWindow(QMainWindow):
-    """预览窗口 - 用于显示并行对比结果"""
+    """预览窗口 - 用于显示并行对比结果，支持预渲染"""
 
     def __init__(self, parent=None):
         super().__init__(None)  # 不设置parent，独立窗口
@@ -49,6 +111,7 @@ class PreviewWindow(QMainWindow):
         self.frame_cache = {}  # {algorithm_name: {frame_idx: image_path}}
         self.result_loaders = {}  # {algorithm_name: MOTResultLoader}
         self.plotter = ResultPlotter()
+        self.pre_render_window = None
 
         self.init_ui()
         self.setup_timer()
@@ -60,6 +123,14 @@ class PreviewWindow(QMainWindow):
         self.setCentralWidget(central_widget)
 
         layout = QVBoxLayout(central_widget)
+
+        # 进度条（用于其他操作）
+        self.progress_bar = QProgressBar()
+        self.progress_bar.setVisible(False)
+        self.progress_label = QLabel()
+        self.progress_label.setVisible(False)
+        layout.addWidget(self.progress_bar)
+        layout.addWidget(self.progress_label)
 
         # 控制面板
         control_group = QGroupBox("控制面板")
@@ -92,6 +163,12 @@ class PreviewWindow(QMainWindow):
         self.copy_btn = QPushButton("复制信息")
         self.copy_btn.clicked.connect(self.copy_sequence_info)
         control_layout.addWidget(self.copy_btn)
+
+        # 预渲染按钮
+        self.pre_render_btn = QPushButton("预渲染")
+        self.pre_render_btn.clicked.connect(self.open_pre_render)
+        control_layout.addWidget(self.pre_render_btn)
+
 
         layout.addWidget(control_group)
 
@@ -159,6 +236,8 @@ class PreviewWindow(QMainWindow):
                 if result_loader.add_algorithm_directory(algo_path, algo_name):
                     self.result_loaders[algo_name] = result_loader
 
+        
+
     def load_sequence_data(self):
         """加载序列数据"""
         if not self.current_sequence:
@@ -191,6 +270,10 @@ class PreviewWindow(QMainWindow):
             self.continuous_preview.set_preview_frames(
                 self.config.get("preview_frames", 5)
             )
+            # 设置绘制器配置
+            if hasattr(self.continuous_preview, 'set_plotter_config'):
+                bbox_config = self.config.get("bbox_config", {})
+                self.continuous_preview.set_plotter_config(bbox_config)
 
     def setup_preview_area(self):
         """设置预览区域 - 已移除传统预览"""
@@ -210,6 +293,9 @@ class PreviewWindow(QMainWindow):
         LOGGER.debug(
             f"[PreviewWindow] 更新显示: 序列={self.current_sequence}, 帧={self.current_frame}"
         )
+
+
+
 
     def plot_results(self):
         """绘制结果 - 已移除"""
@@ -295,9 +381,47 @@ class PreviewWindow(QMainWindow):
         
         LOGGER.info(f"已复制到剪贴板:\n{info_text}")
 
+    def open_pre_render(self):
+        """打开预渲染窗口"""
+        if not self.config["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.config["dataset_path"]:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        if not self.pre_render_window:
+            self.pre_render_window = PreRenderWindow(self)
+            
+        self.pre_render_window.set_config(self.config)
+        self.pre_render_window.show()
+        self.pre_render_window.raise_()
+        self.pre_render_window.activateWindow()
+
+    def open_pre_render(self):
+        """打开预渲染窗口"""
+        if not self.config["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.config["dataset_path"]:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        # 导入预渲染窗口
+        from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.pre_render_window import PreRenderWindow
+        
+        pre_render_window = PreRenderWindow(self)
+        pre_render_window.set_config(self.config)
+        pre_render_window.show()
+
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
         self.stop_play()
+        if self.pre_render_worker and self.pre_render_worker.isRunning():
+            self.pre_render_worker.stop()
+            self.pre_render_worker.wait()
         if hasattr(self, "plot_thread") and self.plot_thread.isRunning():
             self.plot_thread.quit()
             self.plot_thread.wait()

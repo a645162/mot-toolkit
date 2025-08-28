@@ -102,7 +102,7 @@ class ResultPlotter(QObject):
         x2: float,
         y2: float,
         color: Tuple[int, int, int],
-        thickness: int = 2,
+        thickness: int = None,
     ) -> None:
         """绘制边界框"""
         if not self.config.get("show_bbox", True):
@@ -110,8 +110,9 @@ class ResultPlotter(QObject):
 
         pt1 = (int(round(x1)), int(round(y1)))
         pt2 = (int(round(x2)), int(round(y2)))
-        thickness = self.config.get("bbox_thickness", 2)
-        cv2.rectangle(img, pt1, pt2, color, thickness)
+        # 如果指定了线宽，使用指定线宽，否则使用配置的线宽
+        draw_thickness = thickness if thickness is not None else self.config.get("bbox_thickness", 2)
+        cv2.rectangle(img, pt1, pt2, color, draw_thickness)
 
         # 绘制半透明填充
         if self.config.get("show_fill", True):
@@ -166,7 +167,8 @@ class ResultPlotter(QObject):
         )
 
     def draw_results_on_frame(
-        self, frame: np.ndarray, results: List[Dict], algorithm_name: str = ""
+        self, frame: np.ndarray, results: List[Dict], algorithm_name: str = "",
+        color: Tuple[int, int, int] = None, thickness: int = None
     ) -> np.ndarray:
         """在帧上绘制跟踪结果"""
         if not results:
@@ -196,7 +198,14 @@ class ResultPlotter(QObject):
         # 绘制每个检测结果
         for i, det in enumerate(results):
             track_id = det["track_id"]
-            color = color_map.get(track_id, (255, 0, 255))  # 默认紫色
+            # 如果指定了颜色，使用指定颜色，否则使用算法颜色映射
+            if color is not None:
+                draw_color = color
+            else:
+                draw_color = color_map.get(track_id, (255, 0, 255))  # 默认紫色
+
+            # 如果指定了线宽，使用指定线宽，否则使用配置的线宽
+            draw_thickness = thickness if thickness is not None else self.config.get("bbox_thickness", 2)
 
             LOGGER.debug(
                 f"[ResultPlotter] 绘制第{i + 1}个结果: ID={track_id}, 坐标=({det['x1']:.1f}, {det['y1']:.1f}, {det['x2']:.1f}, {det['y2']:.1f})"
@@ -209,12 +218,12 @@ class ResultPlotter(QObject):
                 det["y1"],
                 det["x2"],
                 det["y2"],
-                color,
-                thickness=2,
+                draw_color,
+                thickness=draw_thickness,
             )
 
             # 绘制跟踪ID
-            self.draw_track_id(result_img, track_id, det["x1"], det["y1"], color)
+            self.draw_track_id(result_img, track_id, det["x1"], det["y1"], draw_color)
 
         return result_img
 
