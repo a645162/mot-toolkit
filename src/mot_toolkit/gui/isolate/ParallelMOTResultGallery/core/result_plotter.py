@@ -103,9 +103,17 @@ class ResultPlotter(QObject):
         y2: float,
         color: Tuple[int, int, int],
         thickness: int = None,
+        fill: bool = None,
+        fill_alpha: float = None,
     ) -> None:
         """绘制边界框"""
-        if not self.config.get("show_bbox", True):
+        show_bbox = self.config.get("show_bbox", True)
+        if fill is None:
+            fill = self.config.get("show_fill", True)
+        if fill_alpha is None:
+            fill_alpha = self.config.get("fill_alpha", 0.3)
+            
+        if not show_bbox:
             return
 
         pt1 = (int(round(x1)), int(round(y1)))
@@ -115,11 +123,10 @@ class ResultPlotter(QObject):
         cv2.rectangle(img, pt1, pt2, color, draw_thickness)
 
         # 绘制半透明填充
-        if self.config.get("show_fill", True):
-            alpha = self.config.get("fill_alpha", 0.3)
+        if fill:
             overlay = img.copy()
             cv2.rectangle(overlay, pt1, pt2, color, -1)
-            cv2.addWeighted(overlay, alpha, img, 1 - alpha, 0, img)
+            cv2.addWeighted(overlay, fill_alpha, img, 1 - fill_alpha, 0, img)
 
     def draw_track_id(
         self,
@@ -128,14 +135,26 @@ class ResultPlotter(QObject):
         x: float,
         y: float,
         color: Tuple[int, int, int],
+        confidence: float = None,
     ) -> None:
-        """绘制跟踪ID"""
-        if not self.config.get("show_id", True):
+        """绘制跟踪ID和置信度"""
+        show_id = self.config.get("show_id", True)
+        show_confidence = self.config.get("show_confidence", False)
+        text_size = self.config.get("text_size", 0.7)
+        
+        if not show_id and not show_confidence:
             return
 
-        text = f"ID:{track_id}"
+        # 构建文本内容
+        text_parts = []
+        if show_id:
+            text_parts.append(f"ID:{track_id}")
+        if show_confidence and confidence is not None:
+            text_parts.append(f"{confidence:.2f}")
+
+        text = " ".join(text_parts)
         font = cv2.FONT_HERSHEY_SIMPLEX
-        font_scale = 0.7
+        font_scale = text_size
         thickness = 2
 
         (text_width, text_height), baseline = cv2.getTextSize(
@@ -222,8 +241,8 @@ class ResultPlotter(QObject):
                 thickness=draw_thickness,
             )
 
-            # 绘制跟踪ID
-            self.draw_track_id(result_img, track_id, det["x1"], det["y1"], draw_color)
+            # 绘制跟踪ID和置信度
+            self.draw_track_id(result_img, track_id, det["x1"], det["y1"], draw_color, det.get("confidence"))
 
         return result_img
 
