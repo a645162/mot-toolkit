@@ -1,5 +1,7 @@
 import sys
 
+from mot_toolkit.dl.utils.validate_device import validate_device
+
 from mot_toolkit.utils.logs import get_logger
 
 support_torch = False
@@ -84,6 +86,20 @@ try:
                     logger.info(f"  - {line}")
             except Exception:
                 logger.info("Cannot get VGA device!")
+
+        # Validation
+        logger.info("Validation Device:")
+        validation_result = validate_device(device)
+        is_gpu, available, device_name = validation_result
+        logger.info(f"  - Device Name: {device_name}")
+        logger.info(f"  - GPU: {is_gpu}")
+        logger.info(f"  - Available: {available}")
+        if available:
+            logger.info("  => Device is available!")
+        else:
+            logger.info("Cannot use this device!")
+            device = torch.device("cpu")
+            logger.info(f"  => Switch to CPU: {device}")
 except Exception:
     logger.info("Cannot get device!")
 

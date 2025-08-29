@@ -4,17 +4,15 @@ from PySide6.QtGui import QAction
 from PySide6.QtWidgets import QMenu
 
 from mot_toolkit.datatype.dataset.dataset_spilt import SpiltType
-from mot_toolkit.gui.view.components.widget.list.list_with_title_widget import ListWithTitleWidget
+from mot_toolkit.gui.view.components.widget.list.list_with_title_widget import (
+    ListWithTitleWidget,
+)
 
 
 class SpiltListWidget(ListWithTitleWidget):
     spilt_type: SpiltType
 
-    def __init__(
-            self,
-            spilt_type: Optional[SpiltType] = None,
-            parent=None
-    ):
+    def __init__(self, spilt_type: Optional[SpiltType] = None, parent=None):
         super().__init__(parent=parent)
 
         if spilt_type is None:
@@ -37,27 +35,23 @@ class SpiltListWidget(ListWithTitleWidget):
         self.list_widget.have_menu = True
 
         q_menu: QMenu = self.list_widget.menu
-        select_enable_list: List[QAction] = \
-            self.list_widget.select_enable_list
+        select_enable_list: List[QAction] = self.list_widget.select_enable_list
 
         q_menu.addSeparator()
 
-        self.menu_move_to_train = \
-            QAction("Move to Train", self)
+        self.menu_move_to_train = QAction("Move to Train", self)
         if self.spilt_type == SpiltType.TRAIN:
             self.menu_move_to_train.setVisible(False)
         q_menu.addAction(self.menu_move_to_train)
         select_enable_list.append(self.menu_move_to_train)
 
-        self.menu_move_to_val = \
-            QAction("Move to Val", self)
+        self.menu_move_to_val = QAction("Move to Val", self)
         if self.spilt_type == SpiltType.VAL:
             self.menu_move_to_val.setVisible(False)
         q_menu.addAction(self.menu_move_to_val)
         select_enable_list.append(self.menu_move_to_val)
 
-        self.menu_move_to_test = \
-            QAction("Move to Test", self)
+        self.menu_move_to_test = QAction("Move to Test", self)
         if self.spilt_type == SpiltType.TEST:
             self.menu_move_to_test.setVisible(False)
         q_menu.addAction(self.menu_move_to_test)
@@ -65,12 +59,34 @@ class SpiltListWidget(ListWithTitleWidget):
 
         q_menu.addSeparator()
 
-        self.menu_move_to_other = \
-            QAction("Move to Other(Disable)", self)
+        self.menu_move_to_other = QAction("Move to Other(Disable)", self)
         if self.spilt_type == SpiltType.NONE:
             self.menu_move_to_other.setVisible(False)
         q_menu.addAction(self.menu_move_to_other)
         select_enable_list.append(self.menu_move_to_other)
+
+        q_menu.addSeparator()
+
+        # Move All
+        self.menu_move_all_to_train = QAction("Move All to Train", self)
+        if self.spilt_type == SpiltType.TRAIN:
+            self.menu_move_all_to_train.setVisible(False)
+        q_menu.addAction(self.menu_move_all_to_train)
+
+        self.menu_move_all_to_val = QAction("Move All to Val", self)
+        if self.spilt_type == SpiltType.VAL:
+            self.menu_move_all_to_val.setVisible(False)
+        q_menu.addAction(self.menu_move_all_to_val)
+
+        self.menu_move_all_to_test = QAction("Move All to Test", self)
+        if self.spilt_type == SpiltType.TEST:
+            self.menu_move_all_to_test.setVisible(False)
+        q_menu.addAction(self.menu_move_all_to_test)
+
+        self.menu_move_all_to_other = QAction("Move All to Other(Disable)", self)
+        if self.spilt_type == SpiltType.NONE:
+            self.menu_move_all_to_other.setVisible(False)
+        q_menu.addAction(self.menu_move_all_to_other)
 
         q_menu.addSeparator()
 

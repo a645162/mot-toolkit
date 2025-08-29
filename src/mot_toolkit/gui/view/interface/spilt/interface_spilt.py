@@ -5,16 +5,27 @@ import os
 from PySide6.QtWidgets import (
     QApplication,
     QWidget,
-    QHBoxLayout, QGroupBox,
-    QLabel, QLineEdit, QPushButton, QComboBox, QSizePolicy, QVBoxLayout, QMessageBox
+    QHBoxLayout,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QComboBox,
+    QSizePolicy,
+    QVBoxLayout,
+    QMessageBox,
 )
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.dataset_spilt import DatasetSpilt, SpiltType
-from mot_toolkit.gui.view.components. \
-    window.base_interface_window import BaseWorkInterfaceWindow
-from mot_toolkit.gui.view.interface.spilt.components.spilt_list_widget import SpiltListWidget
+from mot_toolkit.gui.view.components.window.base_interface_window import (
+    BaseWorkInterfaceWindow,
+)
+from mot_toolkit.gui.view.interface.spilt.components.spilt_list_widget import (
+    SpiltListWidget,
+)
 from mot_toolkit.utils.logs import get_logger
+from mot_toolkit.utils.statistics.stats_file import stats_file_count
 
 logger = get_logger()
 
@@ -23,22 +34,10 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     all_dir: List[str]
 
     json_dict: dict = {
-        "all": {
-            "dataset_list": [],
-            "path_str_list": []
-        },
-        "train": {
-            "dataset_list": [],
-            "path_str_list": []
-        },
-        "val": {
-            "dataset_list": [],
-            "path_str_list": []
-        },
-        "test": {
-            "dataset_list": [],
-            "path_str_list": []
-        },
+        "all": {"dataset_list": [], "path_str_list": []},
+        "train": {"dataset_list": [], "path_str_list": []},
+        "val": {"dataset_list": [], "path_str_list": []},
+        "test": {"dataset_list": [], "path_str_list": []},
     }
 
     dataset_dir_list: List[DatasetSpilt]
@@ -48,6 +47,14 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     __json_file_name: str = "default.spilt.json"
 
     __last_load_file_name: str = ""
+
+    # 添加源集合和目标集合的映射名称
+    __spilt_type_name_map = {
+        SpiltType.TRAIN: "Train",
+        SpiltType.VAL: "Val",
+        SpiltType.TEST: "Test",
+        SpiltType.NONE: "Other",
+    }
 
     def __init__(self, work_directory_path: str, parent=None):
         super().__init__(work_directory_path, parent=parent)
@@ -68,8 +75,9 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.setWindowTitle("Spilt Datasets")
 
     def __init_ui(self):
-        self.work_directory_label = \
-            QLabel("Work Directory: " + self.work_directory_path)
+        self.work_directory_label = QLabel(
+            "Work Directory: " + self.work_directory_path
+        )
         self.v_layout.addWidget(self.work_directory_label)
 
         self.select_file_group = QGroupBox("Select File")
@@ -78,8 +86,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.v_layout.addWidget(self.select_file_group)
 
         # Combobox
-        self.select_file_combobox = \
-            QComboBox(parent=self.select_file_group)
+        self.select_file_combobox = QComboBox(parent=self.select_file_group)
 
         # Allow edit
         self.select_file_combobox.setEditable(True)
@@ -92,8 +99,9 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.select_file_layout.addWidget(self.select_file_combobox)
 
         # Combobox Refresh Button
-        self.select_file_refresh_button = \
-            QPushButton("Refresh", parent=self.select_file_group)
+        self.select_file_refresh_button = QPushButton(
+            "Refresh", parent=self.select_file_group
+        )
         self.select_file_refresh_button.clicked.connect(self.load_json_list)
         # SizePolicy Minimum
         self.select_file_refresh_button.setSizePolicy(
@@ -110,35 +118,27 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.v_layout.addWidget(self.h_widget)
 
         # Train
-        self.dataset_train_list_widget = \
-            SpiltListWidget(
-                spilt_type=SpiltType.TRAIN,
-                parent=self.h_widget
-            )
+        self.dataset_train_list_widget = SpiltListWidget(
+            spilt_type=SpiltType.TRAIN, parent=self.h_widget
+        )
         self.h_layout.addWidget(self.dataset_train_list_widget)
 
         # Val
-        self.dataset_val_list_widget = \
-            SpiltListWidget(
-                spilt_type=SpiltType.VAL,
-                parent=self.h_widget
-            )
+        self.dataset_val_list_widget = SpiltListWidget(
+            spilt_type=SpiltType.VAL, parent=self.h_widget
+        )
         self.h_layout.addWidget(self.dataset_val_list_widget)
 
         # Test
-        self.dataset_test_list_widget = \
-            SpiltListWidget(
-                spilt_type=SpiltType.TEST,
-                parent=self.h_widget
-            )
+        self.dataset_test_list_widget = SpiltListWidget(
+            spilt_type=SpiltType.TEST, parent=self.h_widget
+        )
         self.h_layout.addWidget(self.dataset_test_list_widget)
 
         # Other
-        self.dataset_other_list_widget = \
-            SpiltListWidget(
-                spilt_type=SpiltType.NONE,
-                parent=self.h_widget
-            )
+        self.dataset_other_list_widget = SpiltListWidget(
+            spilt_type=SpiltType.NONE, parent=self.h_widget
+        )
         self.h_layout.addWidget(self.dataset_other_list_widget)
 
         # Control Button
@@ -147,18 +147,28 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.control_widget.setLayout(self.control_layout)
         self.v_layout.addWidget(self.control_widget)
 
-        reload_button = QPushButton(
-            "Reload",
-            parent=self.control_widget
-        )
+        reload_button = QPushButton("Reload", parent=self.control_widget)
         reload_button.clicked.connect(self.reload)
+        # 大小尽可能小
+        reload_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         self.control_layout.addWidget(reload_button)
 
-        save_button = QPushButton(
-            "Save",
-            parent=self.control_widget
+        stats_count_button = QPushButton("Stats Count", parent=self.control_widget)
+        stats_count_button.clicked.connect(self.stats_count)
+        # 大小尽可能小
+        stats_count_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
         )
+        self.control_layout.addWidget(stats_count_button)
+
+        save_button = QPushButton("Save", parent=self.control_widget)
         save_button.clicked.connect(self.save)
+        # 大小尽可能小
+        save_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
+        )
         self.control_layout.addWidget(save_button)
 
         # Setting
@@ -183,28 +193,30 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     def __connect_menu(self):
         def __connect_list_menu(list_widget: SpiltListWidget):
             list_widget.menu_move_to_train.triggered.connect(
-                lambda: self.item_move(
-                    list_widget.selection_text,
-                    SpiltType.TRAIN
-                )
+                lambda: self.item_move(list_widget.selection_text, SpiltType.TRAIN)
             )
             list_widget.menu_move_to_val.triggered.connect(
-                lambda: self.item_move(
-                    list_widget.selection_text,
-                    SpiltType.VAL
-                )
+                lambda: self.item_move(list_widget.selection_text, SpiltType.VAL)
             )
             list_widget.menu_move_to_test.triggered.connect(
-                lambda: self.item_move(
-                    list_widget.selection_text,
-                    SpiltType.TEST
-                )
+                lambda: self.item_move(list_widget.selection_text, SpiltType.TEST)
             )
             list_widget.menu_move_to_other.triggered.connect(
-                lambda: self.item_move(
-                    list_widget.selection_text,
-                    SpiltType.NONE
-                )
+                lambda: self.item_move(list_widget.selection_text, SpiltType.NONE)
+            )
+
+            # 连接移动全部菜单项
+            list_widget.menu_move_all_to_train.triggered.connect(
+                lambda: self.items_move_all(list_widget.spilt_type, SpiltType.TRAIN)
+            )
+            list_widget.menu_move_all_to_val.triggered.connect(
+                lambda: self.items_move_all(list_widget.spilt_type, SpiltType.VAL)
+            )
+            list_widget.menu_move_all_to_test.triggered.connect(
+                lambda: self.items_move_all(list_widget.spilt_type, SpiltType.TEST)
+            )
+            list_widget.menu_move_all_to_other.triggered.connect(
+                lambda: self.items_move_all(list_widget.spilt_type, SpiltType.NONE)
             )
 
         __connect_list_menu(self.dataset_train_list_widget)
@@ -218,6 +230,14 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         file_list = os.listdir(self.work_directory_path)
         file_list = [f for f in file_list if f.endswith(".spilt.json")]
+
+        abs_path_list = [os.path.join(self.work_directory_path, f) for f in file_list]
+
+        def sort_by_modify_time(path_list: List[str]) -> List[str]:
+            return sorted(path_list, key=lambda x: os.path.getmtime(x), reverse=True)
+
+        abs_path_list = sort_by_modify_time(abs_path_list)
+        file_list = [os.path.basename(f) for f in abs_path_list]
 
         if len(file_list) == 0:
             file_list.append("default.spilt.json")
@@ -265,6 +285,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
     def reload_data(self):
         json_path = self.settings_json_path
 
+        logger.info(f"Load Data From: {json_path}")
+
         if os.path.exists(json_path):
             with open(json_path, "r", encoding="utf-8") as f:
                 json_dict: dict = json.load(f)
@@ -291,15 +313,14 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         dir_list = get_dataset_dir_list(
             dataset_dir_path=self.work_directory_path,
             depth=dir_level,
-            black_list=["Task"]
+            black_list=["Task"],
         )
 
         all_dataset_obj_list: List[DatasetSpilt] = []
 
         for dir_path in dir_list:
             current_obj = DatasetSpilt(
-                path=dir_path,
-                base_dir_path=self.work_directory_path
+                path=dir_path, base_dir_path=self.work_directory_path
             )
             all_dataset_obj_list.append(current_obj)
 
@@ -332,11 +353,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             elif unique_path in test_str_list:
                 dataset_obj.spilt_type = SpiltType.TEST
 
-        new_dict = {
-            "all": {
-                "path_str_list": all_path_str_list
-            }
-        }
+        new_dict = {"all": {"path_str_list": all_path_str_list}}
         self.json_dict.update(new_dict)
 
         self.dataset_dir_list.clear()
@@ -344,14 +361,8 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         self.__last_load_file_name = self.json_file_name
 
-    def __get_spilt_dict(
-            self,
-            dataset_obj_list: List[DatasetSpilt]
-    ) -> dict:
-        final_dict: dict = {
-            "dataset_list": [],
-            "path_str_list": []
-        }
+    def __get_spilt_dict(self, dataset_obj_list: List[DatasetSpilt]) -> dict:
+        final_dict: dict = {"dataset_list": [], "path_str_list": []}
 
         dataset_dict_list: List[dict] = []
         unique_path_str_list: List[str] = []
@@ -367,13 +378,9 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         return final_dict
 
     def __get_spilt_list(
-            self,
-            dataset_dir_list: Optional[List[DatasetSpilt]] = None
+        self, dataset_dir_list: Optional[List[DatasetSpilt]] = None
     ) -> Tuple[
-        List[DatasetSpilt],
-        List[DatasetSpilt],
-        List[DatasetSpilt],
-        List[DatasetSpilt]
+        List[DatasetSpilt], List[DatasetSpilt], List[DatasetSpilt], List[DatasetSpilt]
     ]:
         if dataset_dir_list is None:
             dataset_dir_list = self.dataset_dir_list
@@ -397,7 +404,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             dataset_obj_list_train,
             dataset_obj_list_val,
             dataset_obj_list_test,
-            dataset_obj_list_other
+            dataset_obj_list_other,
         )
 
     def save(self):
@@ -405,24 +412,18 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             ok = QMessageBox.warning(
                 self,
                 "Warning",
-                (
-                    "Have you load the file?\n"
-                    "You really want to save???"
-                ),
+                ("Have you load the file?\n" "You really want to save???"),
                 QMessageBox.StandardButton.Yes,
-                QMessageBox.StandardButton.No
+                QMessageBox.StandardButton.No,
             )
             if ok != QMessageBox.StandardButton.Yes:
                 return
 
         self.__update_dataset_props()
 
-        (
-            dataset_obj_list_train,
-            dataset_obj_list_val,
-            dataset_obj_list_test,
-            _
-        ) = self.__get_spilt_list()
+        (dataset_obj_list_train, dataset_obj_list_val, dataset_obj_list_test, _) = (
+            self.__get_spilt_list()
+        )
 
         train_dict = self.__get_spilt_dict(dataset_obj_list_train)
         val_dict = self.__get_spilt_dict(dataset_obj_list_val)
@@ -442,12 +443,7 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
         self.json_dict["file_name_depth"] = file_name_depth
 
         with open(self.settings_json_path, "w", encoding="utf-8") as f:
-            json.dump(
-                obj=self.json_dict,
-                fp=f,
-                indent=4,
-                ensure_ascii=False
-            )
+            json.dump(obj=self.json_dict, fp=f, indent=4, ensure_ascii=False)
 
     def __update_dataset_props(self):
         for dataset_obj in self.dataset_dir_list:
@@ -461,9 +457,9 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             dataset_obj.file_name_depth = file_name_depth
 
     def __update_list_widget_with_list(
-            self,
-            list_widget: SpiltListWidget,
-            dataset_obj_list: List[DatasetSpilt],
+        self,
+        list_widget: SpiltListWidget,
+        dataset_obj_list: List[DatasetSpilt],
     ):
         selection_text = list_widget.selection_text
         list_widget.list_widget.clear()
@@ -480,31 +476,27 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
             dataset_obj_list_train,
             dataset_obj_list_val,
             dataset_obj_list_test,
-            dataset_obj_list_other
+            dataset_obj_list_other,
         ) = self.__get_spilt_list()
 
         self.__update_list_widget_with_list(
             list_widget=self.dataset_train_list_widget,
-            dataset_obj_list=dataset_obj_list_train
+            dataset_obj_list=dataset_obj_list_train,
         )
         self.__update_list_widget_with_list(
             list_widget=self.dataset_val_list_widget,
-            dataset_obj_list=dataset_obj_list_val
+            dataset_obj_list=dataset_obj_list_val,
         )
         self.__update_list_widget_with_list(
             list_widget=self.dataset_test_list_widget,
-            dataset_obj_list=dataset_obj_list_test
+            dataset_obj_list=dataset_obj_list_test,
         )
         self.__update_list_widget_with_list(
             list_widget=self.dataset_other_list_widget,
-            dataset_obj_list=dataset_obj_list_other
+            dataset_obj_list=dataset_obj_list_other,
         )
 
-    def item_move(
-            self,
-            unique_path: str,
-            target_spilt_type: SpiltType
-    ):
+    def item_move(self, unique_path: str, target_spilt_type: SpiltType):
         logger.debug(f"Unique Path: {unique_path}, Spilt Type: {target_spilt_type}")
 
         for dataset_obj in self.dataset_dir_list:
@@ -514,6 +506,89 @@ class InterFaceDatasetSpilt(BaseWorkInterfaceWindow):
 
         self.update_spilt_list_widget()
 
+    def items_move_all(
+        self, source_spilt_type: SpiltType, target_spilt_type: SpiltType
+    ):
+        logger.debug(f"Move all from {source_spilt_type} to {target_spilt_type}")
+
+        if source_spilt_type == target_spilt_type:
+            return
+
+        # 统计要移动的数据集数量
+        count = 0
+        for dataset_obj in self.dataset_dir_list:
+            if dataset_obj.spilt_type == source_spilt_type:
+                count += 1
+
+        if count == 0:
+            return
+
+        # 获取源和目标的显示名称
+        source_name = self.__spilt_type_name_map.get(source_spilt_type, "Unknown")
+        target_name = self.__spilt_type_name_map.get(target_spilt_type, "Unknown")
+
+        # 显示确认对话框
+        reply = QMessageBox.question(
+            self,
+            "确认批量移动",
+            f"您确定要将所有 {count} 个数据集从 {source_name} 移动到 {target_name} 吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # 执行移动
+        for dataset_obj in self.dataset_dir_list:
+            if dataset_obj.spilt_type == source_spilt_type:
+                dataset_obj.spilt_type = target_spilt_type
+
+        self.update_spilt_list_widget()
+
+    def stats_count(self):
+        (
+            dataset_obj_list_train,
+            dataset_obj_list_val,
+            dataset_obj_list_test,
+            dataset_obj_list_other,
+        ) = self.__get_spilt_list()
+
+        def get_count(dataset_obj_list: List[DatasetSpilt]):
+            count = 0
+            for dataset_obj in dataset_obj_list:
+                count += stats_file_count(dataset_obj.abs_path, "jpg")
+
+            return count
+
+        train_count = get_count(dataset_obj_list_train)
+        val_count = get_count(dataset_obj_list_val)
+        test_count = get_count(dataset_obj_list_test)
+        other_count = get_count(dataset_obj_list_other)
+
+        used_count = train_count + val_count + test_count
+
+        if used_count == 0:
+            QMessageBox.information(self, "Stats Count", "No data found.")
+            return
+
+        train_rate = round((train_count / used_count) * 100, 2)
+        val_rate = round((val_count / used_count) * 100, 2)
+        test_rate = round((test_count / used_count) * 100, 2)
+
+        text = (
+            f"Train: {train_count}({train_rate}%))\n"
+            f"Val: {val_count}({val_rate}%))\n"
+            f"Test: {test_count}({test_rate}%))\n"
+            f"Other: {other_count}\n"
+            "\n"
+            f"Used: {used_count}\n"
+            f"Train+Val: {train_count + val_count}\n"
+            f"Total: {used_count + other_count}\n"
+        ).strip()
+
+        QMessageBox.information(self, "Stats Count", text)
+
 
 if __name__ == "__main__":
     app = QApplication([])
@@ -521,9 +596,7 @@ if __name__ == "__main__":
     path = r"/mnt/h/Datasets/TrackShipOnlineVideo/LabelMe"
     # path = r"H:\Datasets\TrackShipOnlineVideo\LabelMe"
 
-    window = InterFaceDatasetSpilt(
-        work_directory_path=path
-    )
+    window = InterFaceDatasetSpilt(work_directory_path=path)
     window.show()
 
     app.exec()

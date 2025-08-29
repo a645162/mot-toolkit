@@ -13,12 +13,12 @@ class ObjectAnnotation:
 
     def __eq__(self, other):
         return (
-                len(self.text) > 0 and
-                self.label == other.label_text
+                len(self.label) > 0 and
+                self.label == other.label
         )
 
     def __ne__(self, other):
-        return self.label != other.label_text
+        return self.label != other.label
 
     def __copy__(self):
         new_object = ObjectAnnotation(self.label)

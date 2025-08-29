@@ -2,24 +2,22 @@
 
 [project]
 name = "mot-toolkit"
-version = "1.4.0"
+version = "1.5.0"
 description = "MOT Toolkit"
 authors = [
     { name = "Haomin Kong", email = "a645162@qq.com" }
 ]
 dependencies = [
     "loguru",
+    "objprint",
     "GitPython",
     "tqdm",
     "progressbar2",
     "numpy<2.0.0",
     "opencv-python",
-    "qtpy",
-    "pyside6",
     "chardet",
     "PyYaml",
     "toml",
-    "pygame",
     "psutil",
 ]
 readme = "README.md"
@@ -84,6 +82,12 @@ packages = ["src/mot_toolkit"]
 #source-dirs = ["src"]
 
 [project.optional-dependencies]
+gui = [
+    "qtpy",
+    "pyside6",
+    "pygame",
+]
+
 dl = [
     "torch",
     "torchvision",

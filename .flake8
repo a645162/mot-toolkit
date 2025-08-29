@@ -1,6 +1,7 @@
 [flake8]
 max-line-length = 88
-ignore = E501, E402, W503, W504, E126, E122, E266, F401, E231, E225, W291
+ignore = E501, E402, W503, W504, E126, E122, E266, F401, E231, E225, W291, E221, E203
+# E203 whitespace before ':'
 exclude =
     .git,
     .venv,

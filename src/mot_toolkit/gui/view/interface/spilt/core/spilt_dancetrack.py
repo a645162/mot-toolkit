@@ -89,6 +89,37 @@ class SpiltDanceTrack:
 
             shutil.copyfile(source_path_jpeg, target_path_jpeg)
 
+            yolo_text_list = []
+            for rect_obj in file_obj.rect_annotation_list:
+                group_id = str(rect_obj.group_id).strip()
+
+                if group_id == "":
+                    logger.error(f"Object({rect_obj.label}) Group ID is Empty! {file_obj.file_path}")
+                    continue
+
+                x_ratio = rect_obj.center_x_ratio
+                y_ratio = rect_obj.center_y_ratio
+                w_ratio = rect_obj.width_ratio
+                h_ratio = rect_obj.height_ratio
+
+                round_count = 6
+                x_ratio = round(x_ratio, round_count)
+                y_ratio = round(y_ratio, round_count)
+                w_ratio = round(w_ratio, round_count)
+                h_ratio = round(h_ratio, round_count)
+
+                line = (f"{group_id} "
+                        f"{x_ratio} "
+                        f"{y_ratio} "
+                        f"{w_ratio} "
+                        f"{h_ratio}")
+                yolo_text_list.append(line)
+
+            yolo_text = "\n".join(yolo_text_list)
+            target_path_txt = target_path_jpeg.replace(".jpg", ".txt")
+            with open(target_path_txt, "w") as f:
+                f.write(yolo_text)
+
         # gt.txt
         with open(path_gt_txt, "w") as f:
             f.write(annotation_directory.to_mot_gt_txt(
@@ -177,6 +208,28 @@ class SpiltDanceTrack:
         with open(save_path, "w", encoding="utf-8") as f:
             f.write(text)
 
+    @staticmethod
+    def generate_yolo_list_txt(
+            dir_path: str,
+            profile_name: str = "train"
+    ):
+        image_dir_base = os.path.join(dir_path, profile_name)
+        image_list: List[str] = []
+        for root, dirs, files in os.walk(image_dir_base):
+            for file in files:
+                if file.endswith(".jpg"):
+                    img_path = os.path.join(root, file)
+                    txt_path = img_path.replace(".jpg", ".txt")
+                    if os.path.exists(txt_path):
+                        rel_path = os.path.relpath(img_path, dir_path)
+                        while rel_path.find("\\") != -1:
+                            rel_path = rel_path.replace("\\", "/")
+                        image_list.append(rel_path)
+
+        text = "\n".join(image_list).strip()
+        with open(os.path.join(dir_path, f"yolo_{profile_name}.txt"), "w", encoding="utf-8") as f:
+            f.write(text)
+
     def output_dance_track(
             self,
             output_dance_track_dir: str,
@@ -247,5 +300,24 @@ class SpiltDanceTrack:
         )
         logger.info("Generate Test Done! " + test_seq_map_path)
         logger.info("Generate SeqMap Done!")
+
+        logger.info("Generate YOLO List")
+        self.generate_yolo_list_txt(
+            dir_path=output_dance_track_dir,
+            profile_name="train"
+        )
+        logger.info("Generate YOLO Train Done!")
+
+        self.generate_yolo_list_txt(
+            dir_path=output_dance_track_dir,
+            profile_name="val"
+        )
+        logger.info("Generate YOLO Val Done!")
+
+        self.generate_yolo_list_txt(
+            dir_path=output_dance_track_dir,
+            profile_name="test"
+        )
+        logger.info("Generate YOLO Test Done!")
 
         logger.info("Output DanceTrack Task Done!")

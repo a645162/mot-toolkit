@@ -1,4 +1,8 @@
+from typing import List
+
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QMenu
 
 from mot_toolkit.gui.view.components.widget. \
     list.list_with_title_widget import ListWithTitleWidget
@@ -23,7 +27,16 @@ class LabelClassListWidget(ListWithTitleWidget):
         pass
 
     def __init_menu(self):
-        pass
+        self.list_widget.have_menu = True
+
+        q_menu: QMenu = self.list_widget.menu
+        select_enable_list: List[QAction] = \
+            self.list_widget.select_enable_list
+
+        # Change Class
+        self.menu_change_class = QAction("Change Class", self)
+        q_menu.addAction(self.menu_change_class)
+        select_enable_list.append(self.menu_change_class)
 
     def keyPressEvent(self, event):
         modifier_key = event.modifiers()

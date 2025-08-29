@@ -80,7 +80,8 @@ def sam_predict_xyxy(
         source,
         bbox_xyxy: List[float],
         iou_threshold: float = 0.4,
-        model: Union[SAM, FastSAM] = None
+        model: Union[SAM, FastSAM] = None,
+        verbose: bool = False
 ) -> List[List[float]]:
     result_list: List[List[float]] = []
 
@@ -96,10 +97,12 @@ def sam_predict_xyxy(
     results = model.predict(
         source=source,
         bboxes=bbox_xyxy,
+        verbose=verbose,
     )
 
     for result in results:
-        logger.info(f"Detected {len(result.masks)} masks(boxes).")
+        if verbose:
+            logger.info(f"Detected {len(result.masks)} masks(boxes).")
 
         xy_xy_list = result.boxes.cpu().xyxy.numpy().tolist()
 
@@ -107,12 +110,14 @@ def sam_predict_xyxy(
             box: List[float] = [xy_xy[0], xy_xy[1], xy_xy[2], xy_xy[3]]
 
             iou = calculate_iou(prompt_bbox_tuple, box)
-            logger.info(f"[{i}] IoU: {iou}")
+            if verbose:
+                logger.info(f"[{i}] IoU: {iou}")
 
             if iou > iou_threshold:
                 result_list.append(box)
             else:
-                logger.info(f"[{i}] IoU({iou}) is too low(<{iou_threshold}), skip.")
+                if verbose:
+                    logger.info(f"[{i}] IoU({iou}) is too low(<{iou_threshold}), skip.")
 
     return result_list
 
@@ -122,7 +127,8 @@ def sam_predict_xyxy_near(
         bbox_xyxy: List[float],
         padding: int = -1,
         iou_threshold: float = 0.4,
-        model: Union[SAM, FastSAM] = None
+        model: Union[SAM, FastSAM] = None,
+        verbose: bool = False
 ) -> List[List[float]]:
     result_list: List[List[float]] = []
 
@@ -172,6 +178,7 @@ def sam_predict_xyxy_near(
     results = model.predict(
         source=new_image,
         bboxes=new_prompt_bbox_list,
+        verbose=verbose,
     )
 
     for result in results:

@@ -1,5 +1,7 @@
 # Log
 loguru
+objprint
+
 
 # Program Update
 GitPython
@@ -12,17 +14,11 @@ progressbar2
 numpy<2.0.0
 opencv-python
 
-# GUI
-qtpy
-pyside6
-
 # File
 chardet
 PyYaml
 toml
 
-# Gamepad Controller
-pygame
-
 # System Process
 psutil
+py-cpuinfo

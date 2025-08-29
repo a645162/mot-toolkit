@@ -4,6 +4,24 @@ Multiple Object Tracking (MOT) Toolkit
 
 Lowest Python version: `Python 3.8`
 
+## Screenshots
+
+### Entry
+
+![Entry Screenshot](./Document/docs/assets/MainWindow.png)
+
+### macOS Finder
+
+![macOS Finder Screenshot](./Document/docs/assets/Finder.png)
+
+### Main
+
+![Main Screenshot](./Document/docs/assets/InterfacePreview.png)
+
+### Preview by OpenCV
+
+![Preview by OpenCV Screenshot](./Document/docs/assets/OpenCVPreview.png)
+
 ## Features
 
 - [x] Statistics of the dataset
@@ -30,6 +48,10 @@ Aim to compatible with `X-AnyLabeling` and `LabelMe` and these following:
 - [ ] Export to `DanceTrack` (GUI)
 - [ ] Export to `ultralytics (YOLO Series)` (GUI)
 - [ ] Export to `COCO Format` (GUI)
+
+## Notices
+
+This program only optimized for Intel E5-2690v4 and dual AMD EPYC 7763
 
 ## Installation
 
@@ -94,6 +116,14 @@ You may need to use `Python 3.11` or lower on macOS.
 2. Manually label object appearance frames
 3. Use `Single Object Tracking (SOT)` algorithm
 4. Adjust and delete from the frame where the target disappears.
+
+## QtPy
+
+You need to install one of the Qt Python binding, pyside2, pyside6, python-pyqt5, or python-pyqt6.
+You could use python-pyqt5 by default.
+It is strongly recommended that you use pyqt5 or pyside2. pyqt5 and pyside6 may not work due to API changes.
+If you have multiple Qt Python bindings installed, you could set environment variable 'QT_API' to the one you would like to use.
+See also qtpy's doc for more information: https://github.com/spyder-ide/qtpy
 
 ## Remote Run GUI On Linux Server
 
@@ -183,6 +213,10 @@ but `rye` is not support now.
 ```bash
 find . -type f -name "*.jpg" | wc -l
 ```
+
+## Other Software
+
+- [scalabel](https://github.com/scalabel/scalabel)
 
 ## Thanks
 
