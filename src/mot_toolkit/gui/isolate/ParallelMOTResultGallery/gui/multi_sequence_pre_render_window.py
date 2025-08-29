@@ -24,8 +24,8 @@ from mot_toolkit.utils.logs import get_logger
 LOGGER = get_logger()
 
 
-def check_sequence_rendered(algo_cache_dir, sequence_path, algorithm_name=None):
-    """检查序列是否已经完成渲染 - 通过render.json标记，支持动态算法检测"""
+def check_sequence_rendered(algo_cache_dir, sequence_path):
+    """检查序列是否已经完成渲染 - 通过render.json标记"""
     if not algo_cache_dir.exists():
         return False
         
@@ -34,20 +34,9 @@ def check_sequence_rendered(algo_cache_dir, sequence_path, algorithm_name=None):
     if render_marker.exists():
         try:
             import json
-            import time
             with open(render_marker, 'r', encoding='utf-8') as f:
                 marker_data = json.load(f)
-                
-                # 检查是否完成
-                completed = marker_data.get("completed", False)
-                
-                # 如果标记文件超过30天，认为需要重新检查（支持算法更新）
-                timestamp = marker_data.get("timestamp", 0)
-                if completed and time.time() - timestamp > 2592000:  # 30天
-                    LOGGER.info(f"渲染标记文件过期，重新检查: {algo_cache_dir}")
-                    completed = False
-                
-                return completed
+                return marker_data.get("completed", False)
         except:
             return False
             
@@ -60,38 +49,21 @@ def check_sequence_rendered(algo_cache_dir, sequence_path, algorithm_name=None):
         
     total_frames = video_loader.get_total_frames()
     
-    # 检查所有帧是否都存在且有效
-    jpg_files = list(algo_cache_dir.glob("*.jpg"))
-    existing_frames = 0
-    
-    for jpg_file in jpg_files:
-        try:
-            # 检查文件是否有效（可读取）
-            import cv2
-            img = cv2.imread(str(jpg_file))
-            if img is not None:
-                existing_frames += 1
-        except:
-            continue
-    
-    # 允许95%的完成率，避免因为少数损坏文件导致重新渲染
-    completion_ratio = existing_frames / total_frames if total_frames > 0 else 0
-    return completion_ratio >= 0.95
+    # 检查所有帧是否都存在
+    existing_frames = len(list(algo_cache_dir.glob("*.jpg")))
+    return existing_frames >= total_frames
 
 
-def create_render_marker(algo_cache_dir, total_frames, rendered_frames, algorithm_name=None):
-    """创建渲染完成标记文件，包含算法信息和时间戳"""
+def create_render_marker(algo_cache_dir, total_frames, rendered_frames):
+    """创建渲染完成标记文件"""
     try:
         import json
-        import time
         render_marker = algo_cache_dir / "render.json"
         marker_data = {
             "completed": rendered_frames >= total_frames,
             "total_frames": total_frames,
             "rendered_frames": rendered_frames,
-            "timestamp": time.time(),
-            "algorithm": algorithm_name or "unknown",
-            "version": "1.1"  # 标记文件版本，用于后续兼容性检查
+            "timestamp": time.time()
         }
         with open(render_marker, 'w', encoding='utf-8') as f:
             json.dump(marker_data, f, indent=2, ensure_ascii=False)
@@ -119,7 +91,7 @@ def render_single_sequence_task(task, cache_dir_str, skip_existing=True):
         algo_cache_dir.mkdir(parents=True, exist_ok=True)
         
         # 如果跳过已存在的文件且序列已渲染完成，直接返回
-        if skip_existing and check_sequence_rendered(algo_cache_dir, task["sequence_path"], task["algorithm"]):
+        if skip_existing and check_sequence_rendered(algo_cache_dir, task["sequence_path"]):
             logger.info(f"跳过已渲染的序列: {task['algorithm']} - {task['sequence']}")
             return True, task["sequence"], "已存在，跳过"
             
@@ -198,8 +170,8 @@ def render_single_sequence_task(task, cache_dir_str, skip_existing=True):
             
         logger.info(f"完成渲染: {task['algorithm']} - {task['sequence']}, 共 {rendered_count}/{total_frames} 帧")
         
-        # 创建渲染完成标记，包含算法信息
-        create_render_marker(algo_cache_dir, total_frames, rendered_count, task["algorithm"])
+        # 创建渲染完成标记
+        create_render_marker(algo_cache_dir, total_frames, rendered_count)
         
         return True, task["sequence"], f"完成 {rendered_count}/{total_frames} 帧"
         
@@ -220,8 +192,6 @@ class MultiSequencePreRenderWorker(QThread):
         self.skip_existing = skip_existing
         self.selected_sequences = selected_sequences or []
         self._is_running = True
-        self._executor = None
-        self._futures = []
         
     def run(self):
         """执行多序列预渲染任务"""
@@ -247,30 +217,21 @@ class MultiSequencePreRenderWorker(QThread):
             max_workers = self.config.get("process_count", max(1, multiprocessing.cpu_count() // 2))
             completed = 0
             
-            # 创建执行器并保存引用
-            self._executor = ProcessPoolExecutor(max_workers=max_workers)
-            
-            try:
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 # 提交所有任务
-                self._futures = [
-                    self._executor.submit(
-                        render_single_sequence_task,
-                        task,
+                future_to_task = {
+                    executor.submit(
+                        render_single_sequence_task, 
+                        task, 
                         str(cache_dir),
                         self.skip_existing
-                    )
+                    ): task
                     for task in tasks
-                ]
-                
-                future_to_task = dict(zip(self._futures, tasks))
+                }
                 
                 # 处理完成的任务
                 for future in as_completed(future_to_task):
                     if not self._is_running:
-                        # 用户取消，终止所有任务
-                        for f in self._futures:
-                            if not f.done():
-                                f.cancel()
                         break
                         
                     task = future_to_task[future]
@@ -291,10 +252,6 @@ class MultiSequencePreRenderWorker(QThread):
                             task["sequence"],
                             f"异常: {str(e)}"
                         )
-            finally:
-                # 确保执行器被正确关闭
-                if self._executor:
-                    self._executor.shutdown(wait=False)
                         
             if self._is_running:
                 self.finished.emit(True, f"多序列预渲染完成，共处理 {completed}/{total_tasks} 个序列")
@@ -346,29 +303,8 @@ class MultiSequencePreRenderWorker(QThread):
         return tasks
         
     def stop(self):
-        """停止预渲染 - 终止所有子进程"""
+        """停止预渲染"""
         self._is_running = False
-        
-        # 取消所有未完成的任务
-        if hasattr(self, '_futures'):
-            for future in self._futures:
-                if not future.done():
-                    future.cancel()
-        
-        # 强制关闭执行器
-        if hasattr(self, '_executor') and self._executor:
-            try:
-                self._executor.shutdown(wait=False, cancel_futures=True)
-            except:
-                # 如果shutdown失败，尝试强制终止
-                import os
-                import signal
-                # 获取所有子进程并终止
-                for process in self._executor._processes.values():
-                    try:
-                        os.kill(process.pid, signal.SIGTERM)
-                    except:
-                        pass
 
 
 class MultiSequencePreRenderWindow(QDialog):
@@ -416,11 +352,6 @@ class MultiSequencePreRenderWindow(QDialog):
         self.skip_existing_checkbox.setChecked(True)
         options_layout.addWidget(self.skip_existing_checkbox)
         
-        self.force_rerender_checkbox = QCheckBox("强制重新渲染")
-        self.force_rerender_checkbox.setChecked(False)
-        self.force_rerender_checkbox.stateChanged.connect(self.on_force_rerender_changed)
-        options_layout.addWidget(self.force_rerender_checkbox)
-
         info_layout.addLayout(options_layout)
         layout.addWidget(info_group)
         layout.addWidget(seq_group)
@@ -491,14 +422,6 @@ class MultiSequencePreRenderWindow(QDialog):
         # 这里可以添加特定序列选择的逻辑
         pass
         
-    def on_force_rerender_changed(self, state):
-        """强制重新渲染选项改变时的处理"""
-        if state == Qt.Checked:
-            self.skip_existing_checkbox.setChecked(False)
-            self.skip_existing_checkbox.setEnabled(False)
-        else:
-            self.skip_existing_checkbox.setEnabled(True)
-        
     def _get_cache_directory(self):
         """获取缓存目录"""
         cache_dir = self.config.get("cache_dir")
@@ -522,7 +445,7 @@ class MultiSequencePreRenderWindow(QDialog):
             QMessageBox.warning(self, "警告", "多序列预渲染正在进行中")
             return
             
-        skip_existing = self.skip_existing_checkbox.isChecked() and not self.force_rerender_checkbox.isChecked()
+        skip_existing = self.skip_existing_checkbox.isChecked()
         
         # 获取选择的序列
         selected_sequence = self.sequence_combo.currentText()

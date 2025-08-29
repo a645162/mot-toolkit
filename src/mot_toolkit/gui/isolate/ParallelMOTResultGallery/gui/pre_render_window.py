@@ -33,8 +33,6 @@ class PreRenderWorker(QThread):
         self.config = config
         self.current_sequence = current_sequence
         self._is_running = True
-        self._executor = None
-        self._futures = []
         
     def run(self):
         """执行预渲染任务"""
@@ -59,26 +57,16 @@ class PreRenderWorker(QThread):
             # 使用多进程池执行任务（CPU核心数/2）
             max_workers = max(1, multiprocessing.cpu_count() // 2)
             completed = 0
-            
-            # 创建执行器并保存引用
-            self._executor = ProcessPoolExecutor(max_workers=max_workers)
-            
-            try:
+            with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 # 提交所有任务，单序列模式跳过已存在的帧
-                self._futures = [
-                    self._executor.submit(render_single_task, task, str(cache_dir), True)
+                future_to_task = {
+                    executor.submit(render_single_task, task, str(cache_dir), True): task
                     for task in tasks
-                ]
-                
-                future_to_task = dict(zip(self._futures, tasks))
+                }
                 
                 # 处理完成的任务
                 for future in as_completed(future_to_task):
                     if not self._is_running:
-                        # 用户取消，终止所有任务
-                        for f in self._futures:
-                            if not f.done():
-                                f.cancel()
                         break
                         
                     task = future_to_task[future]
@@ -92,10 +80,6 @@ class PreRenderWorker(QThread):
                         )
                     except Exception as e:
                         LOGGER.error(f"任务执行失败: {e}")
-            finally:
-                # 确保执行器被正确关闭
-                if self._executor:
-                    self._executor.shutdown(wait=False)
                         
             if self._is_running:
                 self.finished.emit(True, f"预渲染完成，共处理 {completed}/{total_tasks} 个任务")
@@ -155,29 +139,8 @@ class PreRenderWorker(QThread):
         
         
     def stop(self):
-        """停止预渲染 - 终止所有子进程"""
+        """停止预渲染"""
         self._is_running = False
-        
-        # 取消所有未完成的任务
-        if hasattr(self, '_futures'):
-            for future in self._futures:
-                if not future.done():
-                    future.cancel()
-        
-        # 强制关闭执行器
-        if hasattr(self, '_executor') and self._executor:
-            try:
-                self._executor.shutdown(wait=False, cancel_futures=True)
-            except:
-                # 如果shutdown失败，尝试强制终止
-                import os
-                import signal
-                # 获取所有子进程并终止
-                for process in self._executor._processes.values():
-                    try:
-                        os.kill(process.pid, signal.SIGTERM)
-                    except:
-                        pass
 
 
 class PreRenderWindow(QDialog):

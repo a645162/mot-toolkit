@@ -84,7 +84,7 @@ class CleanupWorker(QThread):
         return True, f"删除完成: {deleted_count}/{total_files} 个jpg文件"
         
     def cleanup_gt(self):
-        """清理数据集的预渲染图像（GT相关）- 只删除预渲染的jpg文件，不删除原始数据集文件"""
+        """清理GT相关文件"""
         if not self.config or not self.config.get("dataset_path"):
             return False, "数据集路径未设置"
             
@@ -92,47 +92,34 @@ class CleanupWorker(QThread):
         if not dataset_path.exists():
             return False, f"数据集路径不存在: {dataset_path}"
             
-        # 查找所有预渲染图像文件（jpg格式）- 只删除预渲染的文件
-        # 预渲染文件通常有特定的命名模式：8位数字格式的jpg文件
-        jpg_files = []
-        for jpg_file in dataset_path.rglob("*.jpg"):
-            # 只删除预渲染的图像文件（8位数字命名的jpg文件）
-            # 这样可以避免删除原始数据集中的图像文件
-            filename = jpg_file.stem
-            if (len(filename) == 8 and filename.isdigit() and
-                jpg_file.suffix.lower() == '.jpg'):
-                jpg_files.append(jpg_file)
-            
-        total_files = len(jpg_files)
+        # 查找所有gt目录和文件
+        gt_dirs = list(dataset_path.rglob("gt"))
+        total_dirs = len(gt_dirs)
         
-        if total_files == 0:
-            return True, "没有找到预渲染图像文件"
+        if total_dirs == 0:
+            return True, "没有找到gt目录"
             
-        # 使用多线程删除文件，进度条以文件为单位
-        deleted_count = 0
-        from concurrent.futures import ThreadPoolExecutor, as_completed
+        deleted_files = 0
+        processed_dirs = 0
         
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            future_to_file = {
-                executor.submit(self._delete_file, jpg_file): jpg_file
-                for jpg_file in jpg_files
-            }
+        for i, gt_dir in enumerate(gt_dirs):
+            if not self._is_running:
+                return False, "清理被用户取消"
+                
+            processed_dirs += 1
+            self.progress_updated.emit(processed_dirs, total_dirs, f"处理: {gt_dir}")
             
-            for i, future in enumerate(as_completed(future_to_file)):
-                if not self._is_running:
-                    return False, "清理被用户取消"
-                    
-                jpg_file = future_to_file[future]
-                try:
-                    success = future.result()
-                    if success:
-                        deleted_count += 1
-                    # 进度条以文件为单位更新
-                    self.progress_updated.emit(i + 1, total_files, f"删除GT预渲染文件: {jpg_file.name}")
-                except Exception as e:
-                    LOGGER.error(f"删除GT预渲染文件失败 {jpg_file}: {e}")
-                        
-        return True, f"GT清理完成: 删除 {deleted_count}/{total_files} 个预渲染图像文件（只删除8位数字命名的jpg文件）"
+            # 删除gt目录下的所有文件（保留目录结构）
+            if gt_dir.exists() and gt_dir.is_dir():
+                for file in gt_dir.iterdir():
+                    if file.is_file():
+                        try:
+                            file.unlink()
+                            deleted_files += 1
+                        except Exception as e:
+                            LOGGER.error(f"删除文件失败 {file}: {e}")
+                            
+        return True, f"GT清理完成: 处理 {processed_dirs} 个目录，删除 {deleted_files} 个文件"
         
     def cleanup_all_algorithms(self):
         """清理所有算法预渲染结果"""
@@ -143,38 +130,38 @@ class CleanupWorker(QThread):
         if not cache_dir.exists():
             return True, "缓存目录不存在，无需清理"
             
-        # 查找所有预渲染图像文件（jpg格式）
-        jpg_files = list(cache_dir.rglob("*.jpg"))
-        total_files = len(jpg_files)
-        
-        if total_files == 0:
-            return True, "没有找到预渲染图像文件"
-            
-        # 使用多线程删除文件，进度条以文件为单位
-        deleted_count = 0
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-        
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            future_to_file = {
-                executor.submit(self._delete_file, jpg_file): jpg_file
-                for jpg_file in jpg_files
-            }
-            
-            for i, future in enumerate(as_completed(future_to_file)):
-                if not self._is_running:
-                    return False, "清理被用户取消"
+        # 查找所有算法目录
+        algorithm_dirs = []
+        if cache_dir.exists():
+            for algo_dir in cache_dir.iterdir():
+                if algo_dir.is_dir():
+                    algorithm_dirs.append(algo_dir)
                     
-                jpg_file = future_to_file[future]
+        total_dirs = len(algorithm_dirs)
+        
+        if total_dirs == 0:
+            return True, "没有找到算法目录"
+            
+        deleted_files = 0
+        processed_dirs = 0
+        
+        for i, algo_dir in enumerate(algorithm_dirs):
+            if not self._is_running:
+                return False, "清理被用户取消"
+                
+            processed_dirs += 1
+            self.progress_updated.emit(processed_dirs, total_dirs, f"清理: {algo_dir.name}")
+            
+            # 删除算法目录下的所有jpg文件
+            jpg_files = list(algo_dir.rglob("*.jpg"))
+            for jpg_file in jpg_files:
                 try:
-                    success = future.result()
-                    if success:
-                        deleted_count += 1
-                    # 进度条以文件为单位更新
-                    self.progress_updated.emit(i + 1, total_files, f"删除算法文件: {jpg_file.name}")
+                    jpg_file.unlink()
+                    deleted_files += 1
                 except Exception as e:
-                    LOGGER.error(f"删除算法文件失败 {jpg_file}: {e}")
-                        
-        return True, f"算法清理完成: 删除 {deleted_count}/{total_files} 个预渲染图像文件"
+                    LOGGER.error(f"删除文件失败 {jpg_file}: {e}")
+                    
+        return True, f"算法清理完成: 处理 {processed_dirs} 个算法，删除 {deleted_files} 个jpg文件"
         
     def _get_cache_directory(self):
         """获取缓存目录"""
@@ -193,15 +180,6 @@ class CleanupWorker(QThread):
             cache_dir = cache_dir / dataset_name
             
         return Path(cache_dir)
-        
-    def _delete_file(self, file_path):
-        """线程安全的文件删除方法"""
-        try:
-            file_path.unlink()
-            return True
-        except Exception as e:
-            LOGGER.error(f"删除文件失败 {file_path}: {e}")
-            return False
         
     def stop(self):
         """停止清理"""

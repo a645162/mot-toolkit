@@ -39,9 +39,6 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.cleanup_tool_window im
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.multi_sequence_pre_render_window import (
     MultiSequencePreRenderWindow,
 )
-from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.visualization_settings_window import (
-    VisualizationSettingsWindow,
-)
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
     DatasetManager,
 )
@@ -74,7 +71,6 @@ class MainWindow(QMainWindow):
         self.pre_render_window = None
         self.cleanup_tool_window = None
         self.multi_sequence_pre_render_window = None
-        self.visualization_settings_window = None
 
         self.init_ui()
         self.load_config()
@@ -132,14 +128,6 @@ class MainWindow(QMainWindow):
         self.cleanup_btn = QPushButton("清理工具")
         self.cleanup_btn.clicked.connect(self.open_cleanup_tool)
         button_layout.addWidget(self.cleanup_btn)
-
-        self.visualization_btn = QPushButton("可视化设置")
-        self.visualization_btn.clicked.connect(self.open_visualization_settings)
-        button_layout.addWidget(self.visualization_btn)
-
-        self.visualization_btn = QPushButton("可视化设置")
-        self.visualization_btn.clicked.connect(self.open_visualization_settings)
-        button_layout.addWidget(self.visualization_btn)
 
         # 添加到主布局
         layout.addWidget(config_group)
@@ -341,44 +329,6 @@ class MainWindow(QMainWindow):
             
         self.cleanup_tool_window.set_config(self.config)
         self.cleanup_tool_window.exec()
-        
-    def open_visualization_settings(self):
-        """打开可视化设置窗口"""
-        if not self.visualization_settings_window:
-            self.visualization_settings_window = VisualizationSettingsWindow(self)
-            self.visualization_settings_window.settings_changed.connect(self.on_visualization_settings_changed)
-            
-        self.visualization_settings_window.set_config(self.config.get("bbox_config", {}))
-        self.visualization_settings_window.exec()
-        
-    def on_visualization_settings_changed(self, settings):
-        """可视化设置改变时的处理"""
-        # 更新配置中的可视化设置
-        if "bbox_config" not in self.config:
-            self.config["bbox_config"] = {}
-            
-        self.config["bbox_config"].update(settings)
-        self.save_config()
-        LOGGER.info("可视化设置已更新")
-        
-    def open_visualization_settings(self):
-        """打开可视化设置窗口"""
-        if not self.visualization_settings_window:
-            self.visualization_settings_window = VisualizationSettingsWindow(self)
-            self.visualization_settings_window.settings_changed.connect(self.on_visualization_settings_changed)
-            
-        self.visualization_settings_window.set_config(self.config)
-        self.visualization_settings_window.exec()
-        
-    def on_visualization_settings_changed(self, settings):
-        """可视化设置改变时的处理"""
-        # 更新配置中的可视化设置
-        if "bbox_config" not in self.config:
-            self.config["bbox_config"] = {}
-            
-        self.config["bbox_config"].update(settings)
-        self.save_config()
-        LOGGER.info("可视化设置已更新")
 
 
     def on_sequence_changed(self, sequence: str):
