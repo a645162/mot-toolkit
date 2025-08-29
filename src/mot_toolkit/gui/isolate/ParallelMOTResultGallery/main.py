@@ -33,12 +33,6 @@ from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.preview_window import 
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.pre_render_window import (
     PreRenderWindow,
 )
-from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.cleanup_tool_window import (
-    CleanupToolWindow,
-)
-from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.multi_sequence_pre_render_window import (
-    MultiSequencePreRenderWindow,
-)
 from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.dataset_manager import (
     DatasetManager,
 )
@@ -69,8 +63,6 @@ class MainWindow(QMainWindow):
         self.config_window = None
         self.preview_windows = []
         self.pre_render_window = None
-        self.cleanup_tool_window = None
-        self.multi_sequence_pre_render_window = None
 
         self.init_ui()
         self.load_config()
@@ -120,14 +112,6 @@ class MainWindow(QMainWindow):
         self.pre_render_btn = QPushButton("预渲染")
         self.pre_render_btn.clicked.connect(self.open_pre_render)
         button_layout.addWidget(self.pre_render_btn)
-
-        self.multi_pre_render_btn = QPushButton("多序列预渲染")
-        self.multi_pre_render_btn.clicked.connect(self.open_multi_sequence_pre_render)
-        button_layout.addWidget(self.multi_pre_render_btn)
-
-        self.cleanup_btn = QPushButton("清理工具")
-        self.cleanup_btn.clicked.connect(self.open_cleanup_tool)
-        button_layout.addWidget(self.cleanup_btn)
 
         # 添加到主布局
         layout.addWidget(config_group)
@@ -283,52 +267,22 @@ class MainWindow(QMainWindow):
                 self.preview_windows.remove(_window)
 
     def open_pre_render(self):
-        """打开预渲染窗口 - 渲染当前序列"""
+        """打开预渲染窗口"""
         if not self.config["algorithms"]:
             QMessageBox.warning(self, "警告", "请先添加算法结果目录")
             return
 
         if not self.config["dataset_path"]:
             QMessageBox.warning(self, "警告", "请先设置数据集路径")
-            return
-
-        # 获取当前选择的序列
-        current_sequence = self.sequence_combo.currentText()
-        if not current_sequence:
-            QMessageBox.warning(self, "警告", "请先选择序列")
             return
 
         if not self.pre_render_window:
             self.pre_render_window = PreRenderWindow(self)
             
-        self.pre_render_window.set_config(self.config, current_sequence)
+        self.pre_render_window.set_config(self.config)
         self.pre_render_window.show()
         self.pre_render_window.raise_()
         self.pre_render_window.activateWindow()
-
-    def open_multi_sequence_pre_render(self):
-        """打开多序列预渲染窗口"""
-        if not self.config["algorithms"]:
-            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
-            return
-
-        if not self.config["dataset_path"]:
-            QMessageBox.warning(self, "警告", "请先设置数据集路径")
-            return
-
-        if not self.multi_sequence_pre_render_window:
-            self.multi_sequence_pre_render_window = MultiSequencePreRenderWindow(self)
-            
-        self.multi_sequence_pre_render_window.set_config(self.config)
-        self.multi_sequence_pre_render_window.exec()
-
-    def open_cleanup_tool(self):
-        """打开清理工具窗口"""
-        if not self.cleanup_tool_window:
-            self.cleanup_tool_window = CleanupToolWindow(self)
-            
-        self.cleanup_tool_window.set_config(self.config)
-        self.cleanup_tool_window.exec()
 
 
     def on_sequence_changed(self, sequence: str):

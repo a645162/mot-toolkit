@@ -383,28 +383,45 @@ class PreviewWindow(QMainWindow):
 
     def open_pre_render(self):
         """打开预渲染窗口"""
-        if not self.config:
-            QMessageBox.warning(self, "警告", "请先设置配置")
-            return
-            
-        if not self.config.get("algorithms"):
+        if not self.config["algorithms"]:
             QMessageBox.warning(self, "警告", "请先添加算法结果目录")
             return
-            
-        if not self.config.get("dataset_path"):
+
+        if not self.config["dataset_path"]:
             QMessageBox.warning(self, "警告", "请先设置数据集路径")
             return
-            
+
         if not self.pre_render_window:
             self.pre_render_window = PreRenderWindow(self)
             
         self.pre_render_window.set_config(self.config)
-        self.pre_render_window.exec()
+        self.pre_render_window.show()
+        self.pre_render_window.raise_()
+        self.pre_render_window.activateWindow()
 
+    def open_pre_render(self):
+        """打开预渲染窗口"""
+        if not self.config["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.config["dataset_path"]:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        # 导入预渲染窗口
+        from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.pre_render_window import PreRenderWindow
+        
+        pre_render_window = PreRenderWindow(self)
+        pre_render_window.set_config(self.config)
+        pre_render_window.show()
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
         self.stop_play()
+        if self.pre_render_worker and self.pre_render_worker.isRunning():
+            self.pre_render_worker.stop()
+            self.pre_render_worker.wait()
         if hasattr(self, "plot_thread") and self.plot_thread.isRunning():
             self.plot_thread.quit()
             self.plot_thread.wait()

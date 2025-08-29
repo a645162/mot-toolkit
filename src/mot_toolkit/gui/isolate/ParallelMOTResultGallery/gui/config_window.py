@@ -178,23 +178,28 @@ class ConfigWindow(QDialog):
         alpha_layout.addWidget(self.alpha_spin)
         bbox_layout.addLayout(alpha_layout)
 
-        # 多进程设置组
-        multiprocessing_group = QGroupBox("多进程设置")
-        multiprocessing_layout = QVBoxLayout(multiprocessing_group)
+        # 缓存设置组
+        cache_group = QGroupBox("缓存设置")
+        cache_layout = QVBoxLayout(cache_group)
 
-        cpu_layout = QHBoxLayout()
-        cpu_layout.addWidget(QLabel("CPU核心数:"))
-        self.cpu_count_label = QLabel(f"{multiprocessing.cpu_count()}")
-        cpu_layout.addWidget(self.cpu_count_label)
-        multiprocessing_layout.addLayout(cpu_layout)
+        cache_dir_layout = QHBoxLayout()
+        cache_dir_layout.addWidget(QLabel("缓存目录:"))
+        self.cache_dir_label = QLabel("未设置")
+        cache_dir_layout.addWidget(self.cache_dir_label)
+        
+        self.set_cache_dir_btn = QPushButton("设置缓存目录")
+        self.set_cache_dir_btn.clicked.connect(self.set_cache_directory)
+        cache_dir_layout.addWidget(self.set_cache_dir_btn)
+        
+        self.open_cache_dir_btn = QPushButton("打开目录")
+        self.open_cache_dir_btn.clicked.connect(self.open_cache_directory)
+        cache_dir_layout.addWidget(self.open_cache_dir_btn)
+        
+        cache_layout.addLayout(cache_dir_layout)
 
-        process_layout = QHBoxLayout()
-        process_layout.addWidget(QLabel("并发进程数:"))
-        self.process_count_spin = QSpinBox()
-        self.process_count_spin.setRange(1, multiprocessing.cpu_count())
-        self.process_count_spin.setValue(max(1, multiprocessing.cpu_count() // 2))
-        process_layout.addWidget(self.process_count_spin)
-        multiprocessing_layout.addLayout(process_layout)
+        self.cache_enabled_check = QCheckBox("启用缓存")
+        self.cache_enabled_check.setChecked(True)
+        cache_layout.addWidget(self.cache_enabled_check)
 
         # 序列选择组
         seq_group = QGroupBox("可用序列")
@@ -210,6 +215,9 @@ class ConfigWindow(QDialog):
         self.save_btn.clicked.connect(self.save_configuration)
         bottom_layout.addWidget(self.save_btn)
 
+        self.pre_render_btn = QPushButton("预渲染")
+        self.pre_render_btn.clicked.connect(self.open_pre_render)
+        bottom_layout.addWidget(self.pre_render_btn)
 
         self.close_btn = QPushButton("关闭")
         self.close_btn.clicked.connect(self.close)
@@ -221,7 +229,7 @@ class ConfigWindow(QDialog):
         layout.addWidget(split_group)
         layout.addWidget(preview_group)
         layout.addWidget(bbox_group)
-        layout.addWidget(multiprocessing_group)
+        layout.addWidget(cache_group)
         layout.addWidget(seq_group)
         layout.addLayout(bottom_layout)
 
@@ -300,6 +308,40 @@ class ConfigWindow(QDialog):
                 config = self.get_config()
                 self.config_changed.emit(config)
 
+    def set_cache_directory(self):
+        """设置缓存目录"""
+        # 设置默认目录为系统tmp目录中的ParallelMOTResultGallery
+        default_dir = str(Path(tempfile.gettempdir()) / "ParallelMOTResultGallery")
+        
+        directory = QFileDialog.getExistingDirectory(
+            self,
+            "选择缓存目录",
+            default_dir,
+            QFileDialog.ShowDirsOnly | QFileDialog.DontResolveSymlinks,
+        )
+
+        if directory:
+            self.cache_dir = directory
+            self.cache_dir_label.setText(directory)
+            
+    def open_cache_directory(self):
+        """打开缓存目录"""
+        cache_dir = self.cache_dir
+        if not cache_dir:
+            # 使用默认缓存目录
+            cache_dir = Path(tempfile.gettempdir()) / "ParallelMOTResultGallery"
+            
+        try:
+            os.startfile(str(cache_dir))  # Windows
+        except:
+            try:
+                import subprocess
+                subprocess.run(["open", str(cache_dir)])  # macOS
+            except:
+                try:
+                    subprocess.run(["xdg-open", str(cache_dir)])  # Linux
+                except:
+                    QMessageBox.warning(self, "错误", "无法打开缓存目录")
             
     def set_dataset_path(self):
         """设置数据集路径"""
@@ -388,7 +430,8 @@ class ConfigWindow(QDialog):
             "selected_splits": self.selected_splits,
             "sequence_paths": self.dataset_manager.sequence_paths,
             "preview_frames": self.preview_frames_spin.value(),
-            "process_count": self.process_count_spin.value(),
+            "cache_dir": self.cache_dir if hasattr(self, 'cache_dir') else None,
+            "cache_enabled": self.cache_enabled_check.isChecked() if hasattr(self, 'cache_enabled_check') else True,
             "bbox_config": {
                 "show_bbox": self.show_bbox_check.isChecked(),
                 "show_id": self.show_id_check.isChecked(),
@@ -439,9 +482,20 @@ class ConfigWindow(QDialog):
         preview_frames = config.get("preview_frames", 5)
         self.preview_frames_spin.setValue(preview_frames)
 
-        # 设置多进程配置
-        process_count = config.get("process_count", max(1, multiprocessing.cpu_count() // 2))
-        self.process_count_spin.setValue(process_count)
+        # 设置缓存配置
+        self.cache_dir = config.get("cache_dir")
+        if self.cache_dir:
+            self.cache_dir_label.setText(self.cache_dir)
+        else:
+            # 设置默认缓存目录
+            import tempfile
+            from pathlib import Path
+            default_cache_dir = Path(tempfile.gettempdir()) / "ParallelMOTResultGallery"
+            self.cache_dir_label.setText(f"默认: {default_cache_dir}")
+            
+        cache_enabled = config.get("cache_enabled", True)
+        if hasattr(self, 'cache_enabled_check'):
+            self.cache_enabled_check.setChecked(cache_enabled)
 
         # 设置框绘制配置
         bbox_config = config.get("bbox_config", {})
@@ -459,6 +513,24 @@ class ConfigWindow(QDialog):
         self.config_changed.emit(config)
         QMessageBox.information(self, "保存成功", "配置已保存成功！")
 
+    def open_pre_render(self):
+        """打开预渲染窗口"""
+        if not self.get_config()["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.dataset_path:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+
+        if not self.pre_render_window:
+            self.pre_render_window = PreRenderWindow(self)
+            
+        config = self.get_config()
+        self.pre_render_window.set_config(config)
+        self.pre_render_window.show()
+        self.pre_render_window.raise_()
+        self.pre_render_window.activateWindow()
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件 - 不再自动保存"""

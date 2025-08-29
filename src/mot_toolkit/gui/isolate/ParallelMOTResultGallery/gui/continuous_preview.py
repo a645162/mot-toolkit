@@ -163,25 +163,15 @@ class ContinuousPreviewWidget(QWidget):
         if self.show_gt and not self.gt_loaded:
             self._try_load_gt_data()
 
-        # 计算每张图片的宽度 - 更精确的计算
-        scroll_width = self.scroll_area.viewport().width()
-        if scroll_width <= 0:
-            # 如果滚动区域宽度不可用，使用父窗口宽度
-            scroll_width = self.width() if self.width() > 0 else 800
-        
-        # 减去边距和滚动条宽度
-        available_width = scroll_width - 30  # 更保守的边距
-        
+        # 计算每张图片的宽度
+        available_width = self.scroll_area.viewport().width() - 20  # 减去边距
+        if available_width <= 0:
+            available_width = 800
+
         # 算法名称固定宽度，剩余空间分配给图片
-        image_total_width = available_width - self.algo_name_width
-        image_width = max(100, image_total_width // max(1, self.preview_frames))
+        image_total_width = available_width - self.algo_name_width - 20
+        image_width = max(100, image_total_width // self.preview_frames)
         image_height = int(image_width * 0.75)  # 4:3比例
-        
-        # 确保图片宽度不会过大
-        max_image_width = 300  # 最大图片宽度限制
-        if image_width > max_image_width:
-            image_width = max_image_width
-            image_height = int(image_width * 0.75)
 
         # 添加表头
         header_widget = QWidget()

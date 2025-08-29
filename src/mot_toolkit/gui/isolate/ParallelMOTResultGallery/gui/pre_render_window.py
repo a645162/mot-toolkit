@@ -28,10 +28,9 @@ class PreRenderWorker(QThread):
     progress_updated = Signal(int, int, str)  # current, total, message
     finished = Signal(bool, str)  # success, message
     
-    def __init__(self, config, current_sequence=None):
+    def __init__(self, config):
         super().__init__()
         self.config = config
-        self.current_sequence = current_sequence
         self._is_running = True
         
     def run(self):
@@ -58,9 +57,9 @@ class PreRenderWorker(QThread):
             max_workers = max(1, multiprocessing.cpu_count() // 2)
             completed = 0
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
-                # 提交所有任务，单序列模式跳过已存在的帧
+                # 提交所有任务
                 future_to_task = {
-                    executor.submit(render_single_task, task, str(cache_dir), True): task
+                    executor.submit(render_single_task, task, str(cache_dir)): task
                     for task in tasks
                 }
                 
@@ -110,30 +109,19 @@ class PreRenderWorker(QThread):
         return Path(cache_dir)
         
     def _prepare_tasks(self):
-        """准备渲染任务 - 只渲染当前序列"""
+        """准备渲染任务"""
         tasks = []
         algorithms = self.config.get("algorithms", {})
         sequence_paths = self.config.get("sequence_paths", {})
-
-        # 如果指定了当前序列，只渲染该序列
-        if self.current_sequence and self.current_sequence in sequence_paths:
-            for algo_name, algo_path in algorithms.items():
+        
+        for algo_name, algo_path in algorithms.items():
+            for seq_name, seq_path in sequence_paths.items():
                 tasks.append({
                     "algorithm": algo_name,
-                    "sequence": self.current_sequence,
-                    "sequence_path": sequence_paths[self.current_sequence],
+                    "sequence": seq_name,
+                    "sequence_path": seq_path,
                     "algorithm_path": algo_path
                 })
-        else:
-            # 如果没有指定序列，渲染所有序列（保持向后兼容）
-            for algo_name, algo_path in algorithms.items():
-                for seq_name, seq_path in sequence_paths.items():
-                    tasks.append({
-                        "algorithm": algo_name,
-                        "sequence": seq_name,
-                        "sequence_path": seq_path,
-                        "algorithm_path": algo_path
-                    })
                 
         return tasks
         
@@ -148,13 +136,12 @@ class PreRenderWindow(QDialog):
     
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("预渲染 - 当前序列")
+        self.setWindowTitle("预渲染")
         self.setModal(True)
         self.setMinimumWidth(500)
-        self.resize(500, 250)
+        self.resize(500, 200)
         
         self.config = {}
-        self.current_sequence = None
         self.worker = None
         
         self.init_ui()
@@ -166,9 +153,6 @@ class PreRenderWindow(QDialog):
         # 信息组
         info_group = QGroupBox("预渲染信息")
         info_layout = QVBoxLayout(info_group)
-        
-        self.sequence_label = QLabel("当前序列: 未设置")
-        info_layout.addWidget(self.sequence_label)
         
         self.cache_dir_label = QLabel("缓存目录: 计算中...")
         info_layout.addWidget(self.cache_dir_label)
@@ -209,35 +193,21 @@ class PreRenderWindow(QDialog):
         
         layout.addLayout(button_layout)
         
-    def set_config(self, config, current_sequence=None):
-        """设置配置和当前序列"""
+    def set_config(self, config):
+        """设置配置"""
         self.config = config
-        self.current_sequence = current_sequence
         self.update_info()
         
     def update_info(self):
         """更新信息显示"""
-        # 显示当前序列
-        if self.current_sequence:
-            self.sequence_label.setText(f"当前序列: {self.current_sequence}")
-            self.setWindowTitle(f"预渲染 - {self.current_sequence}")
-        else:
-            self.sequence_label.setText("当前序列: 所有序列")
-            self.setWindowTitle("预渲染 - 所有序列")
-        
         # 计算缓存目录
         cache_dir = self._get_cache_directory()
         self.cache_dir_label.setText(f"缓存目录: {cache_dir}")
         
         # 计算任务数量
         algorithms = self.config.get("algorithms", {})
-        if self.current_sequence:
-            # 只渲染当前序列，任务数量等于算法数量
-            task_count = len(algorithms)
-        else:
-            # 渲染所有序列
-            sequence_paths = self.config.get("sequence_paths", {})
-            task_count = len(algorithms) * len(sequence_paths)
+        sequence_paths = self.config.get("sequence_paths", {})
+        task_count = len(algorithms) * len(sequence_paths)
         self.task_count_label.setText(f"任务数量: {task_count}")
         
     def _get_cache_directory(self):
@@ -289,7 +259,7 @@ class PreRenderWindow(QDialog):
             QMessageBox.warning(self, "警告", "预渲染正在进行中")
             return
             
-        self.worker = PreRenderWorker(self.config, self.current_sequence)
+        self.worker = PreRenderWorker(self.config)
         self.worker.progress_updated.connect(self.on_progress_updated)
         self.worker.finished.connect(self.on_finished)
         
@@ -348,11 +318,10 @@ class PreRenderWindow(QDialog):
         super().closeEvent(event)
 
 
-def render_single_task(task, cache_dir_str, skip_existing=True):
-    """独立的渲染任务函数 - 用于多进程，单序列模式只跳过已存在的帧"""
+def render_single_task(task, cache_dir_str):
+    """独立的渲染任务函数 - 用于多进程"""
     import os
     import cv2
-    import time
     from pathlib import Path
     from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.video_loader import VideoFrameLoader
     from mot_toolkit.gui.isolate.ParallelMOTResultGallery.core.result_plotter import ResultPlotter
@@ -391,23 +360,9 @@ def render_single_task(task, cache_dir_str, skip_existing=True):
             gt_reader.load_gt_file(gt_file)
             
         total_frames = video_loader.get_total_frames()
-        rendered_count = 0
         
         # 渲染每一帧
         for frame_num in range(total_frames):
-            output_path = algo_cache_dir / f"{frame_num:08d}.jpg"
-            
-            # 如果文件已存在且有效，跳过渲染（单序列模式只跳过帧）
-            if skip_existing and output_path.exists():
-                try:
-                    # 检查文件是否有效
-                    img = cv2.imread(str(output_path))
-                    if img is not None:
-                        rendered_count += 1
-                        continue
-                except:
-                    pass
-            
             # 获取原始图像
             image_path = video_loader.get_frame_path(frame_num)
             if not image_path or not os.path.exists(image_path):
@@ -437,10 +392,10 @@ def render_single_task(task, cache_dir_str, skip_existing=True):
                     )
             
             # 保存渲染后的图像
+            output_path = algo_cache_dir / f"{frame_num:08d}.jpg"
             cv2.imwrite(str(output_path), img)
-            rendered_count += 1
             
-        logger.info(f"完成渲染: {task['algorithm']} - {task['sequence']}, 共 {rendered_count}/{total_frames} 帧")
+        logger.info(f"完成渲染: {task['algorithm']} - {task['sequence']}, 共 {total_frames} 帧")
         return True
         
     except Exception as e:
