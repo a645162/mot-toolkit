@@ -174,7 +174,7 @@ if __name__ == "__main__":
     # 使用列表方式调用多个数据集划分
     datasets_config = [
         {
-            "enable": True,
+            "enable": False,
             "dataset_base_dir": r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509",
             "output_base_dir": r"/home/konghaomin/Datasets/SMD_Fix_20250509",
             "spilt_config": "20250509.spilt.json",
@@ -186,9 +186,9 @@ if __name__ == "__main__":
             "spilt_config": "20250509.spilt.json",
         },
         {
-            "enable": False,
+            "enable": True,
             "dataset_base_dir": r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
-            "output_base_dir": r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250322",
+            "output_base_dir": r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250322_Det",
             "spilt_config": "20250322.spilt.json",
         },
         # 可以添加更多数据集配置
