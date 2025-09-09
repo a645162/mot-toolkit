@@ -67,21 +67,24 @@ def recursive_expand_differences(
 def setup_plot_style():
     """设置绘图样式"""
     plt.style.use("default")
-
-    # ==== 新增：注册自定义 Times New Roman 字体 ====
     custom_font_path = os.path.expanduser("./Resources/Fonts/Times New Roman.ttf")
     if os.path.exists(custom_font_path):
         font_manager.fontManager.addfont(custom_font_path)
         plt.rc("font", family="Times New Roman")
         print(f"✓ 已注册自定义字体: {custom_font_path}")
     else:
-        # 如果找不到自定义字体，仍然尝试系统字体
         plt.rc("font", family="Times New Roman")
         print(f"✗ 未找到自定义字体文件: {custom_font_path}，尝试系统字体")
-
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["figure.figsize"] = (10, 8)
     plt.rcParams["figure.dpi"] = 100
+    # ==== 放大字体 ====
+    plt.rcParams["font.size"] = 16
+    plt.rcParams["axes.labelsize"] = 18
+    plt.rcParams["axes.titlesize"] = 20
+    plt.rcParams["xtick.labelsize"] = 15
+    plt.rcParams["ytick.labelsize"] = 15
+    plt.rcParams["legend.fontsize"] = 15
 
 
 def load_metrics_data(csv_file_path: str) -> Optional[pd.DataFrame]:
@@ -124,11 +127,12 @@ def create_bubble_chart(
     save_prefix: Optional[str] = None,
     output_dir: Optional[str] = None,
     figsize: Tuple[float, float] = (12, 8),
-    size_scale: float = 2500.0,  # 从1500.0增加到2500.0，总体放大
+    size_scale: float = 2500.0,
     alpha: float = 0.7,
     show_labels: bool = True,
     grid: bool = True,
-    prefer_dark_colors: Optional[bool] = True,  # 新增颜色偏好参数
+    prefer_dark_colors: Optional[bool] = True,
+    bubble_radius_scale: float = 2.0,  # 新增：气泡半径缩放因子
 ) -> Optional[plt.Figure]:
     """
     创建气泡图
@@ -151,6 +155,7 @@ def create_bubble_chart(
             - True: 偏好深色
             - False: 偏好浅色
             - None: 无偏好（默认）
+        bubble_radius_scale: 气泡半径缩放因子（等比例缩放所有气泡半径，默认1.0）
 
     Returns:
         matplotlib Figure对象"""
@@ -192,7 +197,10 @@ def create_bubble_chart(
     # 为每个方法分配颜色
     color_map = {}
     for i, method in enumerate(methods):
-        color_map[method] = colors[i % len(colors)]
+        if method == "SA-MOTIP":
+            color_map[method] = "#FF0000"  # 红色
+        else:
+            color_map[method] = colors[i % len(colors)]
 
     # 计算气泡大小的归一化参数
     size_values = data[size_column].dropna()
@@ -201,12 +209,13 @@ def create_bubble_chart(
     size_range = max_size - min_size
 
     # 设置最小和最大气泡半径 - 总体放大
-    min_bubble_size = 200  # 从100增加到200
-    max_bubble_size = size_scale  # 最大气泡大小
+    min_bubble_size = 200 * bubble_radius_scale
+    max_bubble_size = size_scale * bubble_radius_scale
 
     print(f"📏 HOTA Range: {min_size:.3f} - {max_size:.3f}")
     print(f"📏 Bubble Size Range: {min_bubble_size} - {max_bubble_size}")
     print(f"🔄 Expansion Iterations: {EXPANSION_ITERATIONS}")
+    print(f"🔧 Bubble Radius Scale: {bubble_radius_scale}")
 
     # 创建scatter plot数据
     scatter_data = []
@@ -225,7 +234,6 @@ def create_bubble_chart(
         # 计算归一化的气泡大小 - 使用递归扩大函数
         if size_range > 0:
             normalized_size = (size_val - min_size) / size_range
-            # 使用递归扩大函数来增大差异
             expanded_normalized_size = recursive_expand_differences(
                 np.array([normalized_size]), iterations=EXPANSION_ITERATIONS
             )[0]
@@ -236,14 +244,20 @@ def create_bubble_chart(
             bubble_size = min_bubble_size  # 如果所有HOTA值相同，使用最小值
 
         # 绘制气泡
+        # ==== Method为SA-MOTIP时红色边框，否则白色 ====
+        if method == "SA-MOTIP":
+            edge_color = "#FF0000"
+        else:
+            edge_color = "white"
+
         scatter = ax.scatter(
             x_val,
             y_val,
             s=bubble_size,
             c=color_map[method],
             alpha=alpha,
-            edgecolors="white",
-            linewidth=1.5,
+            edgecolors=edge_color,
+            linewidth=2.5 if method == "SA-MOTIP" else 1.5,
             label=method,
         )
 
@@ -258,22 +272,61 @@ def create_bubble_chart(
             }
         )
 
-        # 添加方法名标签
+        # ==== 标签避免重叠并添加箭头 ====
         if show_labels:
+            label_color = "#FF0000" if method == "SA-MOTIP" else "black"
+            # 根据气泡半径动态调整偏移量（sqrt是因为matplotlib的s参数是面积）
+            radius = np.sqrt(bubble_size / np.pi)
+            offset_y = int(radius * 0.8) + 20  # 0.8倍半径+20像素，保证不重叠
+            offset_x = 30 if i % 2 == 0 else -30
             ax.annotate(
                 method,
-                (x_val, y_val),
-                xytext=(5, 5),
+                xy=(x_val, y_val),  # 圆心
+                xytext=(offset_x, offset_y),  # 标签偏移
                 textcoords="offset points",
-                fontsize=9,
-                ha="left",
+                fontsize=17,
+                ha="center",
                 va="bottom",
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.7),
+                color=label_color,
+                bbox=dict(
+                    boxstyle="round,pad=0.3",
+                    facecolor="white",
+                    edgecolor=label_color if method == "SA-MOTIP" else "gray",
+                    linewidth=2 if method == "SA-MOTIP" else 1,
+                    alpha=0.7,
+                ),
+                arrowprops=dict(
+                    arrowstyle="->",
+                    color=label_color,
+                    lw=2 if method == "SA-MOTIP" else 1,
+                    shrinkA=5,
+                    shrinkB=5,
+                    connectionstyle="arc3,rad=0.2" if i % 2 == 0 else "arc3,rad=-0.2",
+                ),
             )
 
+    # ==== 自动扩展坐标轴范围，保证大气泡不被裁切 ====
+    if scatter_data:
+        # 取所有气泡的圆心和半径
+        xs = np.array([d["x"] for d in scatter_data])
+        ys = np.array([d["y"] for d in scatter_data])
+        radii = np.array([np.sqrt(d["bubble_size"] / np.pi) for d in scatter_data])
+
+        # 计算坐标轴范围
+        x_min, x_max = xs.min(), xs.max()
+        y_min, y_max = ys.min(), ys.max()
+        r_max = radii.max()
+
+        # 扩展比例（由1.1调整为0.6倍最大半径，更紧凑）
+        pad_x = r_max * 0.6 / fig.dpi * (fig.get_figwidth() / ax.get_position().width)
+        pad_y = r_max * 0.6 / fig.dpi * (fig.get_figheight() / ax.get_position().height)
+
+        ax.set_xlim(x_min - pad_x, x_max + pad_x)
+        ax.set_ylim(y_min - pad_y, y_max + pad_y)
+
     # 设置轴标签 - 移除标题设置
-    ax.set_xlabel(f"{x_column}", fontsize=12, fontweight="bold")
-    ax.set_ylabel(f"{y_column}", fontsize=12, fontweight="bold")
+    ax.set_xlabel(f"{x_column}", fontsize=18, fontweight="bold")
+    ax.set_ylabel(f"{y_column}", fontsize=18, fontweight="bold")
 
     # 添加网格
     if grid:
@@ -364,7 +417,8 @@ def create_bubble_chart(
     ax.spines["bottom"].set_linewidth(1.2)
 
     # 调整布局
-    plt.tight_layout()
+    # plt.tight_layout()
+    plt.tight_layout(rect=[0, 0, 1, 0.97])  # 留出标题空间
 
     # 移除数据统计信息
     # stats_text = (
