@@ -285,6 +285,13 @@ class ContinuousPreviewWidget(QWidget):
             # 读取图像
             img = cv2.imread(image_path)
             if img is not None:
+                # 获取渲染配置
+                render_config = self._get_render_config()
+                
+                # 根据渲染模式处理图像
+                if render_config["render_mode"] == "limit_resolution":
+                    img = self._limit_resolution(img, render_config)
+                
                 # 获取跟踪结果
                 results = []
                 if algo_name in self.result_loaders:
@@ -358,6 +365,49 @@ class ContinuousPreviewWidget(QWidget):
             frame_label = QLabel("无图片")
             frame_label.setFixedSize(image_width, image_height)
             return frame_label
+            
+    def _get_render_config(self):
+        """获取渲染配置"""
+        # 从父窗口获取配置
+        parent = self.parent()
+        while parent and not hasattr(parent, 'config'):
+            parent = parent.parent()
+            
+        if parent and hasattr(parent, 'config'):
+            config = parent.config
+            render_config = config.get("render_config", {})
+            return {
+                "render_mode": render_config.get("render_mode", "limit_resolution"),
+                "max_width": render_config.get("max_width", 800),
+                "max_height": render_config.get("max_height", 600),
+                "quality": render_config.get("quality", 85)
+            }
+        else:
+            # 默认配置
+            return {
+                "render_mode": "limit_resolution",
+                "max_width": 800,
+                "max_height": 600,
+                "quality": 85
+            }
+            
+    def _limit_resolution(self, img, render_config):
+        """限制图像分辨率"""
+        h, w = img.shape[:2]
+        max_width = render_config["max_width"]
+        max_height = render_config["max_height"]
+        
+        if w > max_width or h > max_height:
+            # 计算缩放比例
+            scale = min(max_width / w, max_height / h)
+            new_width = int(w * scale)
+            new_height = int(h * scale)
+            
+            # 使用高质量缩放
+            img = cv2.resize(img, (new_width, new_height),
+                           interpolation=cv2.INTER_LANCZOS4)
+            
+        return img
             
         
     def _render_algorithm_frame(self, algo_name, frame_num, image_width, image_height, loader):

@@ -12,6 +12,9 @@ from PySide6.QtWidgets import (
     QProgressBar,
     QMessageBox,
     QGroupBox,
+    QRadioButton,
+    QButtonGroup,
+    QComboBox,
 )
 from PySide6.QtCore import Qt, QThread, Signal
 import multiprocessing
@@ -31,6 +34,8 @@ class PreRenderWorker(QThread):
     def __init__(self, config):
         super().__init__()
         self.config = config
+        self.render_mode = "multi_sequence"  # 默认多序列渲染
+        self.selected_sequence = ""  # 单序列渲染时选择的序列
         self._is_running = True
         
     def run(self):
@@ -56,6 +61,16 @@ class PreRenderWorker(QThread):
             # 使用多进程池执行任务（CPU核心数/2）
             max_workers = max(1, multiprocessing.cpu_count() // 2)
             completed = 0
+            
+            # 显示渲染模式信息
+            mode_info = ""
+            if hasattr(self, 'render_mode') and self.render_mode == "single_sequence":
+                mode_info = f" (单序列模式: {getattr(self, 'selected_sequence', '')})"
+            else:
+                mode_info = " (多序列模式)"
+                
+            LOGGER.info(f"开始预渲染，任务数量: {total_tasks}{mode_info}")
+                
             with ProcessPoolExecutor(max_workers=max_workers) as executor:
                 # 提交所有任务
                 future_to_task = {
@@ -66,6 +81,8 @@ class PreRenderWorker(QThread):
                 # 处理完成的任务
                 for future in as_completed(future_to_task):
                     if not self._is_running:
+                        # 用户取消了预渲染，停止所有任务
+                        executor.shutdown(wait=False, cancel_futures=True)
                         break
                         
                     task = future_to_task[future]
@@ -81,12 +98,18 @@ class PreRenderWorker(QThread):
                         LOGGER.error(f"任务执行失败: {e}")
                         
             if self._is_running:
-                self.finished.emit(True, f"预渲染完成，共处理 {completed}/{total_tasks} 个任务")
+                success_msg = f"预渲染完成，共处理 {completed}/{total_tasks} 个任务{mode_info}"
+                LOGGER.info(success_msg)
+                self.finished.emit(True, success_msg)
             else:
-                self.finished.emit(False, "预渲染被用户取消")
+                cancel_msg = f"预渲染被用户取消，已完成 {completed}/{total_tasks} 个任务{mode_info}"
+                LOGGER.info(cancel_msg)
+                self.finished.emit(False, cancel_msg)
                 
         except Exception as e:
-            self.finished.emit(False, f"预渲染失败: {str(e)}")
+            error_msg = f"预渲染失败: {str(e)}"
+            LOGGER.error(error_msg)
+            self.finished.emit(False, error_msg)
             
     def _get_cache_directory(self):
         """获取缓存目录"""
@@ -114,14 +137,29 @@ class PreRenderWorker(QThread):
         algorithms = self.config.get("algorithms", {})
         sequence_paths = self.config.get("sequence_paths", {})
         
-        for algo_name, algo_path in algorithms.items():
-            for seq_name, seq_path in sequence_paths.items():
+        # 获取渲染模式（从父窗口传递）
+        render_mode = getattr(self, "render_mode", "multi_sequence")
+        selected_sequence = getattr(self, "selected_sequence", "")
+        
+        if render_mode == "single_sequence" and selected_sequence and selected_sequence in sequence_paths:
+            # 单序列模式：只渲染选中的序列
+            for algo_name, algo_path in algorithms.items():
                 tasks.append({
                     "algorithm": algo_name,
-                    "sequence": seq_name,
-                    "sequence_path": seq_path,
+                    "sequence": selected_sequence,
+                    "sequence_path": sequence_paths[selected_sequence],
                     "algorithm_path": algo_path
                 })
+        else:
+            # 多序列模式：渲染所有序列
+            for algo_name, algo_path in algorithms.items():
+                for seq_name, seq_path in sequence_paths.items():
+                    tasks.append({
+                        "algorithm": algo_name,
+                        "sequence": seq_name,
+                        "sequence_path": seq_path,
+                        "algorithm_path": algo_path
+                    })
                 
         return tasks
         
@@ -139,16 +177,44 @@ class PreRenderWindow(QDialog):
         self.setWindowTitle("预渲染")
         self.setModal(True)
         self.setMinimumWidth(500)
-        self.resize(500, 200)
+        self.resize(500, 250)
         
         self.config = {}
         self.worker = None
+        self.render_mode = "multi_sequence"  # 默认多序列渲染
+        self.selected_sequence = ""  # 单序列渲染时选择的序列
         
         self.init_ui()
         
     def init_ui(self):
         """初始化UI"""
         layout = QVBoxLayout(self)
+        
+        # 渲染模式选择组
+        mode_group = QGroupBox("渲染模式")
+        mode_layout = QVBoxLayout(mode_group)
+        
+        from PySide6.QtWidgets import QRadioButton, QButtonGroup
+        self.mode_group = QButtonGroup(self)
+        
+        self.multi_seq_radio = QRadioButton("多序列预渲染 (渲染所有序列)")
+        self.multi_seq_radio.setChecked(True)
+        self.multi_seq_radio.toggled.connect(lambda: self.on_mode_changed("multi_sequence"))
+        self.mode_group.addButton(self.multi_seq_radio)
+        mode_layout.addWidget(self.multi_seq_radio)
+        
+        self.single_seq_radio = QRadioButton("单序列预渲染 (渲染当前选中序列)")
+        self.single_seq_radio.toggled.connect(lambda: self.on_mode_changed("single_sequence"))
+        self.mode_group.addButton(self.single_seq_radio)
+        mode_layout.addWidget(self.single_seq_radio)
+        
+        # 序列选择（单序列模式时显示）
+        self.sequence_combo = QComboBox()
+        self.sequence_combo.setVisible(False)
+        self.sequence_combo.currentTextChanged.connect(self.on_sequence_changed)
+        mode_layout.addWidget(self.sequence_combo)
+        
+        layout.addWidget(mode_group)
         
         # 信息组
         info_group = QGroupBox("预渲染信息")
@@ -197,6 +263,31 @@ class PreRenderWindow(QDialog):
         """设置配置"""
         self.config = config
         self.update_info()
+        self.update_sequence_combo()
+        
+    def on_mode_changed(self, mode):
+        """渲染模式改变时的处理"""
+        self.render_mode = mode
+        self.sequence_combo.setVisible(mode == "single_sequence")
+        self.update_info()
+        
+    def on_sequence_changed(self, sequence):
+        """序列选择改变时的处理"""
+        self.selected_sequence = sequence
+        self.update_info()
+        
+    def update_sequence_combo(self):
+        """更新序列选择下拉框"""
+        self.sequence_combo.clear()
+        sequence_paths = self.config.get("sequence_paths", {})
+        self.sequence_combo.addItems(list(sequence_paths.keys()))
+        
+        # 如果有父窗口且父窗口有当前选中的序列，设置默认选择
+        if hasattr(self.parent(), 'current_sequence') and self.parent().current_sequence:
+            current_seq = self.parent().current_sequence
+            if current_seq in sequence_paths:
+                self.sequence_combo.setCurrentText(current_seq)
+                self.selected_sequence = current_seq
         
     def update_info(self):
         """更新信息显示"""
@@ -207,8 +298,17 @@ class PreRenderWindow(QDialog):
         # 计算任务数量
         algorithms = self.config.get("algorithms", {})
         sequence_paths = self.config.get("sequence_paths", {})
-        task_count = len(algorithms) * len(sequence_paths)
-        self.task_count_label.setText(f"任务数量: {task_count}")
+        
+        if self.render_mode == "single_sequence" and self.selected_sequence:
+            # 单序列模式：只渲染选中的序列
+            task_count = len(algorithms)  # 每个算法渲染一个序列
+            mode_info = f" (单序列: {self.selected_sequence})"
+        else:
+            # 多序列模式：渲染所有序列
+            task_count = len(algorithms) * len(sequence_paths)
+            mode_info = " (多序列)"
+            
+        self.task_count_label.setText(f"任务数量: {task_count}{mode_info}")
         
     def _get_cache_directory(self):
         """获取缓存目录"""
@@ -236,8 +336,18 @@ class PreRenderWindow(QDialog):
         algorithms = self.config.get("algorithms", {})
         sequence_paths = self.config.get("sequence_paths", {})
         
+        # 确定要检查的序列
+        sequences_to_check = []
+        if self.render_mode == "single_sequence" and self.selected_sequence:
+            sequences_to_check = [self.selected_sequence]
+        else:
+            sequences_to_check = list(sequence_paths.keys())
+        
         for algo_name in algorithms.keys():
-            for seq_name in sequence_paths.keys():
+            for seq_name in sequences_to_check:
+                if seq_name not in sequence_paths:
+                    continue
+                    
                 algo_cache_dir = cache_dir / algo_name / seq_name
                 if not algo_cache_dir.exists():
                     return False
@@ -259,7 +369,12 @@ class PreRenderWindow(QDialog):
             QMessageBox.warning(self, "警告", "预渲染正在进行中")
             return
             
+        # 创建worker并传递渲染模式和选中的序列
         self.worker = PreRenderWorker(self.config)
+        # 设置渲染模式和选中的序列
+        self.worker.render_mode = self.render_mode
+        self.worker.selected_sequence = self.selected_sequence
+        
         self.worker.progress_updated.connect(self.on_progress_updated)
         self.worker.finished.connect(self.on_finished)
         

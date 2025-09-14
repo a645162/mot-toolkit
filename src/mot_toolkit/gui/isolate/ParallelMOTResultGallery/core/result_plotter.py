@@ -233,6 +233,7 @@ class ResultPlotter(QObject):
         sequence_path: str,
         output_dir: str,
         sequence_name: str,
+        render_config: dict = None
     ) -> bool:
         """绘制单个序列的结果"""
         try:
@@ -286,6 +287,10 @@ class ResultPlotter(QObject):
                 if img is None:
                     continue
 
+                # 应用渲染配置
+                if render_config:
+                    img = self._apply_render_config(img, render_config)
+
                 # 获取帧索引
                 try:
                     frame_idx = int(os.path.splitext(img_file)[0])
@@ -305,7 +310,7 @@ class ResultPlotter(QObject):
 
                 # 保存结果
                 output_path = os.path.join(output_seq_dir, img_file)
-                cv2.imwrite(output_path, img)
+                cv2.imwrite(output_path, img, [cv2.IMWRITE_JPEG_QUALITY, render_config.get("quality", 85) if render_config else 85])
 
                 # 发送进度信号
                 self.progress_updated.emit(idx + 1, total_frames)
@@ -315,12 +320,32 @@ class ResultPlotter(QObject):
         except Exception as e:
             self.plot_error.emit(str(e))
             return False
+            
+    def _apply_render_config(self, img, render_config):
+        """应用渲染配置到图像"""
+        if render_config.get("render_mode") == "limit_resolution":
+            h, w = img.shape[:2]
+            max_width = render_config.get("max_width", 800)
+            max_height = render_config.get("max_height", 600)
+            
+            if w > max_width or h > max_height:
+                # 计算缩放比例
+                scale = min(max_width / w, max_height / h)
+                new_width = int(w * scale)
+                new_height = int(h * scale)
+                
+                # 使用高质量缩放
+                img = cv2.resize(img, (new_width, new_height),
+                               interpolation=cv2.INTER_LANCZOS4)
+        
+        return img
 
     def plot_all_algorithms(self, config: dict, output_base_dir: str) -> None:
         """绘制所有算法的结果"""
         try:
             algorithms = config.get("algorithms", {})
             sequence_paths = config.get("sequence_paths", {})
+            render_config = config.get("render_config", {})
 
             if not algorithms or not sequence_paths:
                 self.plot_error.emit("没有算法或序列数据")
@@ -335,7 +360,7 @@ class ResultPlotter(QObject):
 
                 # 为每个序列绘制结果
                 for seq_name, seq_path in sequence_paths.items():
-                    self.plot_sequence(algo_path, seq_path, output_dir, seq_name)
+                    self.plot_sequence(algo_path, seq_path, output_dir, seq_name, render_config)
 
             self.plot_completed.emit(output_base_dir)
 

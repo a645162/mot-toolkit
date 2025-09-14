@@ -140,6 +140,39 @@ class ConfigWindow(QDialog):
         preview_layout.addWidget(QLabel("连续帧预览数量:"))
         preview_layout.addWidget(self.preview_frames_spin)
 
+        # 渲染模式设置
+        render_mode_layout = QHBoxLayout()
+        render_mode_layout.addWidget(QLabel("渲染模式:"))
+        self.render_mode_combo = QComboBox()
+        self.render_mode_combo.addItems(["限制分辨率", "原图渲染"])
+        render_mode_layout.addWidget(self.render_mode_combo)
+        preview_layout.addLayout(render_mode_layout)
+
+        # 分辨率限制设置
+        resolution_layout = QHBoxLayout()
+        resolution_layout.addWidget(QLabel("最大宽度:"))
+        self.max_width_spin = QSpinBox()
+        self.max_width_spin.setRange(100, 4000)
+        self.max_width_spin.setValue(800)
+        resolution_layout.addWidget(self.max_width_spin)
+
+        resolution_layout.addWidget(QLabel("最大高度:"))
+        self.max_height_spin = QSpinBox()
+        self.max_height_spin.setRange(100, 4000)
+        self.max_height_spin.setValue(600)
+        resolution_layout.addWidget(self.max_height_spin)
+        preview_layout.addLayout(resolution_layout)
+
+        # 渲染质量设置
+        quality_layout = QHBoxLayout()
+        quality_layout.addWidget(QLabel("渲染质量:"))
+        self.quality_spin = QSpinBox()
+        self.quality_spin.setRange(1, 100)
+        self.quality_spin.setValue(85)
+        self.quality_spin.setSuffix(" %")
+        quality_layout.addWidget(self.quality_spin)
+        preview_layout.addLayout(quality_layout)
+
         # 框绘制设置组
         bbox_group = QGroupBox("框绘制设置")
         bbox_layout = QVBoxLayout(bbox_group)
@@ -430,6 +463,12 @@ class ConfigWindow(QDialog):
             "selected_splits": self.selected_splits,
             "sequence_paths": self.dataset_manager.sequence_paths,
             "preview_frames": self.preview_frames_spin.value(),
+            "render_config": {
+                "render_mode": "limit_resolution" if self.render_mode_combo.currentIndex() == 0 else "original",
+                "max_width": self.max_width_spin.value(),
+                "max_height": self.max_height_spin.value(),
+                "quality": self.quality_spin.value(),
+            },
             "cache_dir": self.cache_dir if hasattr(self, 'cache_dir') else None,
             "cache_enabled": self.cache_enabled_check.isChecked() if hasattr(self, 'cache_enabled_check') else True,
             "bbox_config": {
@@ -496,6 +535,14 @@ class ConfigWindow(QDialog):
         cache_enabled = config.get("cache_enabled", True)
         if hasattr(self, 'cache_enabled_check'):
             self.cache_enabled_check.setChecked(cache_enabled)
+
+        # 设置渲染配置
+        render_config = config.get("render_config", {})
+        render_mode = render_config.get("render_mode", "limit_resolution")
+        self.render_mode_combo.setCurrentIndex(0 if render_mode == "limit_resolution" else 1)
+        self.max_width_spin.setValue(render_config.get("max_width", 800))
+        self.max_height_spin.setValue(render_config.get("max_height", 600))
+        self.quality_spin.setValue(render_config.get("quality", 85))
 
         # 设置框绘制配置
         bbox_config = config.get("bbox_config", {})

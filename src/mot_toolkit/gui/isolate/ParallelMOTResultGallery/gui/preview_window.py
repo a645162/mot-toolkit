@@ -169,6 +169,11 @@ class PreviewWindow(QMainWindow):
         self.pre_render_btn.clicked.connect(self.open_pre_render)
         control_layout.addWidget(self.pre_render_btn)
 
+        # 高清渲染按钮
+        self.hd_render_btn = QPushButton("高清渲染")
+        self.hd_render_btn.clicked.connect(self.open_hd_render)
+        control_layout.addWidget(self.hd_render_btn)
+
 
         layout.addWidget(control_group)
 
@@ -200,6 +205,20 @@ class PreviewWindow(QMainWindow):
         self.config = config
         self.setup_video_loaders()
         self.preview_frames = config.get("preview_frames", 5)
+
+        # 输出配置信息
+        LOGGER.info("=== 当前配置信息 ===")
+        LOGGER.info(f"算法数量: {len(config.get('algorithms', {}))}")
+        LOGGER.info(f"数据集路径: {config.get('dataset_path', '未设置')}")
+        LOGGER.info(f"预览帧数: {self.preview_frames}")
+        
+        # 输出渲染配置
+        render_config = config.get("render_config", {})
+        LOGGER.info(f"渲染模式: {render_config.get('render_mode', 'limit_resolution')}")
+        LOGGER.info(f"最大宽度: {render_config.get('max_width', 800)}")
+        LOGGER.info(f"最大高度: {render_config.get('max_height', 600)}")
+        LOGGER.info(f"渲染质量: {render_config.get('quality', 85)}%")
+        LOGGER.info("===================")
 
         # 设置绘制配置
         bbox_config = config.get("bbox_config", {})
@@ -414,14 +433,42 @@ class PreviewWindow(QMainWindow):
         
         pre_render_window = PreRenderWindow(self)
         pre_render_window.set_config(self.config)
+        
+        # 传递当前选中的序列给预渲染窗口
+        if hasattr(self, 'current_sequence') and self.current_sequence:
+            pre_render_window.selected_sequence = self.current_sequence
+            # 如果预渲染窗口有序列下拉框，设置选中项
+            if hasattr(pre_render_window, 'sequence_combo'):
+                pre_render_window.sequence_combo.setCurrentText(self.current_sequence)
+        
         pre_render_window.show()
+        
+    def open_hd_render(self):
+        """打开高清渲染窗口"""
+        if not self.config["algorithms"]:
+            QMessageBox.warning(self, "警告", "请先添加算法结果目录")
+            return
+
+        if not self.config["dataset_path"]:
+            QMessageBox.warning(self, "警告", "请先设置数据集路径")
+            return
+            
+        if not hasattr(self, 'current_sequence') or not self.current_sequence:
+            QMessageBox.warning(self, "警告", "请先选择序列")
+            return
+
+        # 导入高清渲染窗口
+        from mot_toolkit.gui.isolate.ParallelMOTResultGallery.gui.render_window import RenderWindow
+        
+        render_window = RenderWindow(self)
+        render_window.set_config(self.config)
+        render_window.set_sequence(self.current_sequence)
+        render_window.show()
 
     def closeEvent(self, event: QCloseEvent):
         """关闭事件"""
         self.stop_play()
-        if self.pre_render_worker and self.pre_render_worker.isRunning():
-            self.pre_render_worker.stop()
-            self.pre_render_worker.wait()
+        # 不再管理预渲染工作线程，由PreRenderWindow独立管理
         if hasattr(self, "plot_thread") and self.plot_thread.isRunning():
             self.plot_thread.quit()
             self.plot_thread.wait()
