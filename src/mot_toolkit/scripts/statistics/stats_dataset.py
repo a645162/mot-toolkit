@@ -513,18 +513,23 @@ def plot_movement_histogram(
         max_bin = math.ceil(max_value) + 0.5
         bins = np.linspace(0, max_bin, 101)
 
-    # 绘制直方图
+    # 绘制直方图 - 使用交替颜色
     n, bins, patches = plt.hist(
-        movement_values, bins=bins, alpha=0.7, color=colors[1], edgecolor="black"
+        movement_values, bins=bins, alpha=0.7, edgecolor="black"
     )
 
-    # 标记静止/移动阈值
+    # 为每个柱子分配交替颜色
+    for i, patch in enumerate(patches):
+        patch.set_facecolor(colors[i % len(colors)])
+
+    # 标记静止/移动阈值 - 使用大红色和更粗的线
     plt.axvline(
         x=ocpmd_threshold,
-        color=colors[0],
+        color="red",  # 改为大红色
         linestyle="--",
-        linewidth=2,
+        linewidth=3,  # 增加线宽从2到3
         label=f"Static/Moving Threshold ({ocpmd_threshold})",
+        alpha=0.9,  # 增加透明度使线条更明显
     )
 
     # 计算静止和移动的比例
@@ -548,14 +553,16 @@ def plot_movement_histogram(
         if additional_title
         else ""
     )
-    plt.title(
-        "Object Movement Distribution Histogram" + additional_title_text,
-        fontsize=14,
-    )
+    # plt.title(
+    #     "Object Movement Distribution Histogram" + additional_title_text,
+    #     fontsize=14,
+    # )
+
     plt.xlabel("Normalized Cumulative Movement Distance", fontsize=12)
     plt.ylabel("Object Count", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7)
-    plt.legend()
+    # 恢复图例显示，修复线条长度不对称问题
+    plt.legend(handlelength=2.0, handletextpad=0.8)
 
     # 保存图像
     plt.savefig(output_path, dpi=300, bbox_inches="tight")
@@ -836,10 +843,10 @@ def plot_sequence_moving_avg_distance(
         label=f"Mean Distance: {mean_distance:.4f}",
     )
 
-    plt.title(
-        f"Top {len(sequence_data)} Sequences by Moving Target Average Movement Distance",
-        fontsize=16,
-    )
+    # plt.title(
+    #     f"Top {len(sequence_data)} Sequences by Moving Target Average Movement Distance",
+    #     fontsize=16,
+    # )
     plt.xlabel("Sequence (Video_Sequence)", fontsize=12)
     plt.ylabel("Average Movement Distance", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7, axis="y")
@@ -934,7 +941,7 @@ def parse_args():
     # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
     # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
     # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
-    
+
     return opt
 
 
