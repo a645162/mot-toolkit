@@ -29,13 +29,13 @@ def setup_plot_style():
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["figure.figsize"] = (10, 8)
     plt.rcParams["figure.dpi"] = 100
-    # 字体大小设置
-    plt.rcParams["font.size"] = 16
-    plt.rcParams["axes.labelsize"] = 18
-    plt.rcParams["axes.titlesize"] = 20
-    plt.rcParams["xtick.labelsize"] = 15
-    plt.rcParams["ytick.labelsize"] = 15
-    plt.rcParams["legend.fontsize"] = 15
+    # 字体大小设置 - 论文标准
+    plt.rcParams["font.size"] = 12
+    plt.rcParams["axes.labelsize"] = 14
+    plt.rcParams["axes.titlesize"] = 16
+    plt.rcParams["xtick.labelsize"] = 11
+    plt.rcParams["ytick.labelsize"] = 11
+    plt.rcParams["legend.fontsize"] = 11
 
 
 def calculate_iou(
@@ -207,7 +207,7 @@ def save_iou_results_to_csv(results: List, csv_file_path: str):
 
 def plot_iou_histogram(iou_data: List[float], output_path: str):
     """
-    绘制IoU分布直方图
+    绘制IoU分布直方图 - 论文插图风格
 
     Args:
         iou_data: IoU值列表
@@ -219,84 +219,109 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
 
     setup_plot_style()
 
-    plt.figure(figsize=(12, 8))
+    # 使用单栏图片尺寸 (论文标准)
+    fig, ax = plt.subplots(figsize=(8, 5))
 
     # 获取希格雯配色
     color_scheme = SIGEWINNEColorScheme()
     colors = color_scheme.hex_colors()
 
-    # 设置直方图区间 (0-1, 分成50个区间)
-    bins = np.linspace(0, 1, 51)
+    # 设置直方图区间 (0-1, 分成40个区间，减少过于细密的分割)
+    bins = np.linspace(0, 1, 41)
 
-    # 绘制直方图
-    n, bins, patches = plt.hist(
-        iou_data, bins=bins, alpha=0.7, color=colors[1], edgecolor="black"
+    # 绘制直方图 - 简化样式
+    n, bins, patches = ax.hist(
+        iou_data,
+        bins=bins,
+        alpha=0.75,
+        color=colors[1],
+        edgecolor="black",
+        linewidth=0.5,
     )
 
     # 计算统计信息
     mean_iou = np.mean(iou_data)
     std_iou = np.std(iou_data)
     median_iou = np.median(iou_data)
-    min_iou = np.min(iou_data)
-    max_iou = np.max(iou_data)
 
-    # 添加统计线
-    plt.axvline(
+    # 添加统计线 - 简化，只保留最重要的
+    ax.axvline(
         x=mean_iou,
         color=colors[0],
         linestyle="--",
-        linewidth=2,
+        linewidth=1.5,
         label=f"Mean: {mean_iou:.3f}",
-    )
-    plt.axvline(
-        x=median_iou,
-        color=colors[3],
-        linestyle="--",
-        linewidth=2,
-        label=f"Median: {median_iou:.3f}",
+        alpha=0.8,
     )
 
-    # 添加标题和标签
-    plt.title(
-        f"Adjacent Frame IoU Distribution\n"
-        f"Mean: {mean_iou:.3f}, Std: {std_iou:.3f}, Median: {median_iou:.3f}\n"
-        f"Range: [{min_iou:.3f}, {max_iou:.3f}], Total Samples: {len(iou_data)}",
-        fontsize=14,
+    # 简化标签 - 去除冗余信息
+    ax.set_xlabel("IoU Value")
+    ax.set_ylabel("Frequency")
+
+    # 简化网格
+    ax.grid(True, linestyle=":", alpha=0.5, color="gray", linewidth=0.5)
+    ax.set_axisbelow(True)
+
+    # 简化图例 - 修复alpha参数错误
+    legend = ax.legend(
+        loc="upper right",
+        frameon=True,
+        fancybox=False,
+        shadow=False,
+        edgecolor="black",
+        facecolor="white",
+        fontsize=10,
     )
-    plt.xlabel("IoU Value", fontsize=12)
-    plt.ylabel("Frequency", fontsize=12)
-    plt.grid(True, linestyle="--", alpha=0.7)
-    plt.legend()
+    # 设置图例透明度的正确方法
+    legend.get_frame().set_alpha(0.9)
 
-    # 保存图像
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    # 美化坐标轴 - 学术风格
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_linewidth(1.0)
+    ax.spines["bottom"].set_linewidth(1.0)
 
-    # Save svg
-    svg_output_path = output_path.replace(".png", ".svg")
-    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+    # 设置坐标轴范围
+    ax.set_xlim(0, 1)
+    ax.set_ylim(bottom=0)
 
-    # Save eps
-    eps_output_path = output_path.replace(".png", ".eps")
-    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+    # 紧凑布局
+    plt.tight_layout(pad=1.0)
+
+    # 保存多种格式
+    formats_info = [
+        ("png", {"dpi": 300, "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("eps", {"format": "eps", "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("svg", {"format": "svg", "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("pdf", {"format": "pdf", "bbox_inches": "tight", "pad_inches": 0.1}),
+    ]
+
+    for fmt, kwargs in formats_info:
+        fmt_output_path = output_path.replace(".png", f".{fmt}")
+        try:
+            plt.savefig(fmt_output_path, **kwargs)
+            print(f"✓ 保存{fmt.upper()}格式: {fmt_output_path}")
+        except Exception as e:
+            print(f"✗ 保存{fmt.upper()}格式失败: {e}")
 
     plt.close()
 
     print(f"IoU distribution histogram saved to: {output_path}")
     print(
-        f"IoU statistics - Mean: {mean_iou:.4f}, Std: {std_iou:.4f}, Median: {median_iou:.4f}"
+        f"Statistics - Mean: {mean_iou:.4f}, Std: {std_iou:.4f}, Median: {median_iou:.4f}"
     )
 
 
 def plot_sequence_iou_bar_chart(
-    sequence_results: List, output_path: str, top_n: int = 50
+    sequence_results: List, output_path: str, top_n: int = 30
 ):
     """
-    绘制序列IoU均值的柱状图 (使用DanceTrack IoU)
+    绘制序列IoU均值的柱状图 - 论文插图风格
 
     Args:
         sequence_results: 序列结果列表
         output_path: 输出路径
-        top_n: 显示前N个序列
+        top_n: 显示前N个序列 (减少到30个以提高可读性)
     """
     if not sequence_results:
         print("Warning: No sequence results available for plotting")
@@ -304,7 +329,7 @@ def plot_sequence_iou_bar_chart(
 
     setup_plot_style()
 
-    # 过滤掉IoU为0的序列并按DanceTrack IoU排序 (索引5是DanceTrack IoU)
+    # 过滤和排序
     valid_results = [
         (result[1], result[5]) for result in sequence_results if result[5] > 0
     ]
@@ -318,71 +343,81 @@ def plot_sequence_iou_bar_chart(
         print("Warning: No valid sequences with DanceTrack IoU > 0")
         return
 
-    # 提取序列名和IoU值
+    # 提取数据
     seq_names = [result[0] for result in valid_results]
     iou_values = [result[1] for result in valid_results]
 
-    plt.figure(figsize=(20, 10))
+    # 调整图片尺寸 - 适合论文
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     # 获取希格雯配色
     color_scheme = SIGEWINNEColorScheme()
     colors = color_scheme.hex_colors()
 
-    # 创建柱状图，每个柱子交替使用希格雯配色
+    # 创建柱状图 - 简化样式
     bar_colors = [colors[i % len(colors)] for i in range(len(seq_names))]
-    bars = plt.bar(
+    bars = ax.bar(
         range(len(seq_names)),
         iou_values,
-        alpha=0.7,
+        alpha=0.8,
         color=bar_colors,
         edgecolor="black",
+        linewidth=0.5,
     )
 
-    # 设置x轴标签 (旋转45度以避免重叠)
-    plt.xticks(range(len(seq_names)), seq_names, rotation=45, ha="right")
+    # 简化x轴标签显示 - 只显示每隔几个标签
+    step = max(1, len(seq_names) // 15)  # 最多显示15个标签
+    xtick_positions = range(0, len(seq_names), step)
+    xtick_labels = [seq_names[i] for i in xtick_positions]
+    ax.set_xticks(xtick_positions)
+    ax.set_xticklabels(xtick_labels, rotation=45, ha="right", fontsize=9)
 
-    # 添加数值标签到柱子顶部
-    for i, bar in enumerate(bars):
-        height = bar.get_height()
-        plt.text(
-            bar.get_x() + bar.get_width() / 2.0,
-            height + 0.001,
-            f"{height:.3f}",
-            ha="center",
-            va="bottom",
-            fontsize=8,
-        )
-
-    # 计算总体统计
+    # 添加平均线 - 简化
     mean_iou = np.mean(iou_values)
-    plt.axhline(
+    ax.axhline(
         y=mean_iou,
-        color=colors[0],
+        color="red",
         linestyle="--",
-        linewidth=2,
-        label=f"Mean DanceTrack IoU: {mean_iou:.3f}",
+        linewidth=1.5,
+        alpha=0.8,
+        label=f"Mean: {mean_iou:.3f}",
     )
 
-    plt.title(
-        f"Top {len(valid_results)} Sequences by DanceTrack Adjacent Frame IoU",
-        fontsize=16,
-    )
-    plt.xlabel("Sequence Name", fontsize=12)
-    plt.ylabel("DanceTrack IoU", fontsize=12)
-    plt.grid(True, linestyle="--", alpha=0.7, axis="y")
-    plt.legend()
-    plt.tight_layout()
+    # 简化标签
+    ax.set_xlabel("Sequence")
+    ax.set_ylabel("DanceTrack IoU")
 
-    # 保存图像
-    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+    # 简化网格
+    ax.grid(True, linestyle=":", alpha=0.5, axis="y", linewidth=0.5)
+    ax.set_axisbelow(True)
 
-    # Save svg
-    svg_output_path = output_path.replace(".png", ".svg")
-    plt.savefig(svg_output_path, format="svg", bbox_inches="tight")
+    # 简化图例
+    ax.legend(loc="upper right", fontsize=10)
 
-    # Save eps
-    eps_output_path = output_path.replace(".png", ".eps")
-    plt.savefig(eps_output_path, format="eps", bbox_inches="tight")
+    # 美化坐标轴
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_linewidth(1.0)
+    ax.spines["bottom"].set_linewidth(1.0)
+
+    # 紧凑布局
+    plt.tight_layout(pad=1.0)
+
+    # 保存多种格式
+    formats_info = [
+        ("png", {"dpi": 300, "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("eps", {"format": "eps", "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("svg", {"format": "svg", "bbox_inches": "tight", "pad_inches": 0.1}),
+        ("pdf", {"format": "pdf", "bbox_inches": "tight", "pad_inches": 0.1}),
+    ]
+
+    for fmt, kwargs in formats_info:
+        fmt_output_path = output_path.replace(".png", f".{fmt}")
+        try:
+            plt.savefig(fmt_output_path, **kwargs)
+            print(f"✓ 保存{fmt.upper()}格式: {fmt_output_path}")
+        except Exception as e:
+            print(f"✗ 保存{fmt.upper()}格式失败: {e}")
 
     plt.close()
 
@@ -419,7 +454,7 @@ def parse_args():
     opt = parser.parse_args()
 
     # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
-    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
+    # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
 
     return opt
 

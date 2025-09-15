@@ -205,13 +205,115 @@ def save_iou_results_to_csv(results: List, csv_file_path: str):
             csv_writer.writerow(row)
 
 
-def plot_iou_histogram(iou_data: List[float], output_path: str):
+def plot_iou_histogram_compare(
+    iou_data1: List[float],
+    iou_data2: List[float],
+    dataset1_name: str,
+    dataset2_name: str,
+    output_path: str,
+):
     """
-    绘制IoU分布直方图
+    绘制两个数据集的IoU分布对比直方图
 
     Args:
-        iou_data: IoU值列表
+        iou_data1: 第一个数据集的IoU值列表
+        iou_data2: 第二个数据集的IoU值列表
+        dataset1_name: 第一个数据集名称
+        dataset2_name: 第二个数据集名称
         output_path: 输出图像路径
+    """
+    if not iou_data1 and not iou_data2:
+        print("Warning: No IoU data available for plotting")
+        return
+
+    setup_plot_style()
+
+    plt.figure(figsize=(14, 10))  # 增加高度从8到10
+
+    # 获取希格雯配色
+    color_scheme = SIGEWINNEColorScheme()
+    colors = color_scheme.hex_colors()
+
+    # 设置直方图区间 (0-1, 分成50个区间)
+    bins = np.linspace(0, 1, 51)
+
+    # 绘制双数据集直方图
+    alpha = 0.7
+    if iou_data1:
+        plt.hist(
+            iou_data1,
+            bins=bins,
+            alpha=alpha,
+            color=colors[0],
+            label=dataset1_name,  # 去掉样本数量显示
+            edgecolor="black",
+            linewidth=0.5,
+        )
+
+    if iou_data2:
+        plt.hist(
+            iou_data2,
+            bins=bins,
+            alpha=alpha,
+            color=colors[2],
+            label=dataset2_name,  # 去掉样本数量显示
+            edgecolor="black",
+            linewidth=0.5,
+        )
+
+    # 计算并显示统计信息
+    stats_text = []
+
+    if iou_data1:
+        mean1 = np.mean(iou_data1)
+        std1 = np.std(iou_data1)
+        median1 = np.median(iou_data1)
+        plt.axvline(x=mean1, color=colors[0], linestyle="--", linewidth=2, alpha=0.8)
+        stats_text.append(
+            f"{dataset1_name}: μ={mean1:.3f}, σ={std1:.3f}, Med={median1:.3f}"
+        )
+
+    if iou_data2:
+        mean2 = np.mean(iou_data2)
+        std2 = np.std(iou_data2)
+        median2 = np.median(iou_data2)
+        plt.axvline(x=mean2, color=colors[2], linestyle="--", linewidth=2, alpha=0.8)
+        stats_text.append(
+            f"{dataset2_name}: μ={mean2:.3f}, σ={std2:.3f}, Med={median2:.3f}"
+        )
+
+    # 添加标题和标签
+    title = f"Adjacent Frame IoU Distribution Comparison"
+    if stats_text:
+        title += f"\n{' | '.join(stats_text)}"
+
+    # plt.title(title, fontsize=14)
+    plt.xlabel("IoU Value", fontsize=12)
+    plt.ylabel("Frequency", fontsize=12)
+    plt.grid(True, linestyle=":", alpha=0.5)
+    plt.legend(loc="upper right")
+
+    # 美化坐标轴
+    plt.gca().spines["top"].set_visible(False)
+    plt.gca().spines["right"].set_visible(False)
+
+    # 保存图像
+    plt.tight_layout()
+    plt.savefig(output_path, dpi=300, bbox_inches="tight")
+
+    # Save additional formats
+    for fmt in ["svg", "eps", "pdf"]:
+        fmt_output_path = output_path.replace(".png", f".{fmt}")
+        plt.savefig(fmt_output_path, format=fmt, bbox_inches="tight")
+
+    plt.close()
+
+    print(f"Comparison IoU distribution histogram saved to: {output_path}")
+
+
+def plot_iou_histogram(iou_data: List[float], output_path: str):
+    """
+    绘制IoU分布直方图 (单数据集版本，保持向后兼容)
     """
     if not iou_data:
         print("Warning: No IoU data available for plotting")
@@ -257,12 +359,12 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
     )
 
     # 添加标题和标签
-    plt.title(
-        f"Adjacent Frame IoU Distribution\n"
-        f"Mean: {mean_iou:.3f}, Std: {std_iou:.3f}, Median: {median_iou:.3f}\n"
-        f"Range: [{min_iou:.3f}, {max_iou:.3f}], Total Samples: {len(iou_data)}",
-        fontsize=14,
-    )
+    # plt.title(
+    #     f"Adjacent Frame IoU Distribution\n"
+    #     f"Mean: {mean_iou:.3f}, Std: {std_iou:.3f}, Median: {median_iou:.3f}\n"
+    #     f"Range: [{min_iou:.3f}, {max_iou:.3f}], Total Samples: {len(iou_data)}",
+    #     fontsize=14,
+    # )
     plt.xlabel("IoU Value", fontsize=12)
     plt.ylabel("Frequency", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7)
@@ -363,10 +465,10 @@ def plot_sequence_iou_bar_chart(
         label=f"Mean DanceTrack IoU: {mean_iou:.3f}",
     )
 
-    plt.title(
-        f"Top {len(valid_results)} Sequences by DanceTrack Adjacent Frame IoU",
-        fontsize=16,
-    )
+    # plt.title(
+    #     f"Top {len(valid_results)} Sequences by DanceTrack Adjacent Frame IoU",
+    #     fontsize=16,
+    # )
     plt.xlabel("Sequence Name", fontsize=12)
     plt.ylabel("DanceTrack IoU", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7, axis="y")
@@ -394,14 +496,32 @@ def parse_args():
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Calculate adjacent frame IoU statistics"
+        description="Calculate adjacent frame IoU statistics and compare datasets"
     )
 
     parser.add_argument(
         "--base-path",
         type=str,
         default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
-        help="Dataset base path",
+        help="First dataset base path",
+    )
+    parser.add_argument(
+        "--base-path2",
+        type=str,
+        default=r"/home/konghaomin/Datasets/SMD_LabelMe_Ori",
+        help="Second dataset base path for comparison (optional)",
+    )
+    parser.add_argument(
+        "--dataset1-name",
+        type=str,
+        default="MartimeTrack",
+        help="Name for the first dataset",
+    )
+    parser.add_argument(
+        "--dataset2-name",
+        type=str,
+        default="Singapore Maritime Dataset",
+        help="Name for the second dataset",
     )
     parser.add_argument(
         "--output-csv",
@@ -418,41 +538,26 @@ def parse_args():
 
     opt = parser.parse_args()
 
-    # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
-    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
+    # Default second dataset path if not provided
+    if opt.base_path2 is None:
+        opt.base_path2 = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
+
+    # Auto-generate dataset names if using defaults
+    if opt.dataset1_name == "Dataset1":
+        opt.dataset1_name = os.path.basename(opt.base_path)
+    if opt.dataset2_name == "Dataset2":
+        opt.dataset2_name = os.path.basename(opt.base_path2)
 
     return opt
 
 
-def main():
-    """主函数"""
-    args = parse_args()
+def process_dataset(base_path: str, black_list: List[str]) -> Tuple[List, List[float]]:
+    """
+    处理单个数据集
 
-    base_path = os.path.abspath(args.base_path)
-    output_csv = args.output_csv
-    black_list = args.black_list
-
-    # 输出目录设置
-    output_dir_path = os.path.dirname(os.path.abspath(__file__))
-    output_dir_path = os.path.join(output_dir_path, "output")
-    output_dir_path = os.path.join(output_dir_path, "iou_dancetrack")
-
-    # 获取数据集层级信息用于输出目录命名
-    level1 = os.path.basename(base_path)
-    level2 = os.path.basename(os.path.dirname(base_path))
-    output_dir_path = os.path.join(output_dir_path, level1, level2)
-
-    if not os.path.exists(output_dir_path):
-        os.makedirs(output_dir_path, exist_ok=True)
-
-    # 输出文件路径
-    output_csv_path = os.path.join(output_dir_path, output_csv)
-    iou_hist_path = os.path.join(output_dir_path, "adjacent_frame_iou_histogram.png")
-    seq_bar_path = os.path.join(output_dir_path, "sequence_iou_bar_chart.png")
-    summary_txt_path = os.path.join(output_dir_path, "iou_summary.txt")
-
-    start_time = time.time()
-
+    Returns:
+        tuple: (results, all_iou_values)
+    """
     # 获取视频目录列表
     video_dir_list = get_dataset_dir_list(base_path)
 
@@ -470,20 +575,7 @@ def main():
     print(f"Found {len(filtered_video_dirs)} videos after filtering blacklist")
 
     results = []
-    all_sequence_iou_values = []  # 收集所有序列的IoU值用于绘制分布图
-    sequence_avg_ious = []  # 收集每个序列的平均IoU用于柱状图
-
-    total_frames = 0
-    total_valid_pairs = 0
-    total_objects = 0
-
-    # DanceTrack式统计
-    total_dancetrack_iou_sum = 0.0
-    total_theoretical_pairs = 0
-
-    # 新增：用于加权平均计算的数据
-    weighted_iou_sum = 0.0  # 加权IoU总和
-    total_weighted_frames = 0  # 有效序列的总帧数
+    all_sequence_iou_values = []
 
     for video_dir_path in filtered_video_dirs:
         video_name = os.path.basename(video_dir_path)
@@ -501,10 +593,10 @@ def main():
                 calculate_sequence_adjacent_iou(sequence_dir_path)
             )
 
-            # 计算标准差 (需要重新计算获取所有IoU值)
+            # 计算标准差和收集IoU值
             std_iou = 0.0
             if valid_pairs > 1:
-                # 重新计算获取所有IoU值用于计算标准差
+                # 重新计算获取所有IoU值
                 annotation_directory = XAnyLabelingAnnotationDirectory()
                 annotation_directory.dir_path = sequence_dir_path
                 annotation_directory.walk_dir(recursive=False)
@@ -539,12 +631,12 @@ def main():
                         bbox2 = next_frame[obj_id]
                         iou = calculate_iou(bbox1, bbox2)
                         iou_values.append(iou)
-                        all_sequence_iou_values.append(iou)  # 添加到总的IoU列表
+                        all_sequence_iou_values.append(iou)
 
                 if iou_values:
                     std_iou = np.std(iou_values)
 
-            # 添加结果 [video_name, sequence_name, frame_count, object_count, valid_pairs, dancetrack_iou, original_avg_iou, std_iou]
+            # 添加结果
             results.append(
                 [
                     video_name,
@@ -558,123 +650,164 @@ def main():
                 ]
             )
 
-            if dancetrack_iou > 0:  # 只有有效的序列才添加到柱状图数据
-                sequence_avg_ious.append(
-                    (
-                        video_name,
-                        sequence_name,
-                        frame_count,
-                        object_count,
-                        valid_pairs,
-                        dancetrack_iou,
-                        original_avg_iou,
-                        std_iou,
-                    )
-                )
+    return results, all_sequence_iou_values
 
-                # 新增：累加加权IoU计算所需数据 (使用DanceTrack IoU)
-                weighted_iou_sum += dancetrack_iou * frame_count
-                total_weighted_frames += frame_count
 
-            # DanceTrack式全局统计
-            if object_count > 0 and frame_count > 1:
-                frame_intervals = frame_count - 1
-                theoretical_pairs = object_count * frame_intervals
-                total_dancetrack_iou_sum += dancetrack_iou * theoretical_pairs
-                total_theoretical_pairs += theoretical_pairs
+def main():
+    """主函数"""
+    args = parse_args()
 
-            total_frames += frame_count
-            total_valid_pairs += valid_pairs
-            total_objects += object_count
+    base_path1 = os.path.abspath(args.base_path)
+    base_path2 = os.path.abspath(args.base_path2) if args.base_path2 else None
+    dataset1_name = args.dataset1_name
+    dataset2_name = args.dataset2_name
+    output_csv = args.output_csv
+    black_list = args.black_list
 
-    # 计算全局DanceTrack IoU
-    global_dancetrack_iou = (
-        total_dancetrack_iou_sum / total_theoretical_pairs
-        if total_theoretical_pairs > 0
-        else 0.0
-    )
+    # 输出目录设置
+    output_dir_path = os.path.dirname(os.path.abspath(__file__))
+    output_dir_path = os.path.join(output_dir_path, "output")
+    output_dir_path = os.path.join(output_dir_path, "iou_dancetrack_compare")
 
-    # 计算按帧数加权的数据集IoU
-    dataset_weighted_iou = (
-        weighted_iou_sum / total_weighted_frames if total_weighted_frames > 0 else 0.0
-    )
+    if not os.path.exists(output_dir_path):
+        os.makedirs(output_dir_path, exist_ok=True)
+
+    start_time = time.time()
+
+    print("=" * 60)
+    print("Processing Dataset 1:", dataset1_name)
+    print("Path:", base_path1)
+    print("=" * 60)
+
+    results1, all_iou_values1 = process_dataset(base_path1, black_list)
+
+    results2, all_iou_values2 = [], []
+    if base_path2:
+        print("\n" + "=" * 60)
+        print("Processing Dataset 2:", dataset2_name)
+        print("Path:", base_path2)
+        print("=" * 60)
+
+        results2, all_iou_values2 = process_dataset(base_path2, black_list)
 
     # 保存CSV结果
-    save_iou_results_to_csv(results, output_csv_path)
+    csv1_path = os.path.join(output_dir_path, f"{dataset1_name}_{output_csv}")
+    save_iou_results_to_csv(results1, csv1_path)
 
-    # 绘制IoU分布直方图
-    if all_sequence_iou_values:
-        plot_iou_histogram(all_sequence_iou_values, iou_hist_path)
+    if results2:
+        csv2_path = os.path.join(output_dir_path, f"{dataset2_name}_{output_csv}")
+        save_iou_results_to_csv(results2, csv2_path)
 
-    # 绘制序列IoU柱状图
-    if sequence_avg_ious:
-        plot_sequence_iou_bar_chart(sequence_avg_ious, seq_bar_path)
+    # 绘制对比直方图
+    if base_path2 and (all_iou_values1 or all_iou_values2):
+        compare_hist_path = os.path.join(
+            output_dir_path, "iou_distribution_comparison.png"
+        )
+        plot_iou_histogram_compare(
+            all_iou_values1,
+            all_iou_values2,
+            dataset1_name,
+            dataset2_name,
+            compare_hist_path,
+        )
 
-    # 生成总结报告
-    valid_sequences = [r for r in results if r[5] > 0]  # 使用DanceTrack IoU判断
-    dancetrack_avg_iou = (
-        np.mean([r[5] for r in valid_sequences]) if valid_sequences else 0
-    )  # DanceTrack IoU
-    original_avg_iou = (
-        np.mean([r[6] for r in valid_sequences]) if valid_sequences else 0
-    )  # 原始平均IoU
-    dancetrack_std_iou = (
-        np.std([r[5] for r in valid_sequences]) if valid_sequences else 0
-    )
+    # 绘制单独的直方图
+    if all_iou_values1:
+        hist1_path = os.path.join(output_dir_path, f"{dataset1_name}_iou_histogram.png")
+        plot_iou_histogram(all_iou_values1, hist1_path)
 
+    if all_iou_values2:
+        hist2_path = os.path.join(output_dir_path, f"{dataset2_name}_iou_histogram.png")
+        plot_iou_histogram(all_iou_values2, hist2_path)
+
+    # 生成对比总结报告
     summary_lines = [
-        "=" * 60,
-        "Adjacent Frame IoU Statistics Summary (DanceTrack Style)",
-        "=" * 60,
-        f"Total Videos: {len(filtered_video_dirs)}",
-        f"Total Sequences: {len(results)}",
-        f"Valid Sequences (DanceTrack IoU > 0): {len(valid_sequences)}",
-        f"Total Frames: {total_frames}",
-        f"Total Objects: {total_objects}",
-        f"Total Valid IoU Pairs: {total_valid_pairs}",
-        f"Total Theoretical Pairs: {total_theoretical_pairs}",
-        "=" * 60,
-        "DanceTrack IoU Formula: U = 1/(N*(T-1)) * ∑∑IoU",
-        f"Global DanceTrack IoU: {global_dancetrack_iou:.4f}",
-        f"Sequence Average DanceTrack IoU: {dancetrack_avg_iou:.4f}",
-        f"DanceTrack IoU Standard Deviation: {dancetrack_std_iou:.4f}",
-        "=" * 60,
-        "Comparison with Original Method:",
-        f"Original Average IoU (Simple Mean): {original_avg_iou:.4f}",
-        f"Frame-Weighted DanceTrack IoU: {dataset_weighted_iou:.4f}",
-        f"Difference (DanceTrack - Original): {dancetrack_avg_iou - original_avg_iou:.4f}",
-        "=" * 60,
+        "=" * 80,
+        "Dataset Comparison Report - Adjacent Frame IoU Statistics",
+        "=" * 80,
     ]
 
-    if all_sequence_iou_values:
+    # Dataset 1 statistics
+    if results1:
+        valid_sequences1 = [r for r in results1 if r[5] > 0]
+        dancetrack_avg1 = (
+            np.mean([r[5] for r in valid_sequences1]) if valid_sequences1 else 0
+        )
+
         summary_lines.extend(
             [
-                f"All IoU Values Statistics:",
-                f"  Total IoU Samples: {len(all_sequence_iou_values)}",
-                f"  Mean: {np.mean(all_sequence_iou_values):.4f}",
-                f"  Std: {np.std(all_sequence_iou_values):.4f}",
-                f"  Median: {np.median(all_sequence_iou_values):.4f}",
-                f"  Min: {np.min(all_sequence_iou_values):.4f}",
-                f"  Max: {np.max(all_sequence_iou_values):.4f}",
-                "=" * 60,
+                f"Dataset 1: {dataset1_name}",
+                f"  Path: {base_path1}",
+                f"  Total Sequences: {len(results1)}",
+                f"  Valid Sequences: {len(valid_sequences1)}",
+                f"  IoU Samples: {len(all_iou_values1)}",
+                f"  DanceTrack IoU: {dancetrack_avg1:.4f}",
             ]
         )
 
+        if all_iou_values1:
+            summary_lines.extend(
+                [
+                    f"  Mean IoU: {np.mean(all_iou_values1):.4f}",
+                    f"  Std IoU: {np.std(all_iou_values1):.4f}",
+                    f"  Median IoU: {np.median(all_iou_values1):.4f}",
+                ]
+            )
+
+    # Dataset 2 statistics
+    if results2:
+        valid_sequences2 = [r for r in results2 if r[5] > 0]
+        dancetrack_avg2 = (
+            np.mean([r[5] for r in valid_sequences2]) if valid_sequences2 else 0
+        )
+
+        summary_lines.extend(
+            [
+                "",
+                f"Dataset 2: {dataset2_name}",
+                f"  Path: {base_path2}",
+                f"  Total Sequences: {len(results2)}",
+                f"  Valid Sequences: {len(valid_sequences2)}",
+                f"  IoU Samples: {len(all_iou_values2)}",
+                f"  DanceTrack IoU: {dancetrack_avg2:.4f}",
+            ]
+        )
+
+        if all_iou_values2:
+            summary_lines.extend(
+                [
+                    f"  Mean IoU: {np.mean(all_iou_values2):.4f}",
+                    f"  Std IoU: {np.std(all_iou_values2):.4f}",
+                    f"  Median IoU: {np.median(all_iou_values2):.4f}",
+                ]
+            )
+
+        # Comparison
+        if results1 and all_iou_values1 and all_iou_values2:
+            diff_dancetrack = dancetrack_avg1 - dancetrack_avg2
+            diff_mean = np.mean(all_iou_values1) - np.mean(all_iou_values2)
+
+            summary_lines.extend(
+                [
+                    "",
+                    "Comparison (Dataset1 - Dataset2):",
+                    f"  DanceTrack IoU Difference: {diff_dancetrack:+.4f}",
+                    f"  Mean IoU Difference: {diff_mean:+.4f}",
+                ]
+            )
+
+    summary_lines.append("=" * 80)
     summary_text = "\n".join(summary_lines)
     print("\n" + summary_text)
 
     # 保存总结到文件
+    summary_txt_path = os.path.join(output_dir_path, "comparison_summary.txt")
     with open(summary_txt_path, "w", encoding="utf-8") as f:
         f.write(summary_text)
 
     end_time = time.time()
-
-    print(f"CSV results saved to: {output_csv_path}")
-    print(f"IoU histogram saved to: {iou_hist_path}")
-    print(f"Sequence bar chart saved to: {seq_bar_path}")
-    print(f"Summary saved to: {summary_txt_path}")
-    print(f"Global DanceTrack IoU: {global_dancetrack_iou:.4f}")
-    print(f"Processing completed in {end_time - start_time:.2f} seconds")
+    print(f"\nProcessing completed in {end_time - start_time:.2f} seconds")
+    print(f"Results saved to: {output_dir_path}")
 
 
 if __name__ == "__main__":
