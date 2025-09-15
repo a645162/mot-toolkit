@@ -5,6 +5,9 @@ import numpy as np
 from typing import Optional, Tuple
 import warnings
 
+# 新增导入
+from matplotlib import font_manager
+
 warnings.filterwarnings("ignore")
 
 # 导入配色方案
@@ -64,7 +67,18 @@ def recursive_expand_differences(
 def setup_plot_style():
     """设置绘图样式"""
     plt.style.use("default")
-    plt.rcParams["font.sans-serif"] = ["Microsoft YaHei", "SimHei", "Arial"]
+
+    # ==== 新增：注册自定义 Times New Roman 字体 ====
+    custom_font_path = os.path.expanduser("./Resources/Fonts/Times New Roman.ttf")
+    if os.path.exists(custom_font_path):
+        font_manager.fontManager.addfont(custom_font_path)
+        plt.rc("font", family="Times New Roman")
+        print(f"✓ 已注册自定义字体: {custom_font_path}")
+    else:
+        # 如果找不到自定义字体，仍然尝试系统字体
+        plt.rc("font", family="Times New Roman")
+        print(f"✗ 未找到自定义字体文件: {custom_font_path}，尝试系统字体")
+
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["figure.figsize"] = (10, 8)
     plt.rcParams["figure.dpi"] = 100
@@ -590,4 +604,5 @@ if __name__ == "__main__":
     main()
 
     # 取消注释下面这行来运行自定义图表演示
+    # demo_custom_chart()
     # demo_custom_chart()

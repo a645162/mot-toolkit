@@ -42,7 +42,9 @@ def parse_args():
         COCO-VID format."
     )
 
-    default_path = r"/home/konghaomin/Datasets/MaritimeTrack_Full_Same_73/DanceTrack/MoTRv2/DanceTrack"
+    default_path = (
+        r"/home/konghaomin/Datasets/MaritimeTrack_Full_20250322_Det/DanceTrack"
+    )
 
     parser.add_argument(
         "-i",
