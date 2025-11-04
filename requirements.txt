@@ -11,7 +11,7 @@ tqdm
 progressbar2
 
 # Core Data
-numpy<2.0.0
+numpy
 opencv-python
 
 # File

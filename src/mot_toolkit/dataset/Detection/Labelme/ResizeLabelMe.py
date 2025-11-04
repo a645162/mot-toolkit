@@ -4,8 +4,8 @@ from PIL import Image
 from tqdm import tqdm
 from multiprocessing import Pool, Manager, cpu_count
 
-source_dir_path = r"F:\Datasets\Sea-MOT-Datasets\SeaDronesSee\SeaDronesSee_MOT_LabelMe\train"
-target_dir_path = r"F:\Datasets\Sea-MOT-Datasets\SeaDronesSee\SeaDronesSee_MOT_LabelMe_1080p\train"
+source_dir_path = r"/mnt/d/Datasets/Sea-MOT-Datasets/SeaDronesSee/SeaDronesSee_MOT_LabelMe/"
+target_dir_path = r"/mnt/d/Datasets/Sea-MOT-Datasets/SeaDronesSee/SeaDronesSee_MOT_LabelMe_1080p/"
 TARGET_WIDTH = 1920
 
 def process_one(args):
