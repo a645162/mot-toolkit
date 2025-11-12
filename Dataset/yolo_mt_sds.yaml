@@ -1,0 +1,8 @@
+path: /home/konghaomin/Datasets/MaritimeTrack_Full_20250413_SDS73/YOLO
+#path: /home/konghaomin/Datasets/SeaDronesSee/SeaDronesSee_MOT_LabelMe_1080p_73/YOLO
+
+train: images/train
+val: images/val
+# Classes
+names:
+  0: Object

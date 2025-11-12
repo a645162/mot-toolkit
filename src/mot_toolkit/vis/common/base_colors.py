@@ -56,6 +56,100 @@ class BaseColorScheme(ABC):
         return brightness
 
     @staticmethod
+    def _calculate_color_brightness_rgb(rgb_color: Tuple[int, int, int]) -> float:
+        """计算RGB颜色的亮度值 (0-255)
+
+        参数:
+            rgb_color: RGB颜色元组，如 (255, 0, 0)
+
+        返回:
+            亮度值，使用感知亮度公式：0.299*R + 0.587*G + 0.114*B
+        """
+        r, g, b = rgb_color
+        # 使用感知亮度公式
+        brightness = 0.299 * r + 0.587 * g + 0.114 * b
+        return brightness
+
+    def get_sorted_colors_by_brightness(
+        self, reverse: bool = False, use_expanded: bool = False, multiplier: int = 3
+    ) -> List[Tuple[int, int, int]]:
+        """获取按亮度排序的颜色列表
+
+        参数:
+            reverse: 是否反向排序 (True: 从亮到暗, False: 从暗到亮)
+            use_expanded: 是否使用扩展后的颜色集
+            multiplier: 扩展倍数，仅在use_expanded=True时有效
+
+        返回:
+            按亮度排序的RGB颜色列表
+        """
+        # 获取颜色集
+        if use_expanded:
+            colors_to_sort = self.expand_colors(multiplier=multiplier)
+        else:
+            colors_to_sort = list(self.colors)
+
+        # 计算每个颜色的亮度并存储
+        colors_with_brightness = []
+        for rgb_color in colors_to_sort:
+            brightness = self._calculate_color_brightness_rgb(rgb_color)
+            colors_with_brightness.append((rgb_color, brightness))
+
+        # 按亮度排序
+        colors_with_brightness.sort(key=lambda x: x[1], reverse=reverse)
+
+        # 返回排序后的颜色列表（不包含亮度值）
+        return [color for color, _ in colors_with_brightness]
+
+    def get_sorted_hex_colors_by_brightness(
+        self, reverse: bool = False, use_expanded: bool = False, multiplier: int = 3
+    ) -> List[str]:
+        """获取按亮度排序的HEX颜色列表
+
+        参数:
+            reverse: 是否反向排序 (True: 从亮到暗, False: 从暗到亮)
+            use_expanded: 是否使用扩展后的颜色集
+            multiplier: 扩展倍数，仅在use_expanded=True时有效
+
+        返回:
+            按亮度排序的HEX颜色列表
+        """
+        sorted_rgb = self.get_sorted_colors_by_brightness(
+            reverse=reverse, use_expanded=use_expanded, multiplier=multiplier
+        )
+        return [rgb_to_hex(r, g, b) for r, g, b in sorted_rgb]
+
+    def get_sorted_colors_with_brightness(
+        self, reverse: bool = False, use_expanded: bool = False, multiplier: int = 3
+    ) -> List[Tuple[Tuple[int, int, int], float]]:
+        """获取按亮度排序的颜色列表，同时返回亮度值
+
+        参数:
+            reverse: 是否反向排序 (True: 从亮到暗, False: 从暗到亮)
+            use_expanded: 是否使用扩展后的颜色集
+            multiplier: 扩展倍数，仅在use_expanded=True时有效
+
+        返回:
+            元组列表，每个元组包含 (RGB颜色, 亮度值)
+        """
+        # 获取颜色集
+        if use_expanded:
+            colors_to_sort = self.expand_colors(multiplier=multiplier)
+        else:
+            colors_to_sort = list(self.colors)
+
+        # 计算每个颜色的亮度并存储
+        colors_with_brightness = []
+        for rgb_color in colors_to_sort:
+            brightness = self._calculate_color_brightness_rgb(rgb_color)
+            colors_with_brightness.append((rgb_color, brightness))
+
+        # 按亮度排序
+        colors_with_brightness.sort(key=lambda x: x[1], reverse=reverse)
+
+        return colors_with_brightness
+
+    @staticmethod
     def get_smart_colors_from_schemes(
         count: int,
         color_schemes: List["BaseColorScheme"],

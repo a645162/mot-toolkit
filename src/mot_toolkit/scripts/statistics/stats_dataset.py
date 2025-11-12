@@ -15,12 +15,36 @@ from typing import List, Dict
 import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import font_manager
 
 from mot_toolkit.dataset.utils.dataset_dir import get_dataset_dir_list
 from mot_toolkit.datatype.dataset.object_classfication import ObjectClassConfigure
 from mot_toolkit.datatype.dataset.object_property import ObjectSizeType
 from mot_toolkit.datatype.xanylabeling import XAnyLabelingAnnotationDirectory
 from mot_toolkit.vis.scheme.genshin.sigewinne_colors import SIGEWINNEColorScheme
+
+
+def setup_plot_style():
+    """设置绘图样式 - 模仿气泡图的Times字体设置"""
+    plt.style.use("default")
+    custom_font_path = os.path.expanduser("./Resources/Fonts/Times New Roman.ttf")
+    if os.path.exists(custom_font_path):
+        font_manager.fontManager.addfont(custom_font_path)
+        plt.rc("font", family="Times New Roman")
+        print(f"✓ 已注册自定义字体: {custom_font_path}")
+    else:
+        plt.rc("font", family="Times New Roman")
+        print(f"✗ 未找到自定义字体文件: {custom_font_path}，尝试系统字体")
+    plt.rcParams["axes.unicode_minus"] = False
+    plt.rcParams["figure.figsize"] = (10, 8)
+    plt.rcParams["figure.dpi"] = 100
+    # 字体大小设置
+    plt.rcParams["font.size"] = 16
+    plt.rcParams["axes.labelsize"] = 18
+    plt.rcParams["axes.titlesize"] = 20
+    plt.rcParams["xtick.labelsize"] = 15
+    plt.rcParams["ytick.labelsize"] = 15
+    plt.rcParams["legend.fontsize"] = 15
 
 
 def walk_dir_get_dir_list(dir_path: str) -> List[str]:
@@ -486,6 +510,9 @@ def plot_movement_histogram(
         output_path: 输出图像的路径
         ocpmd_threshold: 静止/移动目标的阈值
     """
+    # 设置绘图样式
+    setup_plot_style()
+
     # 提取移动数据值
     movement_values = list(movement_data.values())
 
@@ -497,39 +524,63 @@ def plot_movement_histogram(
     # 创建图形
     plt.figure(figsize=(12, 8))
 
-    # 获取希格雯配色
+    # 获取希格雯配色方案
     color_scheme = SIGEWINNEColorScheme()
-    colors = color_scheme.hex_colors()
 
-    # 计算数据的最大值，以确定直方图范围
+    # 按亮度排序获取颜色（从浅到深，反序）
+    sorted_colors_rgb = color_scheme.get_sorted_colors_by_brightness(reverse=True)
+    sorted_colors = [f"#{r:02x}{g:02x}{b:02x}".upper() for r, g, b in sorted_colors_rgb]
+
+    # 计算数据的最大值和最小值
     max_value = max(movement_values)
+    min_value = min(movement_values)
 
     # 设置直方图区间，从0到数据最大值，分成100个区间
-    # 如果最大值小于1，则使用更精细的区间
     if max_value < 1:
         bins = np.linspace(0, 1, 101)
     else:
-        # 向上取整到最接近的整数，再加1确保包含所有数据
         max_bin = math.ceil(max_value) + 0.5
         bins = np.linspace(0, max_bin, 101)
 
-    # 绘制直方图 - 使用交替颜色
+    # 绘制直方图
     n, bins, patches = plt.hist(
         movement_values, bins=bins, alpha=0.7, edgecolor="black"
     )
 
-    # 为每个柱子分配交替颜色
+    # 定义固定的区间边界
+    # 区间1: [0, 0.1)        - 颜色1（浅色）
+    # 区间2: [0.1, 0.5)      - 颜色2
+    # 区间3: [0.5, 1.0)      - 颜色3
+    # 区间4: [1.0, 1.5)      - 颜色4
+    # 区间5: [1.5, +∞)       - 颜色5（深色）
+    interval_boundaries = [0, 0.1, 0.5, 1.0, 1.5, float("inf")]
+
+    # 为每个柱子分配颜色：根据bin的中心值所在的区间
     for i, patch in enumerate(patches):
-        patch.set_facecolor(colors[i % len(colors)])
+        # 获取当前bin的中心值
+        bin_center = (bins[i] + bins[i + 1]) / 2
+
+        # 判断bin_center属于哪个区间
+        color_idx = 0
+        for j in range(len(interval_boundaries) - 1):
+            if interval_boundaries[j] <= bin_center < interval_boundaries[j + 1]:
+                color_idx = j
+                break
+
+        # 确保索引不越界
+        color_idx = min(color_idx, len(sorted_colors) - 1)
+        color_idx = max(color_idx, 0)
+
+        patch.set_facecolor(sorted_colors[color_idx])
 
     # 标记静止/移动阈值 - 使用大红色和更粗的线
     plt.axvline(
         x=ocpmd_threshold,
-        color="red",  # 改为大红色
+        color="red",
         linestyle="--",
-        linewidth=3,  # 增加线宽从2到3
+        linewidth=3,
         label=f"Static/Moving Threshold ({ocpmd_threshold})",
-        alpha=0.9,  # 增加透明度使线条更明显
+        alpha=0.9,
     )
 
     # 计算静止和移动的比例
@@ -539,7 +590,6 @@ def plot_movement_histogram(
     moving_percent = moving_count / len(movement_values) * 100 if movement_values else 0
 
     # 添加数据范围信息
-    min_value = min(movement_values)
     avg_value = sum(movement_values) / len(movement_values)
 
     # 添加标题和标签 - 使用英文替代中文
@@ -561,7 +611,6 @@ def plot_movement_histogram(
     plt.xlabel("Normalized Cumulative Movement Distance", fontsize=12)
     plt.ylabel("Object Count", fontsize=12)
     plt.grid(True, linestyle="--", alpha=0.7)
-    # 恢复图例显示，修复线条长度不对称问题
     plt.legend(handlelength=2.0, handletextpad=0.8)
 
     # 保存图像
@@ -579,6 +628,21 @@ def plot_movement_histogram(
 
     print(f"已保存移动特性分布直方图到: {output_path}")
     print(f"移动距离范围: [{min_value:.4f}, {max_value:.4f}], 平均: {avg_value:.4f}")
+    print(
+        f"使用了 {len(sorted_colors)} 种颜色，划分为 {len(interval_boundaries) - 1} 个固定区间"
+    )
+
+    # 打印区间信息
+    print("颜色区间划分:")
+    interval_labels = [
+        "[0, 0.1) (静止目标区间)",
+        "[0.1, 0.5)",
+        "[0.5, 1.0)",
+        "[1.0, 1.5)",
+        "[1.5, +∞)",
+    ]
+    for j in range(min(len(interval_labels), len(sorted_colors))):
+        print(f"\t区间 {j+1}: {interval_labels[j]} -> 颜色 {sorted_colors[j]}")
 
 
 def output_summary(
@@ -802,6 +866,9 @@ def plot_sequence_moving_avg_distance(
 
     moving_distances = [data[2] for data in sequence_data]
 
+    # 设置绘图样式
+    setup_plot_style()
+
     plt.figure(figsize=(20, 10))
 
     # 获取希格雯配色
@@ -940,7 +1007,7 @@ def parse_args():
     # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Fix_20250509"
     # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
     # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
-    # opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
+    opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
 
     return opt
 

@@ -230,36 +230,69 @@ def plot_iou_histogram_compare(
 
     plt.figure(figsize=(14, 10))  # 增加高度从8到10
 
-    # 获取希格雯配色
+    # 获取希格雯配色方案（从深到浅）
     color_scheme = SIGEWINNEColorScheme()
-    colors = color_scheme.hex_colors()
+    sorted_colors_rgb = color_scheme.get_sorted_colors_by_brightness(reverse=False)
+    sorted_colors = [f"#{r:02x}{g:02x}{b:02x}".upper() for r, g, b in sorted_colors_rgb]
 
-    # 设置直方图区间 (0-1, 分成50个区间)
-    bins = np.linspace(0, 1, 51)
+    # 设置直方图区间 (0-1, 分成100个区间)
+    bins = np.linspace(0, 1, 101)
+
+    # 定义IoU区间边界（从高到低）
+    # 区间1: [0.9, 1.0]   - 颜色1（深色） - 极高重叠
+    # 区间2: [0.8, 0.9)   - 颜色2
+    # 区间3: [0.7, 0.8)   - 颜色3
+    # 区间4: [0.6, 0.7)   - 颜色4
+    # 区间5: [0, 0.6)     - 颜色5（浅色） - 低重叠
+    interval_boundaries = [0, 0.8, 0.85, 0.9, 0.95, 1.0]
 
     # 绘制双数据集直方图
     alpha = 0.7
     if iou_data1:
-        plt.hist(
+        n1, bins1, patches1 = plt.hist(
             iou_data1,
             bins=bins,
             alpha=alpha,
-            color=colors[0],
-            label=dataset1_name,  # 去掉样本数量显示
+            label=dataset1_name,
             edgecolor="black",
             linewidth=0.5,
         )
 
+        # 为第一个数据集的柱子分配颜色
+        for i, patch in enumerate(patches1):
+            bin_center = (bins[i] + bins[i + 1]) / 2
+            color_idx = 0
+            for j in range(len(interval_boundaries) - 1):
+                if interval_boundaries[j] <= bin_center < interval_boundaries[j + 1]:
+                    color_idx = j
+                    break
+            if bin_center >= interval_boundaries[-1]:
+                color_idx = len(interval_boundaries) - 2
+            color_idx = min(color_idx, len(sorted_colors) - 1)
+            patch.set_facecolor(sorted_colors[color_idx])
+
     if iou_data2:
-        plt.hist(
+        n2, bins2, patches2 = plt.hist(
             iou_data2,
             bins=bins,
             alpha=alpha,
-            color=colors[2],
-            label=dataset2_name,  # 去掉样本数量显示
+            label=dataset2_name,
             edgecolor="black",
             linewidth=0.5,
         )
+
+        # 为第二个数据集的柱子分配颜色
+        for i, patch in enumerate(patches2):
+            bin_center = (bins[i] + bins[i + 1]) / 2
+            color_idx = 0
+            for j in range(len(interval_boundaries) - 1):
+                if interval_boundaries[j] <= bin_center < interval_boundaries[j + 1]:
+                    color_idx = j
+                    break
+            if bin_center >= interval_boundaries[-1]:
+                color_idx = len(interval_boundaries) - 2
+            color_idx = min(color_idx, len(sorted_colors) - 1)
+            patch.set_facecolor(sorted_colors[color_idx])
 
     # 计算并显示统计信息
     stats_text = []
@@ -268,7 +301,7 @@ def plot_iou_histogram_compare(
         mean1 = np.mean(iou_data1)
         std1 = np.std(iou_data1)
         median1 = np.median(iou_data1)
-        plt.axvline(x=mean1, color=colors[0], linestyle="--", linewidth=2, alpha=0.8)
+        plt.axvline(x=mean1, color="red", linestyle="--", linewidth=2, alpha=0.8)
         stats_text.append(
             f"{dataset1_name}: μ={mean1:.3f}, σ={std1:.3f}, Med={median1:.3f}"
         )
@@ -277,7 +310,7 @@ def plot_iou_histogram_compare(
         mean2 = np.mean(iou_data2)
         std2 = np.std(iou_data2)
         median2 = np.median(iou_data2)
-        plt.axvline(x=mean2, color=colors[2], linestyle="--", linewidth=2, alpha=0.8)
+        plt.axvline(x=mean2, color="red", linestyle="--", linewidth=2, alpha=0.8)
         stats_text.append(
             f"{dataset2_name}: μ={mean2:.3f}, σ={std2:.3f}, Med={median2:.3f}"
         )
@@ -323,17 +356,37 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
 
     plt.figure(figsize=(12, 8))
 
-    # 获取希格雯配色
+    # 获取希格雯配色方案（从深到浅）
     color_scheme = SIGEWINNEColorScheme()
-    colors = color_scheme.hex_colors()
+    sorted_colors_rgb = color_scheme.get_sorted_colors_by_brightness(reverse=False)
+    sorted_colors = [f"#{r:02x}{g:02x}{b:02x}".upper() for r, g, b in sorted_colors_rgb]
 
-    # 设置直方图区间 (0-1, 分成50个区间)
-    bins = np.linspace(0, 1, 51)
+    # 设置直方图区间 (0-1, 分成100个区间)
+    bins = np.linspace(0, 1, 101)
+
+    # 定义IoU区间边界（从高到低）- 与对比图保持一致
+    # 区间1: [0.95, 1.0]  - 颜色1（深色） - 极高重叠
+    # 区间2: [0.9, 0.95)  - 颜色2
+    # 区间3: [0.85, 0.9)  - 颜色3
+    # 区间4: [0.8, 0.85)  - 颜色4
+    # 区间5: [0, 0.8)     - 颜色5（浅色） - 低重叠
+    interval_boundaries = [0, 0.8, 0.85, 0.9, 0.95, 1.0]
 
     # 绘制直方图
-    n, bins, patches = plt.hist(
-        iou_data, bins=bins, alpha=0.7, color=colors[1], edgecolor="black"
-    )
+    n, bins_edges, patches = plt.hist(iou_data, bins=bins, alpha=0.7, edgecolor="black")
+
+    # 为每个柱子分配颜色
+    for i, patch in enumerate(patches):
+        bin_center = (bins[i] + bins[i + 1]) / 2
+        color_idx = 0
+        for j in range(len(interval_boundaries) - 1):
+            if interval_boundaries[j] <= bin_center < interval_boundaries[j + 1]:
+                color_idx = j
+                break
+        if bin_center >= interval_boundaries[-1]:
+            color_idx = len(interval_boundaries) - 2
+        color_idx = min(color_idx, len(sorted_colors) - 1)
+        patch.set_facecolor(sorted_colors[color_idx])
 
     # 计算统计信息
     mean_iou = np.mean(iou_data)
@@ -345,17 +398,11 @@ def plot_iou_histogram(iou_data: List[float], output_path: str):
     # 添加统计线
     plt.axvline(
         x=mean_iou,
-        color=colors[0],
+        color="red",
         linestyle="--",
-        linewidth=2,
+        linewidth=3,
         label=f"Mean: {mean_iou:.3f}",
-    )
-    plt.axvline(
-        x=median_iou,
-        color=colors[3],
-        linestyle="--",
-        linewidth=2,
-        label=f"Median: {median_iou:.3f}",
+        alpha=0.9,
     )
 
     # 添加标题和标签

@@ -218,8 +218,8 @@ def main():
     spilt_seq_by_ratio = SpiltSeqByRatio()
 
     spilt_seq_by_ratio.output_dataset_by_ratio(
-        base_dir=r"H:\Datasets\MaritimeTrackAllData\LabelMe",
-        output_dir=r"H:\Datasets\MaritimeTrackAllData\Spilt\MaritimeTrack_Full_Same",
+        base_dir=r"/home/konghaomin/Datasets/SeaDronesSee/SeaDronesSee_MOT_LabelMe_1080p",
+        output_dir=r"/home/konghaomin/Datasets/SeaDronesSee/SeaDronesSee_MOT_LabelMe_1080p_73",
     )
 
 

@@ -2,8 +2,8 @@ import os
 import shutil
 
 profile_name = "val"
-dir_path = "/mnt/d/Datasets/MaritimeTrack_Full/DanceTrack"
-target_dir = "/mnt/h/Datasets/MaritimeTrack_Full/YOLO"
+dir_path = "/home/konghaomin/Datasets/MaritimeTrack_Full_20250413_SDS73/DanceTrack"
+target_dir = "/home/konghaomin/Datasets/MaritimeTrack_Full_20250413_SDS73/YOLO"
 
 dir_path = os.path.join(dir_path, profile_name)
 
