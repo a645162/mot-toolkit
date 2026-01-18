@@ -549,7 +549,8 @@ def parse_args():
     parser.add_argument(
         "--base-path",
         type=str,
-        default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
+        default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe_Ocean",
+        # default=r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe",
         help="First dataset base path",
     )
     parser.add_argument(

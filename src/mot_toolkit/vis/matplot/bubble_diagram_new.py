@@ -7,6 +7,7 @@ import warnings
 
 # 新增导入
 from matplotlib import font_manager
+import matplotlib.patches as mpatches
 
 warnings.filterwarnings("ignore")
 
@@ -178,6 +179,7 @@ def create_bubble_chart(
     y_column: Optional[str] = None,
     size_column: str = "HOTA",
     method_column: str = "Method",
+    highlight_method: Optional[str] = "P-MOTIP",  # 仅为此方法绘制指引线，None表示不高亮任何点
     title: Optional[str] = None,
     save_prefix: Optional[str] = None,
     output_dir: Optional[str] = None,
@@ -198,6 +200,7 @@ def create_bubble_chart(
         y_column: y轴列名
         size_column: 气泡大小列名（固定为HOTA）
         method_column: 方法名称列名
+        highlight_method: 仅为此方法绘制指引线，None表示不高亮任何点
         title: 图表标题
         save_prefix: 保存文件名前缀
         output_dir: 输出目录
@@ -332,7 +335,7 @@ def create_bubble_chart(
             alpha=alpha,
             edgecolors=edge_color,
             linewidth=2.5 if method == "SA-MOTIP" else 1.5,
-            label=method,
+            label=None,  # 不使用每点label，改用自定义图例以避免重复/重叠
         )
 
         scatter_data.append(
@@ -346,35 +349,35 @@ def create_bubble_chart(
             }
         )
 
-        # ==== 标签避免重叠并添加箭头 ====
-        if show_labels:
-            label_color = "#FF0000" if method == "SA-MOTIP" else "black"
-            # 根据气泡半径动态调整偏移量（sqrt是因为matplotlib的s参数是面积）
+        # ==== 只为 highlight_method 添加注释箭头，其他方法仅通过图例展示 ====
+        if show_labels and highlight_method is not None and method == highlight_method:
+            label_color = "#FF0000" if "MOTIP" in method or method == "SA-MOTIP" else "black"
             radius = np.sqrt(bubble_size / np.pi)
-            offset_y = int(radius * 0.8) + 20  # 0.8倍半径+20像素，保证不重叠
-            offset_x = 30 if i % 2 == 0 else -30
+            # 简单左右偏移，避免复杂自动布局导致截断
+            offset_y = int(radius * 0.8) + 24
+            offset_x = 40 if i % 2 == 0 else -40
             ax.annotate(
                 method,
-                xy=(x_val, y_val),  # 圆心
-                xytext=(offset_x, offset_y),  # 标签偏移
+                xy=(x_val, y_val),
+                xytext=(offset_x, offset_y),
                 textcoords="offset points",
-                fontsize=17,
+                fontsize=20,
                 ha="center",
                 va="bottom",
                 color=label_color,
                 bbox=dict(
-                    boxstyle="round,pad=0.3",
+                    boxstyle="round,pad=0.35",
                     facecolor="white",
-                    edgecolor=label_color if method == "SA-MOTIP" else "gray",
-                    linewidth=2 if method == "SA-MOTIP" else 1,
-                    alpha=0.7,
+                    edgecolor=label_color,
+                    linewidth=2,
+                    alpha=0.95,
                 ),
                 arrowprops=dict(
                     arrowstyle="->",
                     color=label_color,
-                    lw=2 if method == "SA-MOTIP" else 1,
+                    lw=2,
                     shrinkA=5,
-                    shrinkB=5,
+                    shrinkB=6,
                     connectionstyle="arc3,rad=0.2" if i % 2 == 0 else "arc3,rad=-0.2",
                 ),
             )
@@ -436,7 +439,22 @@ def create_bubble_chart(
     #         handlelength=1.5,  # 图例标记长度
     #     )
 
-    # 添加气泡大小说明 - 使用实际的HOTA值范围
+    # 构建方法颜色图例（所有方法），放在右侧
+    method_handles = []
+    for m in methods:
+        method_handles.append(mpatches.Patch(facecolor=color_map[m], edgecolor="black", label=str(m)))
+    if method_handles:
+        legend1 = ax.legend(
+            handles=method_handles,
+            loc="center left",
+            bbox_to_anchor=(1.02, 0.6),
+            title="Methods",
+            frameon=True,
+            fancybox=True,
+        )
+        ax.add_artist(legend1)
+
+    # 添加气泡大小说明 - 使用实际的HOTA值范围（右侧下方）
     if data[size_column].nunique() > 1:
         # 选择有代表性的HOTA值来展示大小
         legend_hota_values = [min_size, (min_size + max_size) / 2, max_size]
@@ -464,25 +482,15 @@ def create_bubble_chart(
                 )
             )
 
-        # legend2 = ax.legend(
-        #     handles=size_legend_elements,
-        #     loc="center left",
-        #     bbox_to_anchor=(1.02, 0.25),  # 从0.3调整到0.25，增加与上方图例的距离
-        #     title="Bubble Size (HOTA)",
-        #     title_fontsize=11,
-        #     fontsize=10,
-        #     frameon=True,
-        #     fancybox=True,
-        #     shadow=False,
-        #     borderaxespad=0,  # 减少边框填充
-        #     columnspacing=1.0,  # 列间距
-        #     handletextpad=0.5,  # 图例标记和文本间距
-        #     handlelength=1.5,  # 图例标记长度
-        # )
-
-        # # 同时显示两个图例
-        # if unique_handles:
-        #     ax.add_artist(legend1)
+        # 直接创建图例，不将结果赋值给未使用变量，避免 Pylance 警告
+        ax.legend(
+            handles=size_legend_elements,
+            loc="center left",
+            bbox_to_anchor=(1.02, 0.25),
+            title="Bubble Size (HOTA)",
+            frameon=True,
+            fancybox=True,
+        )
 
     # 美化坐标轴
     ax.spines["top"].set_visible(False)
