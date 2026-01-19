@@ -652,6 +652,7 @@ def output_summary(
     ocpmd_threshold: float,
     total_static_bbox_count: int,
     total_bbox_count: int,
+    max_frame_info: Dict,  # 新增参数：最长帧数信息
     output_txt_path: str = None,
 ) -> str:
     """
@@ -664,6 +665,7 @@ def output_summary(
         ocpmd_threshold: 静止目标阈值
         total_static_bbox_count: 静止目标BBox总数
         total_bbox_count: BBox总数
+        max_frame_info: 最长帧数信息字典
         output_txt_path: 输出文本文件路径，如果为None则不保存
 
     Returns:
@@ -726,6 +728,10 @@ def output_summary(
     summary_lines.append("=" * 60)
     summary_lines.append(f"总序列数: {valid_sequences}")
     summary_lines.append(f"总帧数: {total_frame_count}")
+    summary_lines.append(f"最长序列帧数: {max_frame_info['max_frames']}")
+    summary_lines.append(
+        f"最长序列: {max_frame_info['video_name']} / {max_frame_info['sequence_name']}"
+    )
     summary_lines.append(f"总目标数: {total_object_count}")
     summary_lines.append(f"总实例数: {total_object_instance_count}")
     summary_lines.append("目标尺寸分布:")
@@ -1008,7 +1014,7 @@ def parse_args():
     # opt.base_path = r"H:\Datasets\MaritimeTrackAllData\LabelMe"
     # opt.base_path = r"H:\Datasets\SMD\SMD_LabelMe_Fix_20250509"
     opt.base_path = r"/home/konghaomin/Datasets/SMD_LabelMe_Ori"
-    opt.base_path = r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe_Ocean"
+    # opt.base_path = r"/home/konghaomin/Datasets/MaritimeTrackAllData/MT20250319/LabelMe_Ocean"
 
     return opt
 
@@ -1059,6 +1065,13 @@ def main():
     total_static_bbox_count = 0
     total_bbox_count = 0  # 总BBox数
 
+    # 记录最长帧数信息
+    max_frame_info = {
+        'max_frames': 0,
+        'video_name': '',
+        'sequence_name': ''
+    }
+
     start_time = time.time()
 
     # 尝试获取类别配置，如果指定跳过类别统计则允许配置为None
@@ -1104,6 +1117,14 @@ def main():
                 ocpmd_threshold=ocpmd_threshold,
                 collect_movement_data=all_movement_data,  # 传入收集数据的字典
             )
+
+            # 更新最长帧数记录
+            if len(seq_result) > 0 and isinstance(seq_result[0], int):
+                current_frames = seq_result[0]
+                if current_frames > max_frame_info['max_frames']:
+                    max_frame_info['max_frames'] = current_frames
+                    max_frame_info['video_name'] = video_name
+                    max_frame_info['sequence_name'] = sequence_name
 
             # 累加静止目标帧数统计
             if len(seq_result) > 15 and isinstance(seq_result[14], int):  # 静止目标帧数
@@ -1154,6 +1175,7 @@ def main():
         ocpmd_threshold,
         total_static_bbox_count,
         total_bbox_count,
+        max_frame_info,  # 传入最长帧数信息
         output_txt_path,
     )
 
