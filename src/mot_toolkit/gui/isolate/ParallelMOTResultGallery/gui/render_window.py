@@ -74,6 +74,7 @@ def process_frame_group(args):
         if grid_image is not None:
             # 保存网格图像
             output_path = Path(output_dir) / f"grid_{start_frame:08d}.jpg"
+            LOGGER.debug(f"保存网格图像: {output_path}")
             cv2.imwrite(str(output_path), grid_image, 
                        [cv2.IMWRITE_JPEG_QUALITY, render_config.get("quality", 85)])
             return start_frame, True, f"成功保存网格图像: {output_path.name}"
